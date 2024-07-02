@@ -118,9 +118,11 @@ export default class FileHandler{
         const beforeText = line.substring(0, position.character);
         const afterText = line.substring(position.character);
         const beforePat = /(|[A-Za-z_][A-Za-z0-9_]*|'([^'\n]|\\')*)$/;
-        const afterPat = (useSingleQuotation: boolean): RegExp => {
+        const afterPat = (useSingleQuotation: boolean, isEmpty: boolean): RegExp => {
             if(useSingleQuotation){
                 return /^(([^'\n]|\\')*')\s*\(/;
+            }else if(isEmpty){
+                return /^([A-Za-z_][A-Za-z0-9_]*|'([^'\n]|\\')*')\s*\(/;
             }else{
                 return /^([A-Za-z0-9_]*)\s*\(/;
             }
@@ -131,7 +133,7 @@ export default class FileHandler{
             return undefined;
         }
         const before = beforeMatch[1];
-        const afterMatch = afterPat(before.startsWith("'")).exec(afterText);
+        const afterMatch = afterPat(before.startsWith("'"), !before).exec(afterText);
         if(!afterMatch){
             Log(`after not matched`);
             return undefined;
