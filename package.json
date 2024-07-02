@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/usuke1726/MagmaLanguageSupport.git"
   },
-  "icon": "images/magma-icon.png",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -28,6 +28,10 @@
           "Magma",
           "magma"
         ],
+        "icon": {
+          "light": "./images/icon-magma-light.svg",
+          "dark": "./images/icon-magma-dark.svg"
+        },
         "extensions": [
           ".m",
           ".mag",
