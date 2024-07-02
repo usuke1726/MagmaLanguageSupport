@@ -168,6 +168,7 @@ export default class FileHandler{
         scope = "global";
         let comment: string = "";
         const loadStatementWithAtMark = /^\s*load\s+"(@.+?)";\s*$/;
+        const requireComment = /^\s*\/\/\s+@requires?\s+"(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
         const inComment = /^\s*\*?(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
@@ -213,6 +214,19 @@ export default class FileHandler{
                         }
                     }
                     continue;
+                }
+                m = requireComment.exec(line);
+                if(m){
+                    const requiredFiles = await this.resolveRequiredFile(m[1], uri);
+                    requiredFiles.forEach(reqUri => {
+                        cache.dependencies.push({
+                            uri: reqUri,
+                            loadsAt: new vscode.Position(idx, 0)
+                        });
+                        if(!this.isRegistered(reqUri)){
+                            this.reserveLoad(reqUri);
+                        }
+                    });
                 }
             }else if(scope === "inComment"){
                 m = endComment.exec(line);
@@ -261,16 +275,17 @@ export default class FileHandler{
             return name;
         }
     }
+    private static uriToBaseDir(uri: vscode.Uri): string{
+        const relPath = vscode.workspace.asRelativePath(uri).replaceAll("\\", "/");
+        const idx = relPath.lastIndexOf("/");
+        if(idx >= 0){
+            return relPath.substring(0, idx) || ".";
+        }else{
+            return ".";
+        }
+    }
     private static async resolveLoadFile(name: string, uri: vscode.Uri): Promise<vscode.Uri | undefined>{
-        const baseDir = (() => {
-            const relPath = vscode.workspace.asRelativePath(uri).replaceAll("\\", "/");
-            const idx = relPath.lastIndexOf("/");
-            if(idx >= 0){
-                return relPath.substring(0, idx) || ".";
-            }else{
-                return ".";
-            }
-        })();
+        const baseDir = this.uriToBaseDir(uri);
         const escapedChars = /[\[\]*{}?]/g;
         name = name
             .replaceAll("\\", "/")
@@ -285,6 +300,19 @@ export default class FileHandler{
             return files[0];
         }else{
             return undefined;
+        }
+    }
+    private static async resolveRequiredFile(name: string, uri: vscode.Uri): Promise<vscode.Uri[]>{
+        const baseDir = this.uriToBaseDir(uri);
+        // ここに限りGlobパターンを許容する
+        name = name
+            .replaceAll("\\", "/")
+            .replace(/@\//, "./");
+        const filePath = path.join(baseDir, name);
+        try{
+            return await vscode.workspace.findFiles(filePath);
+        }catch(e){
+            return [];
         }
     }
 };

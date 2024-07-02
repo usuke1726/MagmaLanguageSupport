@@ -53,6 +53,32 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
+			<string>^\s*//\s+(@requires?)(?:\s+("[^"]*");?)?\s*$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.comment.magma</string>
+				</dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.required-in-comment.magma</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>string.required-file-pattern.magma</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>$\n?</string>
+			<key>name</key>
+			<string>comment.line.double-slash-with-require.magma</string>
+		</dict>
+		<dict>
+			<key>begin</key>
 			<string>//</string>
 			<key>beginCaptures</key>
 			<dict>
