@@ -250,7 +250,7 @@ export default class FileHandler{
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
                         new vscode.Position(idx, start),
-                        new vscode.Position(idx, start + functionName.length - 1)
+                        new vscode.Position(idx, start + functionName.length)
                     );
                     const firstLine = line.trim();
                     cache.definitions.push({
