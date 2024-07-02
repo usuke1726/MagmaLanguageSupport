@@ -1,0 +1,6 @@
+
+load "@/test1.magma";
+
+OK("");
+
+'::dwo21'();

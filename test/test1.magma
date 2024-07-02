@@ -1,0 +1,23 @@
+
+
+/**
+ * コメント1
+ * 
+ * コメント2
+ */
+function OK(args)
+    print args;
+    return 0;
+end function;
+
+/** 1行コメント */
+procedure OK2()
+    print "OK";
+end procedure;
+
+/** 1行コメント */
+
+
+function '::dwo21'()
+    return 0;
+end function;

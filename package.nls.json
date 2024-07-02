@@ -1,0 +1,6 @@
+{
+    "extension.description": "Magma Language Support for Visual Studio Code",
+    "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
+    "config.enableHover": "Enables hover provider",
+    "config.enableDifinition": "Enables definition provider"
+}
