@@ -6,6 +6,10 @@
   "license": "MIT",
   "publisher": "usuke1726",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/usuke1726/MagmaLanguageSupport.git"
+  },
   "icon": "images/magma-icon.png",
   "engines": {
     "vscode": "^1.90.0"
