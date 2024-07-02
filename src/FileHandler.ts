@@ -80,12 +80,14 @@ export default class FileHandler{
         const functionName = this.getFunctionNameOfPosition(document, position);
         const stack: Cache[] = [];
         const selfCache: MaybeCache = this.FileCache[id];
+        const searchedFiles = new Set<string>();
         if(isCache(selfCache)){
             stack.push(selfCache);
         }
         while(stack.length){
             const cache: Cache | undefined = stack.pop();
             if(!cache) continue;
+            searchedFiles.add(this.uriToID(cache.uri));
             const def =  cache.definitions.find(def => def.name === functionName);
             if(def){
                 Log(`Definition found!`, def);
@@ -104,7 +106,7 @@ export default class FileHandler{
                     await this.load(dep.uri);
                 }
                 const depCache = this.FileCache[id];
-                if(isCache(depCache)){
+                if(isCache(depCache) && !searchedFiles.has(id)){
                     stack.push(depCache);
                 }
             };
