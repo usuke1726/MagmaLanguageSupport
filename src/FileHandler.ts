@@ -95,6 +95,9 @@ export default class FileHandler{
                 };
             }
             for(const dep of cache.dependencies){
+                if(position.line < dep.loadsAt.line){
+                    continue;
+                }
                 const id = this.uriToID(dep.uri);
                 if(this.FileCache[id] === undefined){
                     this.FileCache[id] = "reserved";

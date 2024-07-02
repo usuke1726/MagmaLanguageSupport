@@ -3,4 +3,8 @@ load "@/test1.magma";
 
 OK("");
 
+NG();
+
 '::dwo21'();
+
+load "@/test3.magma";

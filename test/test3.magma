@@ -1,0 +1,8 @@
+
+
+/**
+ * この関数はtest2.magmaではホバーされないはず．
+ */
+procedure NG()
+    print "NG";
+end procedure;
