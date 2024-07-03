@@ -189,7 +189,7 @@ export default class FileHandler{
         const lines = (fullText ?? (
             (new TextDecoder()).decode(await vscode.workspace.fs.readFile(uri))
         )).replaceAll("\r", "").split("\n");
-        let scope: "global" | "inComment" | "afterComment";
+        let scope: "global" | "inComment";
         scope = "global";
         let comment: string = "";
         const loadStatementWithAtMark = /^\s*load\s+"(@.+?)";\s*$/;
@@ -218,7 +218,7 @@ export default class FileHandler{
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
-                    scope = "afterComment";
+                    scope = "global";
                     comment = m[1]?.trim() ?? "";
                     continue;
                 }
@@ -262,20 +262,8 @@ export default class FileHandler{
                             }
                         });
                     }
-                }
-            }else if(scope === "inComment"){
-                m = endComment.exec(line);
-                if(m){
-                    scope = "afterComment";
-                    comment += `\n${m[1]?.trim() ?? ""}`;
                     continue;
                 }
-                m = inComment.exec(line);
-                if(m){
-                    comment += `\n${m[1] ?? ""}`;
-                    continue;
-                }
-            }else{
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??
                     startFunction3.exec(line);
@@ -300,6 +288,18 @@ export default class FileHandler{
                 if(line.trim()){
                     Log("NOT startFunction", line);
                     resetParams();
+                }
+            }else if(scope === "inComment"){
+                m = endComment.exec(line);
+                if(m){
+                    scope = "global";
+                    comment += `\n${m[1]?.trim() ?? ""}`;
+                    continue;
+                }
+                m = inComment.exec(line);
+                if(m){
+                    comment += `\n${m[1] ?? ""}`;
+                    continue;
                 }
             }
         }
