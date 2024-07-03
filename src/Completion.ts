@@ -44,7 +44,7 @@ class ProviderBase{
 class IfLikeProvider extends ProviderBase{
     constructor(name: string){
         super(" ", (beforeText, afterText, wholeLine) => {
-            return beforeText.endsWith(`${name} `) && afterText === "";
+            return RegExp(`^\\s*${name} $`).test(beforeText) && afterText === "";
         }, (line, character, wholeText) => {
             insertToNextLineWithSameTab(`end ${name};`, line, character, wholeText);
         });
