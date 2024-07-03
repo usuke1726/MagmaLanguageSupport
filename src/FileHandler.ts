@@ -195,7 +195,7 @@ export default class FileHandler{
         const loadStatementWithAtMark = /^\s*load\s+"(@.+?)";\s*$/;
         const requireComment = /^\s*\/\/\s+@requires?\s+"(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
-        const inComment = /^\s*\*?(.*)$/;
+        const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
         const startFunction1 = /^((?:function|procedure) +)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
@@ -224,7 +224,7 @@ export default class FileHandler{
                 m = startComment.exec(line);
                 if(m){
                     scope = "inComment";
-                    comment = m[1]?.trim() ?? "";
+                    comment = m[1]?.trimStart() ?? "";
                     continue;
                 }
                 m = loadStatementWithAtMark.exec(line);
@@ -271,7 +271,7 @@ export default class FileHandler{
                 }
                 m = inComment.exec(line);
                 if(m){
-                    comment += `\n${m[1]?.trim() ?? ""}`;
+                    comment += `\n${m[1] ?? ""}`;
                     continue;
                 }
             }else{
