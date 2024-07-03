@@ -59,6 +59,8 @@ class FunctionLikeProvider extends ProviderBase{
                     ( beforeText.endsWith(`${name} `) && afterText === "" ) ||
                     ( beforeText.endsWith(`${name}(`) && afterText === ")" ) ||
                     ( beforeText.endsWith(`(${name}(`) && afterText === "))" )
+                ) && (
+                    !RegExp(`@define[sd]?\\s+${name} $`).test(beforeText)
                 );
             },
             (line, character, wholeText) => {

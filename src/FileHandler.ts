@@ -236,6 +236,7 @@ export default class FileHandler{
         const startFunction1 = /^((?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
+        const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const cache: Cache = {
             uri,
             definitions: [],
@@ -297,7 +298,8 @@ export default class FileHandler{
                 }
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??
-                    startFunction3.exec(line);
+                    startFunction3.exec(line) ??
+                    startFunction4.exec(line);
                 if(m){
                     Log("startFunction", line);
                     const functionName = this.formatFunctionName(m[2]);

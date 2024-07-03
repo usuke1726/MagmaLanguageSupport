@@ -53,6 +53,37 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
+			<string>^\s*(//\s+)(@define[sd]?)\s+(function|procedure|intrinsic)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>comment.line.double-slash.magma</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.defined-in-comment.magma</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.function.defined-in-comment.magma</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.function.definition.defined-in-comment.magma</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>$\n?</string>
+			<key>name</key>
+			<string>source.defined-in-comment.magma</string>
+		</dict>
+		<dict>
+			<key>begin</key>
 			<string>^\s*//\s+(@requires?)(?:\s+("[^"]*");?)?\s*$</string>
 			<key>beginCaptures</key>
 			<dict>
