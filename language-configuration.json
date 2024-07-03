@@ -24,6 +24,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
         ["(", ")"],
         ["\"", "\""],
         ["'", "'"],
+        ["<", ">"],
         {
             "open": "/**",
             "close": " */",

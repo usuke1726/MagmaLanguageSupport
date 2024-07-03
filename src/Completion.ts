@@ -92,9 +92,6 @@ const patterns: ProviderBase[] = [
     }),
     new FunctionLikeProvider("function"),
     new FunctionLikeProvider("procedure"),
-    new ProviderBase("<", "<", (line, character, wholeText) => {
-        insertToSameLine(">", line, character, wholeText);
-    })
 ];
 
 const insertTo = (pos: vscode.Position, text: string) => {
