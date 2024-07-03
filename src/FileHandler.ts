@@ -31,14 +31,24 @@ type Caches = {
 
 export default class FileHandler{
     static FileCache: Caches = {};
+    static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
     private static isEnabled(){
         const config = getConfig();
-        return config.enableDifinition || config.enableHover;
+        return config.enableDefinition || config.enableHover;
     }
     static onDidChange(e: vscode.TextDocumentChangeEvent){
+        this.dirtyChangeTimeout = undefined;
         if(!this.isEnabled()) return;
         const uri = e.document.uri;
-        this.reserveLoad(uri);
+        this.reserveLoad(uri, e.document.getText());
+    }
+    static onDidDirtyChange(e: vscode.TextDocumentChangeEvent){
+        clearTimeout(this.dirtyChangeTimeout);
+        this.dirtyChangeTimeout = setTimeout(() => {
+            if(this.dirtyChangeTimeout){
+                this.onDidChange(e);
+            }
+        }, getConfig().onChangeDelay);
     }
     static onDidOpen(e: vscode.TextDocument){
         if(!this.isEnabled()) return;
@@ -168,16 +178,17 @@ export default class FileHandler{
         const id = this.uriToID(uri);
         return this.FileCache.hasOwnProperty(id) && isCache(this.FileCache[id]);
     }
-    private static reserveLoad(uri: vscode.Uri): void{
+    private static reserveLoad(uri: vscode.Uri, fullText?: string): void{
         const id = this.uriToID(uri);
         if(this.FileCache[id] !== "reserved"){
             this.FileCache[id] = "reserved";
-            this.load(uri);
+            this.load(uri, fullText);
         }
     }
-    private static async load(uri: vscode.Uri): Promise<void>{
-        const buffer: Uint8Array = await vscode.workspace.fs.readFile(uri);
-        const lines = (new TextDecoder()).decode(buffer).replaceAll("\r", "").split("\n");
+    private static async load(uri: vscode.Uri, fullText?: string): Promise<void>{
+        const lines = (fullText ?? (
+            (new TextDecoder()).decode(await vscode.workspace.fs.readFile(uri))
+        )).replaceAll("\r", "").split("\n");
         let scope: "global" | "inComment" | "afterComment";
         scope = "global";
         let comment: string = "";

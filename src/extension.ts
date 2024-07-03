@@ -7,7 +7,7 @@ import getConfig from './config';
 
 class DefProvider implements vscode.DefinitionProvider{
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
-        if(getConfig().enableDifinition){
+        if(getConfig().enableDefinition){
             return FileHandler.onDefinitionCall(document, position);
         }else{
             return undefined;
@@ -34,10 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
             if(e.document.languageId !== "magma") return;
             CompletionProvider.exec(e);
             if(e.document.isDirty){
-                Log("Dirty skip");
-                return;
+                Log("isDirty");
+                FileHandler.onDidDirtyChange(e);
+            }else{
+                FileHandler.onDidChange(e);
             }
-            FileHandler.onDidChange(e);
         });
         context.subscriptions.push(vscode.languages.registerDefinitionProvider({
             scheme: "file",
