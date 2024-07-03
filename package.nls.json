@@ -2,5 +2,6 @@
     "extension.description": "Magma Language Support for Visual Studio Code",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
     "config.enableHover": "Enables hover provider",
-    "config.enableDifinition": "Enables definition provider"
+    "config.enableDefinition": "Enables definition provider",
+    "config.onChangeDelay": "A delay [ms] to load file having unsaved change"
 }

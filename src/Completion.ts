@@ -44,7 +44,7 @@ class ProviderBase{
 class IfLikeProvider extends ProviderBase{
     constructor(name: string){
         super(" ", (beforeText, afterText, wholeLine) => {
-            return beforeText.endsWith(`${name} `) && afterText === "";
+            return RegExp(`^\\s*${name} $`).test(beforeText) && afterText === "";
         }, (line, character, wholeText) => {
             insertToNextLineWithSameTab(`end ${name};`, line, character, wholeText);
         });
@@ -59,6 +59,8 @@ class FunctionLikeProvider extends ProviderBase{
                     ( beforeText.endsWith(`${name} `) && afterText === "" ) ||
                     ( beforeText.endsWith(`${name}(`) && afterText === ")" ) ||
                     ( beforeText.endsWith(`(${name}(`) && afterText === "))" )
+                ) && (
+                    !RegExp(`@define[sd]?\\s+${name} $`).test(beforeText)
                 );
             },
             (line, character, wholeText) => {
@@ -92,9 +94,6 @@ const patterns: ProviderBase[] = [
     }),
     new FunctionLikeProvider("function"),
     new FunctionLikeProvider("procedure"),
-    new ProviderBase("<", "<", (line, character, wholeText) => {
-        insertToSameLine(">", line, character, wholeText);
-    })
 ];
 
 const insertTo = (pos: vscode.Position, text: string) => {

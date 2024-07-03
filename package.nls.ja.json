@@ -2,5 +2,6 @@
     "extension.description": "数式処理言語 Magma のVisual Studio Code向けの言語サポート",
     "config.enableAutoCompletion": "自動補完を有効化する (例 `if ... end if;`)",
     "config.enableHover": "Hover機能を有効化する",
-    "config.enableDifinition": "Definition機能を有効化する"
+    "config.enableDefinition": "Definition機能を有効化する",
+    "config.onChangeDelay": "未保存の変更があったときにファイルの再読み込みを開始するまでの遅延時間 [ms]"
 }

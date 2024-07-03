@@ -79,10 +79,15 @@
           "default": true,
           "description": "%config.enableHover%"
         },
-        "MagmaLanguageSupport.enableDifinition": {
+        "MagmaLanguageSupport.enableDefinition": {
           "type": "boolean",
           "default": true,
-          "description": "%config.enableDifinition%"
+          "description": "%config.enableDefinition%"
+        },
+        "MagmaLanguageSupport.onChangeDelay": {
+          "type": "integer",
+          "default": 3000,
+          "description": "%config.onChangeDelay%"
         }
       }
     }

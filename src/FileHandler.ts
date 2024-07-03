@@ -3,11 +3,12 @@ import * as vscode from 'vscode';
 import path from 'path';
 import Log from './Log';
 import getConfig from './config';
+import DocumentParser from './DocumentParser';
 
 type Definition = {
     name: string;
     document: string;
-    firstLine: string;
+    isForward: boolean;
     range: vscode.Range;
 };
 type Dependency = {
@@ -28,17 +29,35 @@ type MaybeCache = Cache | "reserved" | undefined;
 type Caches = {
     [filepath: string]: MaybeCache;
 };
+type SearchDefinitionOptions = {
+    onlyForward?: boolean;
+    functionName?: string;
+};
+type SearchResult = {
+    uri: vscode.Uri;
+    definition: Definition;
+};
 
 export default class FileHandler{
     static FileCache: Caches = {};
+    static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
     private static isEnabled(){
         const config = getConfig();
-        return config.enableDifinition || config.enableHover;
+        return config.enableDefinition || config.enableHover;
     }
     static onDidChange(e: vscode.TextDocumentChangeEvent){
+        this.dirtyChangeTimeout = undefined;
         if(!this.isEnabled()) return;
         const uri = e.document.uri;
-        this.reserveLoad(uri);
+        this.reserveLoad(uri, e.document.getText());
+    }
+    static onDidDirtyChange(e: vscode.TextDocumentChangeEvent){
+        clearTimeout(this.dirtyChangeTimeout);
+        this.dirtyChangeTimeout = setTimeout(() => {
+            if(this.dirtyChangeTimeout){
+                this.onDidChange(e);
+            }
+        }, getConfig().onChangeDelay);
     }
     static onDidOpen(e: vscode.TextDocument){
         if(!this.isEnabled()) return;
@@ -62,25 +81,51 @@ export default class FileHandler{
         }
     }
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
-        const result = await this.searchDefinition(document, position);
-        if(result){
-            const firstLine = result.definition.firstLine;
-            const num = Math.max(0, ...[...firstLine.matchAll(/`+/g)].map(m => m[0].length)) + 1;
-            const brac = "`".repeat(num);
-            const firstLineDoc = new vscode.MarkdownString(`${brac}${firstLine}${brac}`);
-            const documentBody = new vscode.MarkdownString(result.definition.document);
-            const contents = [firstLineDoc, documentBody];
-            return { contents };
+        const selfDef = this.searchDefinitionAtPosition(document, position);
+        if(selfDef){
+            if(selfDef.isForward){
+                return {
+                    contents: [new vscode.MarkdownString(selfDef.document)]
+                };
+            }
+            const forward = await this.searchDefinition(document, position, {
+                onlyForward: true,
+                functionName: selfDef.name
+            });
+            if(forward){
+                return {
+                    contents: [
+                        new vscode.MarkdownString(forward.definition.document),
+                        new vscode.MarkdownString("---"),
+                        new vscode.MarkdownString(selfDef.document)
+                    ]
+                };
+            }else{
+                return {
+                    contents: [new vscode.MarkdownString(selfDef.document)]
+                };
+            }
         }else{
-            return undefined;
+            const result = await this.searchDefinition(document, position);
+            if(result){
+                const documentBody = new vscode.MarkdownString(result.definition.document);
+                const contents = [documentBody];
+                return { contents };
+            }else{
+                return undefined;
+            }
         }
     }
-    static async searchDefinition(document: vscode.TextDocument, position: vscode.Position): Promise<{uri: vscode.Uri, definition: Definition} | undefined>{
+    private static async searchDefinition(document: vscode.TextDocument, position: vscode.Position, options?: SearchDefinitionOptions): Promise<SearchResult | undefined>{
         const id = this.uriToID(document.uri);
-        const functionName = this.getFunctionNameOfPosition(document, position);
+        const functionName = (options?.functionName) ?? this.getFunctionNameOfPosition(document, position);
+        if(!functionName) return undefined;
         const stack: Cache[] = [];
         const selfCache: MaybeCache = this.FileCache[id];
         const searchedFiles = new Set<string>();
+        const query: ((def: Definition) => boolean) = (options?.onlyForward)
+            ? def => def.isForward && def.name === functionName
+            : def => def.name === functionName;
         if(isCache(selfCache)){
             stack.push(selfCache);
         }
@@ -88,7 +133,7 @@ export default class FileHandler{
             const cache: Cache | undefined = stack.pop();
             if(!cache) continue;
             searchedFiles.add(this.uriToID(cache.uri));
-            const def =  cache.definitions.find(def => def.name === functionName);
+            const def =  cache.definitions.find(query);
             if(def){
                 Log(`Definition found!`, def);
                 return {
@@ -113,7 +158,19 @@ export default class FileHandler{
         }
         return undefined;
     }
+    private static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Definition | undefined{
+        const id = this.uriToID(document.uri);
+        const cache = this.FileCache[id];
+        if(!cache || cache === "reserved") return undefined;
+        return cache.definitions.find(def => def.range.contains(position));
+    }
     private static getFunctionNameOfPosition(document: vscode.TextDocument, position: vscode.Position): string | undefined{
+        const def = this.searchDefinitionAtPosition(document, position);
+        if(def){
+            const name = def.name;
+            Log(`found as definition: ${name}`);
+            return name;
+        }
         const line = document.lineAt(position.line).text.replace("\r", "");
         const beforeText = line.substring(0, position.character);
         const afterText = line.substring(position.character);
@@ -156,30 +213,30 @@ export default class FileHandler{
         const id = this.uriToID(uri);
         return this.FileCache.hasOwnProperty(id) && isCache(this.FileCache[id]);
     }
-    private static reserveLoad(uri: vscode.Uri): void{
+    private static reserveLoad(uri: vscode.Uri, fullText?: string): void{
         const id = this.uriToID(uri);
         if(this.FileCache[id] !== "reserved"){
             this.FileCache[id] = "reserved";
-            this.load(uri);
+            this.load(uri, fullText);
         }
     }
-    private static async load(uri: vscode.Uri): Promise<void>{
-        const buffer: Uint8Array = await vscode.workspace.fs.readFile(uri);
-        const lines = (new TextDecoder()).decode(buffer).replaceAll("\r", "").split("\n");
-        let scope: "global" | "inComment" | "afterComment";
+    private static async load(uri: vscode.Uri, fullText?: string): Promise<void>{
+        const lines = (fullText ?? (
+            (new TextDecoder()).decode(await vscode.workspace.fs.readFile(uri))
+        )).replaceAll("\r", "").split("\n");
+        let scope: "global" | "inComment";
         scope = "global";
-        let comment: string = "";
+        const parser = new DocumentParser(uri);
         const loadStatementWithAtMark = /^\s*load\s+"(@.+?)";\s*$/;
         const requireComment = /^\s*\/\/\s+@requires?\s+"(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
-        const inComment = /^\s*\*?(.*)$/;
+        const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
-        const startFunction = /^((?:function|procedure) +)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
-        const resetParams = () => {
-            comment = "";
-            scope = "global";
-        };
+        const startFunction1 = /^((?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+        const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
+        const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
+        const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const cache: Cache = {
             uri,
             definitions: [],
@@ -193,20 +250,23 @@ export default class FileHandler{
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
-                    scope = "afterComment";
-                    comment = m[1]?.trim() ?? "";
+                    scope = "global";
+                    parser.send(m[1]?.trim());
                     continue;
                 }
                 m = startComment.exec(line);
                 if(m){
                     scope = "inComment";
-                    comment = m[1]?.trim() ?? "";
+                    parser.send(m[1]?.trimStart());
                     continue;
                 }
                 m = loadStatementWithAtMark.exec(line);
                 if(m){
                     const loadFileUri = await this.resolveLoadFile(m[1], uri);
                     if(loadFileUri){
+                        cache.dependencies = cache.dependencies.filter(dep => {
+                            return loadFileUri.fsPath !== dep.uri.fsPath;
+                        });
                         cache.dependencies.push({
                             uri: loadFileUri,
                             loadsAt: new vscode.Position(idx, 0)
@@ -220,30 +280,26 @@ export default class FileHandler{
                 m = requireComment.exec(line);
                 if(m){
                     const requiredFiles = await this.resolveRequiredFile(m[1], uri);
-                    requiredFiles.forEach(reqUri => {
-                        cache.dependencies.push({
-                            uri: reqUri,
-                            loadsAt: new vscode.Position(idx, 0)
+                    if(requiredFiles.length){
+                        cache.dependencies = cache.dependencies.filter(dep => {
+                            return !requiredFiles.some(uri => uri.fsPath === dep.uri.fsPath);
                         });
-                        if(!this.isRegistered(reqUri)){
-                            this.reserveLoad(reqUri);
-                        }
-                    });
-                }
-            }else if(scope === "inComment"){
-                m = endComment.exec(line);
-                if(m){
-                    scope = "afterComment";
-                    comment += `\n${m[1]?.trim() ?? ""}`;
+                        requiredFiles.forEach(reqUri => {
+                            cache.dependencies.push({
+                                uri: reqUri,
+                                loadsAt: new vscode.Position(idx, 0)
+                            });
+                            if(!this.isRegistered(reqUri)){
+                                this.reserveLoad(reqUri);
+                            }
+                        });
+                    }
                     continue;
                 }
-                m = inComment.exec(line);
-                if(m){
-                    comment += `\n${m[1]?.trim() ?? ""}`;
-                    continue;
-                }
-            }else{
-                m = startFunction.exec(line);
+                m = startFunction1.exec(line) ??
+                    startFunction2.exec(line) ??
+                    startFunction3.exec(line) ??
+                    startFunction4.exec(line);
                 if(m){
                     Log("startFunction", line);
                     const functionName = this.formatFunctionName(m[2]);
@@ -253,19 +309,36 @@ export default class FileHandler{
                         new vscode.Position(idx, start + functionName.length)
                     );
                     const firstLine = line.trim();
+                    parser.setFirstLine(firstLine);
                     cache.definitions.push({
                         name: functionName,
-                        document: comment.trim(),
-                        firstLine,
+                        document: parser.pop(),
+                        isForward: m[1].startsWith("forward"),
                         range: nameRange
                     });
-                    resetParams();
-                }else if(line.trim()){
+                    scope = "global";
+                    continue;
+                }
+                if(line.trim()){
                     Log("NOT startFunction", line);
-                    resetParams();
+                    scope = "global";
+                }
+            }else if(scope === "inComment"){
+                m = endComment.exec(line);
+                if(m){
+                    scope = "global";
+                    parser.send(m[1]?.trim());
+                    continue;
+                }
+                m = inComment.exec(line);
+                if(m){
+                    parser.send(m[1]);
+                    continue;
                 }
             }
         }
+        cache.dependencies.reverse();
+        cache.definitions.reverse();
         Log(`Cache(${uri.fsPath})`, cache);
         this.FileCache[this.uriToID(uri)] = cache;
     }

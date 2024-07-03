@@ -5,23 +5,30 @@ import Log from './Log';
 type Config = {
     enableAutoCompletion: boolean;
     enableHover: boolean;
-    enableDifinition: boolean;
+    enableDefinition: boolean;
+    onChangeDelay: number;
 };
 const defaultConfig: Config = {
     enableAutoCompletion: true,
     enableHover: true,
-    enableDifinition: true
+    enableDefinition: true,
+    onChangeDelay: 3000
 };
 type ConfigKey = keyof Config;
 const keys: ConfigKey[] = [
     "enableAutoCompletion",
     "enableHover",
-    "enableDifinition",
+    "enableDefinition",
+    "onChangeDelay",
 ];
 const isConfig = (obj: any): obj is Config => {
     return (
         typeof obj === "object" &&
-        keys.every(k => obj.hasOwnProperty(k) && typeof obj[k] === "boolean")
+        keys.every(k => obj.hasOwnProperty(k)) &&
+        typeof obj["enableAutoCompletion"] === "boolean" &&
+        typeof obj["enableHover"] === "boolean" &&
+        typeof obj["enableDefinition"] === "boolean" &&
+        typeof obj["onChangeDelay"] === "number"
     );
 };
 
