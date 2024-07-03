@@ -3,11 +3,11 @@ import * as vscode from 'vscode';
 import path from 'path';
 import Log from './Log';
 import getConfig from './config';
+import DocumentParser from './DocumentParser';
 
 type Definition = {
     name: string;
     document: string;
-    firstLine: string;
     range: vscode.Range;
 };
 type Dependency = {
@@ -74,12 +74,8 @@ export default class FileHandler{
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const result = await this.searchDefinition(document, position);
         if(result){
-            const firstLine = result.definition.firstLine;
-            const num = Math.max(0, ...[...firstLine.matchAll(/`+/g)].map(m => m[0].length)) + 1;
-            const brac = "`".repeat(num);
-            const firstLineDoc = new vscode.MarkdownString(`${brac}${firstLine}${brac}`);
             const documentBody = new vscode.MarkdownString(result.definition.document);
-            const contents = [firstLineDoc, documentBody];
+            const contents = [documentBody];
             return { contents };
         }else{
             return undefined;
@@ -191,7 +187,7 @@ export default class FileHandler{
         )).replaceAll("\r", "").split("\n");
         let scope: "global" | "inComment";
         scope = "global";
-        let comment: string = "";
+        const parser = new DocumentParser(uri);
         const loadStatementWithAtMark = /^\s*load\s+"(@.+?)";\s*$/;
         const requireComment = /^\s*\/\/\s+@requires?\s+"(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
@@ -201,10 +197,6 @@ export default class FileHandler{
         const startFunction1 = /^((?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
-        const resetParams = () => {
-            comment = "";
-            scope = "global";
-        };
         const cache: Cache = {
             uri,
             definitions: [],
@@ -219,13 +211,13 @@ export default class FileHandler{
                 if(m){
                     Log("inlineComment", line);
                     scope = "global";
-                    comment = m[1]?.trim() ?? "";
+                    parser.send(m[1]?.trim());
                     continue;
                 }
                 m = startComment.exec(line);
                 if(m){
                     scope = "inComment";
-                    comment = m[1]?.trimStart() ?? "";
+                    parser.send(m[1]?.trimStart());
                     continue;
                 }
                 m = loadStatementWithAtMark.exec(line);
@@ -276,29 +268,29 @@ export default class FileHandler{
                         new vscode.Position(idx, start + functionName.length)
                     );
                     const firstLine = line.trim();
+                    parser.setFirstLine(firstLine);
                     cache.definitions.push({
                         name: functionName,
-                        document: comment.trim(),
-                        firstLine,
+                        document: parser.toString(),
                         range: nameRange
                     });
-                    resetParams();
+                    scope = "global";
                     continue;
                 }
                 if(line.trim()){
                     Log("NOT startFunction", line);
-                    resetParams();
+                    scope = "global";
                 }
             }else if(scope === "inComment"){
                 m = endComment.exec(line);
                 if(m){
                     scope = "global";
-                    comment += `\n${m[1]?.trim() ?? ""}`;
+                    parser.send(m[1]?.trim());
                     continue;
                 }
                 m = inComment.exec(line);
                 if(m){
-                    comment += `\n${m[1] ?? ""}`;
+                    parser.send(m[1]);
                     continue;
                 }
             }
