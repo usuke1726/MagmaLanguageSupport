@@ -207,6 +207,9 @@ export default class FileHandler{
                 if(m){
                     const loadFileUri = await this.resolveLoadFile(m[1], uri);
                     if(loadFileUri){
+                        cache.dependencies = cache.dependencies.filter(dep => {
+                            return loadFileUri.fsPath !== dep.uri.fsPath;
+                        });
                         cache.dependencies.push({
                             uri: loadFileUri,
                             loadsAt: new vscode.Position(idx, 0)
@@ -220,15 +223,20 @@ export default class FileHandler{
                 m = requireComment.exec(line);
                 if(m){
                     const requiredFiles = await this.resolveRequiredFile(m[1], uri);
-                    requiredFiles.forEach(reqUri => {
-                        cache.dependencies.push({
-                            uri: reqUri,
-                            loadsAt: new vscode.Position(idx, 0)
+                    if(requiredFiles.length){
+                        cache.dependencies = cache.dependencies.filter(dep => {
+                            return !requiredFiles.some(uri => uri.fsPath === dep.uri.fsPath);
                         });
-                        if(!this.isRegistered(reqUri)){
-                            this.reserveLoad(reqUri);
-                        }
-                    });
+                        requiredFiles.forEach(reqUri => {
+                            cache.dependencies.push({
+                                uri: reqUri,
+                                loadsAt: new vscode.Position(idx, 0)
+                            });
+                            if(!this.isRegistered(reqUri)){
+                                this.reserveLoad(reqUri);
+                            }
+                        });
+                    }
                 }
             }else if(scope === "inComment"){
                 m = endComment.exec(line);
