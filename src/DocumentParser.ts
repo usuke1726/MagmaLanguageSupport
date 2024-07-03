@@ -10,7 +10,7 @@ export default class DocumentParser{
         this.uri = uri;
         this.lines = [];
     }
-    reset(){
+    private reset(){
         this.positionLine = undefined;
         this.firstLine = undefined;
         this.lines = [];
@@ -31,11 +31,14 @@ export default class DocumentParser{
         const brac = "`".repeat(num);
         return `${brac}magma\n${this.firstLine}\n${brac}`;
     }
-    toString(): string{
+    pop(): string{
         const body = this.lines.join("\n");
         if(this.firstLine){
-            return `${this.firstLineToCodeBlock()}\n\n${body}`;
+            const code = this.firstLineToCodeBlock();
+            this.reset();
+            return `${code}\n\n${body}`;
         }else{
+            this.reset();
             return body;
         }
     }

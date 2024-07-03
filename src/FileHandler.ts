@@ -310,7 +310,7 @@ export default class FileHandler{
                     parser.setFirstLine(firstLine);
                     cache.definitions.push({
                         name: functionName,
-                        document: parser.toString(),
+                        document: parser.pop(),
                         isForward: m[1].startsWith("forward"),
                         range: nameRange
                     });
