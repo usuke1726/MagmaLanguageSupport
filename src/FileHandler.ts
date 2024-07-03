@@ -198,8 +198,9 @@ export default class FileHandler{
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
-        const startFunction1 = /^((?:function|procedure) +)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
-        const startFunction2 = /^(\s*)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
+        const startFunction1 = /^((?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+        const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
+        const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
         const resetParams = () => {
             comment = "";
             scope = "global";
@@ -275,28 +276,11 @@ export default class FileHandler{
                     continue;
                 }
             }else{
-                m = startFunction1.exec(line);
+                m = startFunction1.exec(line) ??
+                    startFunction2.exec(line) ??
+                    startFunction3.exec(line);
                 if(m){
-                    Log("startFunction1", line);
-                    const functionName = this.formatFunctionName(m[2]);
-                    const start = m[1].length;
-                    const nameRange = new vscode.Range(
-                        new vscode.Position(idx, start),
-                        new vscode.Position(idx, start + functionName.length)
-                    );
-                    const firstLine = line.trim();
-                    cache.definitions.push({
-                        name: functionName,
-                        document: comment.trim(),
-                        firstLine,
-                        range: nameRange
-                    });
-                    resetParams();
-                    continue;
-                }
-                m = startFunction2.exec(line);
-                if(m){
-                    Log("startFunction2", line);
+                    Log("startFunction", line);
                     const functionName = this.formatFunctionName(m[2]);
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
