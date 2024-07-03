@@ -1,9 +1,9 @@
 
 
 /**
- * コメント1
- * 
- * コメント2
+ *  コメント1
+ *  
+ *  コメント2
  */
 function OK(args)
     print args;
@@ -21,3 +21,19 @@ end procedure;
 function '::dwo21'()
     return 0;
 end function;
+
+/**
+ *  この関数では，以下の機能を実装すること．
+ *  
+ *  - ○○
+ *  - △△
+ *      - ✕✕
+ */
+forward forwardFunc;
+
+/**
+ *  種数を計算する．
+ *  
+ *  ([ドキュメント](https://magma.maths.usyd.edu.au/magma/handbook/text/1415#15978))
+ */
+// @defined intrinsic Genus(C)
