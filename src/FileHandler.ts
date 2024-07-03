@@ -8,6 +8,7 @@ import DocumentParser from './DocumentParser';
 type Definition = {
     name: string;
     document: string;
+    isForward: boolean;
     range: vscode.Range;
 };
 type Dependency = {
@@ -27,6 +28,14 @@ const isCache = (obj: MaybeCache): obj is Cache => {
 type MaybeCache = Cache | "reserved" | undefined;
 type Caches = {
     [filepath: string]: MaybeCache;
+};
+type SearchDefinitionOptions = {
+    onlyForward?: boolean;
+    functionName?: string;
+};
+type SearchResult = {
+    uri: vscode.Uri;
+    definition: Definition;
 };
 
 export default class FileHandler{
@@ -72,21 +81,51 @@ export default class FileHandler{
         }
     }
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
-        const result = await this.searchDefinition(document, position);
-        if(result){
-            const documentBody = new vscode.MarkdownString(result.definition.document);
-            const contents = [documentBody];
-            return { contents };
+        const selfDef = this.searchDefinitionAtPosition(document, position);
+        if(selfDef){
+            if(selfDef.isForward){
+                return {
+                    contents: [new vscode.MarkdownString(selfDef.document)]
+                };
+            }
+            const forward = await this.searchDefinition(document, position, {
+                onlyForward: true,
+                functionName: selfDef.name
+            });
+            if(forward){
+                return {
+                    contents: [
+                        new vscode.MarkdownString(forward.definition.document),
+                        new vscode.MarkdownString("---"),
+                        new vscode.MarkdownString(selfDef.document)
+                    ]
+                };
+            }else{
+                return {
+                    contents: [new vscode.MarkdownString(selfDef.document)]
+                };
+            }
         }else{
-            return undefined;
+            const result = await this.searchDefinition(document, position);
+            if(result){
+                const documentBody = new vscode.MarkdownString(result.definition.document);
+                const contents = [documentBody];
+                return { contents };
+            }else{
+                return undefined;
+            }
         }
     }
-    static async searchDefinition(document: vscode.TextDocument, position: vscode.Position): Promise<{uri: vscode.Uri, definition: Definition} | undefined>{
+    private static async searchDefinition(document: vscode.TextDocument, position: vscode.Position, options?: SearchDefinitionOptions): Promise<SearchResult | undefined>{
         const id = this.uriToID(document.uri);
-        const functionName = this.getFunctionNameOfPosition(document, position);
+        const functionName = (options?.functionName) ?? this.getFunctionNameOfPosition(document, position);
+        if(!functionName) return undefined;
         const stack: Cache[] = [];
         const selfCache: MaybeCache = this.FileCache[id];
         const searchedFiles = new Set<string>();
+        const query: ((def: Definition) => boolean) = (options?.onlyForward)
+            ? def => def.isForward && def.name === functionName
+            : def => def.name === functionName;
         if(isCache(selfCache)){
             stack.push(selfCache);
         }
@@ -94,7 +133,7 @@ export default class FileHandler{
             const cache: Cache | undefined = stack.pop();
             if(!cache) continue;
             searchedFiles.add(this.uriToID(cache.uri));
-            const def =  cache.definitions.find(def => def.name === functionName);
+            const def =  cache.definitions.find(query);
             if(def){
                 Log(`Definition found!`, def);
                 return {
@@ -272,6 +311,7 @@ export default class FileHandler{
                     cache.definitions.push({
                         name: functionName,
                         document: parser.toString(),
+                        isForward: m[1].startsWith("forward"),
                         range: nameRange
                     });
                     scope = "global";
