@@ -266,6 +266,8 @@ export default class FileHandler{
                 }
             }
         }
+        cache.dependencies.reverse();
+        cache.definitions.reverse();
         Log(`Cache(${uri.fsPath})`, cache);
         this.FileCache[this.uriToID(uri)] = cache;
     }
