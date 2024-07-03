@@ -113,7 +113,19 @@ export default class FileHandler{
         }
         return undefined;
     }
+    private static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Definition | undefined{
+        const id = this.uriToID(document.uri);
+        const cache = this.FileCache[id];
+        if(!cache || cache === "reserved") return undefined;
+        return cache.definitions.find(def => def.range.contains(position));
+    }
     private static getFunctionNameOfPosition(document: vscode.TextDocument, position: vscode.Position): string | undefined{
+        const def = this.searchDefinitionAtPosition(document, position);
+        if(def){
+            const name = def.name;
+            Log(`found as definition: ${name}`);
+            return name;
+        }
         const line = document.lineAt(position.line).text.replace("\r", "");
         const beforeText = line.substring(0, position.character);
         const afterText = line.substring(position.character);
@@ -175,7 +187,8 @@ export default class FileHandler{
         const inComment = /^\s*\*?(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
-        const startFunction = /^((?:function|procedure) +)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+        const startFunction1 = /^((?:function|procedure) +)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+        const startFunction2 = /^(\s*)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const resetParams = () => {
             comment = "";
             scope = "global";
@@ -251,9 +264,9 @@ export default class FileHandler{
                     continue;
                 }
             }else{
-                m = startFunction.exec(line);
+                m = startFunction1.exec(line);
                 if(m){
-                    Log("startFunction", line);
+                    Log("startFunction1", line);
                     const functionName = this.formatFunctionName(m[2]);
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
@@ -268,7 +281,28 @@ export default class FileHandler{
                         range: nameRange
                     });
                     resetParams();
-                }else if(line.trim()){
+                    continue;
+                }
+                m = startFunction2.exec(line);
+                if(m){
+                    Log("startFunction2", line);
+                    const functionName = this.formatFunctionName(m[2]);
+                    const start = m[1].length;
+                    const nameRange = new vscode.Range(
+                        new vscode.Position(idx, start),
+                        new vscode.Position(idx, start + functionName.length)
+                    );
+                    const firstLine = line.trim();
+                    cache.definitions.push({
+                        name: functionName,
+                        document: comment.trim(),
+                        firstLine,
+                        range: nameRange
+                    });
+                    resetParams();
+                    continue;
+                }
+                if(line.trim()){
                     Log("NOT startFunction", line);
                     resetParams();
                 }
