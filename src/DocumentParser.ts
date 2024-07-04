@@ -28,19 +28,15 @@ export default class DocumentParser{
     }
     send(line: string = ""){
         if(!this.lines.length && !line) return;
-        const tagPatterns = [
-            /^\s*(@param)(|\s+.*)$/,
-            /^\s*(@returns?)(|\s+.*)$/,
-            /^\s*(@example)(|\s+.*)$/,
-            /^\s*(@remarks?)(|\s+.*)$/,
-        ];
-        const m = tagPatterns.map(pattern => pattern.exec(line)).find(m => m);
+        const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|.*?)$/;
+        const tagsExpectingArgs = ["param", "arg", "argument"];
+        const m = tagPattern.exec(line);
         if(m){
             if(this.tag){
                 this.finishTag();
             }
             this.tag = m[1].substring(1);
-            if(this.tag === "param"){
+            if(tagsExpectingArgs.includes(this.tag)){
                 this.waitingForFirstToken = true;
             }
             const remaining = m[2].trimStart();

@@ -16,7 +16,8 @@
 - Hover Imformation
 - Go to Definition (only function/procedure having document comment)
 - Partial JSDoc Support
-    - `@param`, `@returns`, `@example`, `@remarks` are available.
+    - `@param`, `@returns`, `@example` are available.
+    - `@see`, `@link` are unavailable.
 
 ## License
 
