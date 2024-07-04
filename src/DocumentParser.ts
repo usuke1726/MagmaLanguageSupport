@@ -58,7 +58,7 @@ export default class DocumentParser{
     private sendAsInMode(line: string){
         if(this.waitingForFirstToken){
             line = line.trimStart();
-            const m = /^(\w+)(|.+)$/.exec(line);
+            const m = /^([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(|.+)$/.exec(line);
             if(m){
                 this.firstToken = m[1];
                 const remaining = m[2].trimStart();

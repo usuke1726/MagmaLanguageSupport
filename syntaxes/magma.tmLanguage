@@ -42,7 +42,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 			<array>
 				<dict>
 					<key>match</key>
-					<string>(@param)\s+(\w+)</string>
+					<string>(@param)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')</string>
 					<key>captures</key>
 					<dict>
 						<key>1</key>
