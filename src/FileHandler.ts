@@ -117,7 +117,8 @@ export default class FileHandler{
         }
     }
     private static async searchDefinition(document: vscode.TextDocument, position: vscode.Position, options?: SearchDefinitionOptions): Promise<SearchResult | undefined>{
-        const id = this.uriToID(document.uri);
+        const baseUri = document.uri;
+        const id = this.uriToID(baseUri);
         const functionName = (options?.functionName) ?? this.getFunctionNameOfPosition(document, position);
         if(!functionName) return undefined;
         const stack: Cache[] = [];
@@ -132,17 +133,15 @@ export default class FileHandler{
         while(stack.length){
             const cache: Cache | undefined = stack.pop();
             if(!cache) continue;
-            searchedFiles.add(this.uriToID(cache.uri));
-            const def =  cache.definitions.find(query);
-            if(def){
-                Log(`Definition found!`, def);
-                return {
-                    uri: cache.uri,
-                    definition: def
-                };
+            const uri = cache.uri;
+            searchedFiles.add(this.uriToID(uri));
+            const definition = cache.definitions.find(query);
+            if(definition){
+                Log(`Definition found!`, definition);
+                return { uri, definition };
             }
             for(const dep of cache.dependencies){
-                if(position.line < dep.loadsAt.line){
+                if(uri.fsPath === baseUri.fsPath && position.line < dep.loadsAt.line){
                     continue;
                 }
                 const id = this.uriToID(dep.uri);
