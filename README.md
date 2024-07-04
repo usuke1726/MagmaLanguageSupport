@@ -15,6 +15,8 @@
     - `procedure ... end procedure;`
 - Hover Imformation
 - Go to Definition (only function/procedure having document comment)
+- Partial JSDoc Support
+    - `@param`, `@returns`, `@example`, `@remarks` are available.
 
 ## License
 
