@@ -8,7 +8,7 @@ export default class DocumentParser{
     private firstLine?: string;
     private lines: string[];
     private tag?: string;
-    private waitingForFirstToken: boolean = false;
+    private tokenCount: number = 0;
     private firstToken?: string;
     private buffer: string[] = [];
     constructor(uri: vscode.Uri){
@@ -28,7 +28,7 @@ export default class DocumentParser{
     }
     send(line: string = ""){
         if(!this.lines.length && !line) return;
-        const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|.*?)$/;
+        const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|\s+.*)$/;
         const tagsExpectingArgs = ["param", "arg", "argument"];
         const m = tagPattern.exec(line);
         if(m){
@@ -37,9 +37,9 @@ export default class DocumentParser{
             }
             this.tag = m[1].substring(1);
             if(tagsExpectingArgs.includes(this.tag)){
-                this.waitingForFirstToken = true;
+                this.tokenCount = 1;
             }
-            const remaining = m[2].trimStart();
+            const remaining = m[2];
             if(remaining){
                 this.sendAsInMode(remaining);
             }
@@ -52,23 +52,62 @@ export default class DocumentParser{
         this.lines.push(line);
     }
     private sendAsInMode(line: string){
-        if(this.waitingForFirstToken){
-            line = line.trimStart();
-            const m = /^([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(|.+)$/.exec(line);
-            if(m){
-                this.firstToken = m[1];
-                const remaining = m[2].trimStart();
-                if(remaining){
-                    this.buffer.push(remaining);
-                }
-                this.waitingForFirstToken = false;
-            }else if(line){
-                this.firstToken = undefined;
-                this.waitingForFirstToken = false;
-                this.buffer.push(line);
+        if(this.tokenCount){
+            switch(this.tag){
+                case "param":
+                case "arg":
+                case "argument":
+                    this.sendAsInParamTag(line);
+                    break;
+                default:
+                    this.sendAsInTagExpectingOneArg(line);
+                    break;
             }
         }else{
             if(!this.buffer.length && !line.trim()) return;
+            this.buffer.push(line);
+        }
+    }
+    private sendAsInParamTag(line: string){
+        line = line.trimStart();
+        const typePattern = /^(\{[A-Za-z_][A-Za-z0-9_]*\})(|.+)$/;
+        const variablePattern = /^([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(|.+)$/;
+        let m: RegExpExecArray | null;
+        if(this.tokenCount === 1){
+            m = typePattern.exec(line);
+            if(m){
+                line = m[2].trimStart();
+                this.tokenCount++;
+                // 現時点では，型情報は使わない
+            }
+        }
+        m = variablePattern.exec(line);
+        if(m){
+            this.firstToken = m[1];
+            const remaining = m[2].trimStart();
+            if(remaining){
+                this.buffer.push(remaining);
+            }
+            this.tokenCount = 0;
+        }else if(line){
+            this.firstToken = undefined;
+            this.tokenCount = 0;
+            this.buffer.push(line);
+        }
+    }
+    private sendAsInTagExpectingOneArg(line: string){
+        line = line.trimStart();
+        const m = /^([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(|.+)$/.exec(line);
+        if(m){
+            this.firstToken = m[1];
+            const remaining = m[2].trimStart();
+            if(remaining){
+                this.buffer.push(remaining);
+            }
+            this.tokenCount = 0;
+        }else if(line){
+            this.firstToken = undefined;
+            this.tokenCount = 0;
             this.buffer.push(line);
         }
     }
@@ -105,7 +144,7 @@ export default class DocumentParser{
         }
         this.lines.push("");
         this.lines.push(out);
-        this.waitingForFirstToken = false;
+        this.tokenCount = 0;
         this.firstToken = undefined;
         this.tag = undefined;
         this.buffer = [];
