@@ -25,6 +25,50 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 	<array>
 		<dict>
 			<key>begin</key>
+			<string>/\*\*</string>
+			<key>captures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.comment.magma</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>\*/</string>
+			<key>name</key>
+			<string>comment.block.with-document.magma</string>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>match</key>
+					<string>(@param)\s+(\w+)</string>
+					<key>captures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>storage.type.tag.document-comment.magma</string>
+						</dict>
+						<key>2</key>
+						<dict>
+							<key>name</key>
+							<string>variable.param.document-comment.magma</string>
+						</dict>
+					</dict>
+					<key>name</key>
+					<string>source.param.document-comment.magma</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>@\w+</string>
+					<key>name</key>
+					<string>storage.type.tag.document-comment.magma</string>
+				</dict>
+			</array>
+		</dict>
+		<dict>
+			<key>begin</key>
 			<string>/\*</string>
 			<key>captures</key>
 			<dict>

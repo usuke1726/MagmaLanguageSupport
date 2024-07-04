@@ -4,6 +4,14 @@
  *  コメント1
  *  
  *  コメント2
+ *  @param x
+ *  x座標．
+ *  
+ *  @param args
+ *  第1引数．
+ *  
+ *  @example
+ *  OK("argument");
  */
 function OK(args)
     print args;
