@@ -88,6 +88,12 @@
           "type": "integer",
           "default": 3000,
           "description": "%config.onChangeDelay%"
+        },
+        "MagmaLanguageSupport.functionCompletionType": {
+          "type": "string",
+          "enum": ["snippet", "original", "none"],
+          "default": "snippet",
+          "description": "%config.functionCompletionType%"
         }
       }
     }

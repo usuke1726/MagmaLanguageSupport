@@ -55,6 +55,7 @@ class FunctionLikeProvider extends ProviderBase{
         super(
             (c: string) => [" ", "()"].includes(c),
             (beforeText, afterText, wholeLine) => {
+                if(getConfig().functionCompletionType !== "original") return false;
                 return (
                     ( beforeText.endsWith(`${name} `) && afterText === "" ) ||
                     ( beforeText.endsWith(`${name}(`) && afterText === ")" ) ||

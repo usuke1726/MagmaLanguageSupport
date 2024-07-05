@@ -4,6 +4,7 @@ import FileHandler from './FileHandler';
 import CompletionProvider from './Completion';
 import Log from './Log';
 import getConfig from './config';
+import { registerCompletionProviders } from './CompletionProviders';
 
 class DefProvider implements vscode.DefinitionProvider{
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
@@ -48,6 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
             scheme: "file",
             language: "magma"
         }, new HoverProvider()));
+        registerCompletionProviders(context);
     }catch(e){
         const mes = `MagmaLanguageSupport couldn't start ${String(e)}`;
         Log(mes);

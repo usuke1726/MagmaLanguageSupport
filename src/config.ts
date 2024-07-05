@@ -7,28 +7,28 @@ type Config = {
     enableHover: boolean;
     enableDefinition: boolean;
     onChangeDelay: number;
+    functionCompletionType: "snippet" | "original" | "none";
 };
 const defaultConfig: Config = {
     enableAutoCompletion: true,
     enableHover: true,
     enableDefinition: true,
-    onChangeDelay: 3000
+    onChangeDelay: 3000,
+    functionCompletionType: "snippet",
 };
 type ConfigKey = keyof Config;
-const keys: ConfigKey[] = [
-    "enableAutoCompletion",
-    "enableHover",
-    "enableDefinition",
-    "onChangeDelay",
-];
+const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
+    enableAutoCompletion: val => typeof val === "boolean",
+    enableHover: val => typeof val === "boolean",
+    enableDefinition: val => typeof val === "boolean",
+    onChangeDelay: val => typeof val === "number",
+    functionCompletionType: val => typeof val === "string" && ["snippet", "original", "none"].includes(val),
+};
+const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];
 const isConfig = (obj: any): obj is Config => {
     return (
         typeof obj === "object" &&
-        keys.every(k => obj.hasOwnProperty(k)) &&
-        typeof obj["enableAutoCompletion"] === "boolean" &&
-        typeof obj["enableHover"] === "boolean" &&
-        typeof obj["enableDefinition"] === "boolean" &&
-        typeof obj["onChangeDelay"] === "number"
+        keys.every(k => obj.hasOwnProperty(k) && conditions[k](obj[k]))
     );
 };
 

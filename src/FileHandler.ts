@@ -46,6 +46,10 @@ export default class FileHandler{
         return config.enableDefinition || config.enableHover;
     }
     static onDidChange(e: vscode.TextDocumentChangeEvent){
+        if(e.document.isUntitled){
+            Log("isUntitled");
+            return;
+        }
         this.dirtyChangeTimeout = undefined;
         if(!this.isEnabled()) return;
         const uri = e.document.uri;
@@ -61,6 +65,10 @@ export default class FileHandler{
     }
     static onDidOpen(e: vscode.TextDocument){
         if(!this.isEnabled()) return;
+        if(e.isUntitled){
+            Log("isUntitled");
+            return;
+        }
         const uri = e.uri;
         if(!this.isRegistered(uri)){
             Log("open registering!");
@@ -156,6 +164,39 @@ export default class FileHandler{
             };
         }
         return undefined;
+    }
+    static async searchAllDefinitions(document: vscode.TextDocument, position: vscode.Position): Promise<Definition[]>{
+        const baseUri = document.uri;
+        const id = this.uriToID(baseUri);
+        const stack: Cache[] = [];
+        const selfCache: MaybeCache = this.FileCache[id];
+        const searchedFiles = new Set<string>();
+        const ret: Definition[] = [];
+        if(isCache(selfCache)){
+            stack.push(selfCache);
+        }
+        while(stack.length){
+            const cache: Cache | undefined = stack.pop();
+            if(!cache) continue;
+            const uri = cache.uri;
+            searchedFiles.add(this.uriToID(uri));
+            ret.push(...cache.definitions);
+            for(const dep of cache.dependencies){
+                if(uri.fsPath === baseUri.fsPath && position.line < dep.loadsAt.line){
+                    continue;
+                }
+                const id = this.uriToID(dep.uri);
+                if(this.FileCache[id] === undefined){
+                    this.FileCache[id] = "reserved";
+                    await this.load(dep.uri);
+                }
+                const depCache = this.FileCache[id];
+                if(isCache(depCache) && !searchedFiles.has(id)){
+                    stack.push(depCache);
+                }
+            };
+        }
+        return ret;
     }
     private static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Definition | undefined{
         const id = this.uriToID(document.uri);
