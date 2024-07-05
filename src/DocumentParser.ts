@@ -70,7 +70,7 @@ export default class DocumentParser{
     }
     private sendAsInParamTag(line: string){
         line = line.trimStart();
-        const typePattern = /^(\{[A-Za-z_][A-Za-z0-9_]*\})(|.+)$/;
+        const typePattern = /^(\{.*?\})(|.+)$/;
         const variablePattern = /^([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(|.+)$/;
         let m: RegExpExecArray | null;
         if(this.tokenCount === 1){
