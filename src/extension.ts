@@ -3,27 +3,7 @@ import * as vscode from 'vscode';
 import FileHandler from './FileHandler';
 import CompletionProvider from './Completion';
 import Log from './Log';
-import getConfig from './config';
 import { registerCompletionProviders } from './CompletionProviders';
-
-class DefProvider implements vscode.DefinitionProvider{
-    provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
-        if(getConfig().enableDefinition){
-            return FileHandler.onDefinitionCall(document, position);
-        }else{
-            return undefined;
-        }
-    }
-};
-class HoverProvider implements vscode.HoverProvider{
-    provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
-        if(getConfig().enableHover){
-            return FileHandler.onHoverCall(document, position);
-        }else{
-            return undefined;
-        }
-    }
-};
 
 export function activate(context: vscode.ExtensionContext) {
     try{
@@ -41,14 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
                 FileHandler.onDidChange(e);
             }
         });
-        context.subscriptions.push(vscode.languages.registerDefinitionProvider({
-            scheme: "file",
-            language: "magma"
-        }, new DefProvider()));
-        context.subscriptions.push(vscode.languages.registerHoverProvider({
-            scheme: "file",
-            language: "magma"
-        }, new HoverProvider()));
+        FileHandler.setProviders(context);
         registerCompletionProviders(context);
     }catch(e){
         const mes = `MagmaLanguageSupport couldn't start ${String(e)}`;

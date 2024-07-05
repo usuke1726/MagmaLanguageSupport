@@ -38,12 +38,44 @@ type SearchResult = {
     definition: Definition;
 };
 
+class DefProvider implements vscode.DefinitionProvider{
+    provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
+        if(getConfig().enableDefinition){
+            return FileHandler.onDefinitionCall(document, position);
+        }else{
+            return undefined;
+        }
+    }
+};
+class HoverProvider implements vscode.HoverProvider{
+    provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
+        if(getConfig().enableHover){
+            return FileHandler.onHoverCall(document, position);
+        }else{
+            return undefined;
+        }
+    }
+};
+
 export default class FileHandler{
-    static FileCache: Caches = {};
-    static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
+    private static FileCache: Caches = {};
+    private static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
+    private static diagnosticCollection: vscode.DiagnosticCollection;
     private static isEnabled(){
         const config = getConfig();
         return config.enableDefinition || config.enableHover;
+    }
+    static setProviders(context: vscode.ExtensionContext){
+        context.subscriptions.push(vscode.languages.registerDefinitionProvider({
+            scheme: "file",
+            language: "magma"
+        }, new DefProvider()));
+        context.subscriptions.push(vscode.languages.registerHoverProvider({
+            scheme: "file",
+            language: "magma"
+        }, new HoverProvider()));
+        this.diagnosticCollection = vscode.languages.createDiagnosticCollection("magma");
+        context.subscriptions.push(this.diagnosticCollection);
     }
     static onDidChange(e: vscode.TextDocumentChangeEvent){
         if(e.document.isUntitled){
@@ -53,7 +85,14 @@ export default class FileHandler{
         this.dirtyChangeTimeout = undefined;
         if(!this.isEnabled()) return;
         const uri = e.document.uri;
-        this.reserveLoad(uri, e.document.getText());
+        const fullText = e.document.getText();
+        if(e.reason === vscode.TextDocumentChangeReason.Redo || e.reason === vscode.TextDocumentChangeReason.Undo){
+            setTimeout(() => {
+                this.load(uri, fullText);
+            }, 500);
+        }else{
+            this.reserveLoad(uri, fullText);
+        }
     }
     static onDidDirtyChange(e: vscode.TextDocumentChangeEvent){
         clearTimeout(this.dirtyChangeTimeout);
@@ -267,8 +306,9 @@ export default class FileHandler{
         let scope: "global" | "inComment";
         scope = "global";
         const parser = new DocumentParser(uri);
-        const loadStatementWithAtMark = /^\s*load\s+"(@.+?)";\s*$/;
-        const requireComment = /^\s*\/\/\s+@requires?\s+"(.+?)";?\s*$/;
+        const errorsNotFound: vscode.Diagnostic[] = [];
+        const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*$/;
+        const requireComment = /^(\s*\/\/\s+@requires?\s+")(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
@@ -300,31 +340,29 @@ export default class FileHandler{
                     parser.send(m[1]?.trimStart());
                     continue;
                 }
-                m = loadStatementWithAtMark.exec(line);
-                if(m){
-                    const loadFileUri = await this.resolveLoadFile(m[1], uri);
-                    if(loadFileUri){
-                        cache.dependencies = cache.dependencies.filter(dep => {
-                            return loadFileUri.fsPath !== dep.uri.fsPath;
-                        });
-                        cache.dependencies.push({
-                            uri: loadFileUri,
-                            loadsAt: new vscode.Position(idx, 0)
-                        });
-                        if(!this.isRegistered(loadFileUri)){
-                            this.reserveLoad(loadFileUri);
-                        }
+                let loadPrefix: string = "";
+                let loadFilePattern: string = "";
+                const loadFiles = await (async () => {
+                    m = loadStatementWithAtMark.exec(line);
+                    if(m){
+                        loadPrefix = m[1];
+                        loadFilePattern = m[2];
+                        return await this.resolveLoadFile(loadFilePattern, uri, false);
                     }
-                    continue;
-                }
-                m = requireComment.exec(line);
-                if(m){
-                    const requiredFiles = await this.resolveRequiredFile(m[1], uri);
-                    if(requiredFiles.length){
+                    m = requireComment.exec(line);
+                    if(m){
+                        loadPrefix = m[1];
+                        loadFilePattern = m[2];
+                        return await this.resolveLoadFile(loadFilePattern, uri, true);
+                    }
+                    return undefined;
+                })();
+                if(loadFiles !== undefined){
+                    if(loadFiles.length){
                         cache.dependencies = cache.dependencies.filter(dep => {
-                            return !requiredFiles.some(uri => uri.fsPath === dep.uri.fsPath);
+                            return !loadFiles.some(uri => uri.fsPath === dep.uri.fsPath);
                         });
-                        requiredFiles.forEach(reqUri => {
+                        loadFiles.forEach(reqUri => {
                             cache.dependencies.push({
                                 uri: reqUri,
                                 loadsAt: new vscode.Position(idx, 0)
@@ -333,8 +371,20 @@ export default class FileHandler{
                                 this.reserveLoad(reqUri);
                             }
                         });
+                        continue;
+                    }else{
+                        Log("ERROR FOUND");
+                        const start = loadPrefix.length;
+                        const range = new vscode.Range(
+                            new vscode.Position(idx, start),
+                            new vscode.Position(idx, start + loadFilePattern.length)
+                        );
+                        errorsNotFound.push(new vscode.Diagnostic(
+                            range,
+                            `ファイルが見つかりません． パターン: ${loadFilePattern}`,
+                            vscode.DiagnosticSeverity.Error
+                        ));
                     }
-                    continue;
                 }
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??
@@ -377,6 +427,7 @@ export default class FileHandler{
                 }
             }
         }
+        this.diagnosticCollection.set(uri, [...errorsNotFound]);
         cache.dependencies.reverse();
         cache.definitions.reverse();
         Log(`Cache(${uri.fsPath})`, cache);
@@ -399,30 +450,17 @@ export default class FileHandler{
             return ".";
         }
     }
-    private static async resolveLoadFile(name: string, uri: vscode.Uri): Promise<vscode.Uri | undefined>{
+    private static async resolveLoadFile(name: string, uri: vscode.Uri, allowsGlob: boolean): Promise<vscode.Uri[]>{
         const baseDir = this.uriToBaseDir(uri);
         const escapedChars = /[\[\]*{}?]/g;
         name = name
             .replaceAll("\\", "/")
-            .replace(/@\//, "./")
-            .replaceAll(escapedChars, char => {
+            .replace(/@\//, "./");
+        if(!allowsGlob){
+            name = name.replaceAll(escapedChars, char => {
                 return `\\${char}`;
             });
-        const filePath = path.join(baseDir, name);
-        const files = await vscode.workspace.findFiles(filePath);
-        if(files.length === 1){
-            Log(`found ${files[0]}`);
-            return files[0];
-        }else{
-            return undefined;
         }
-    }
-    private static async resolveRequiredFile(name: string, uri: vscode.Uri): Promise<vscode.Uri[]>{
-        const baseDir = this.uriToBaseDir(uri);
-        // ここに限りGlobパターンを許容する
-        name = name
-            .replaceAll("\\", "/")
-            .replace(/@\//, "./");
         const filePath = path.join(baseDir, name);
         try{
             return await vscode.workspace.findFiles(filePath);
