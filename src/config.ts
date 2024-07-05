@@ -13,7 +13,7 @@ const defaultConfig: Config = {
     enableAutoCompletion: true,
     enableHover: true,
     enableDefinition: true,
-    onChangeDelay: 3000,
+    onChangeDelay: 1000,
     functionCompletionType: "snippet",
 };
 type ConfigKey = keyof Config;
