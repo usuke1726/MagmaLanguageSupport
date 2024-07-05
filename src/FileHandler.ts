@@ -4,6 +4,7 @@ import path from 'path';
 import Log from './Log';
 import getConfig from './config';
 import DocumentParser from './DocumentParser';
+import INTRINSICS from './Intrinsics';
 
 type Definition = {
     name: string;
@@ -306,7 +307,7 @@ export default class FileHandler{
         let scope: "global" | "inComment";
         scope = "global";
         const parser = new DocumentParser(uri);
-        const errorsNotFound: vscode.Diagnostic[] = [];
+        const diagnostics: vscode.Diagnostic[] = [];
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*$/;
         const requireComment = /^(\s*\/\/\s+@requires?\s+")(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
@@ -379,7 +380,7 @@ export default class FileHandler{
                             new vscode.Position(idx, start),
                             new vscode.Position(idx, start + loadFilePattern.length)
                         );
-                        errorsNotFound.push(new vscode.Diagnostic(
+                        diagnostics.push(new vscode.Diagnostic(
                             range,
                             `ファイルが見つかりません． パターン: ${loadFilePattern}`,
                             vscode.DiagnosticSeverity.Error
@@ -406,6 +407,15 @@ export default class FileHandler{
                         isForward: m[1].startsWith("forward"),
                         range: nameRange
                     });
+                    if(getConfig().warnsWhenRedefiningIntrinsic && !m[1].includes("@define")){
+                        if(INTRINSICS.includes(functionName)){
+                            diagnostics.push(new vscode.Diagnostic(
+                                nameRange,
+                                `関数 ${functionName} はMagmaの組み込み関数として定義されています．他の関数名への変更をお勧めします．`,
+                                vscode.DiagnosticSeverity.Warning
+                            ));
+                        }
+                    }
                     scope = "global";
                     continue;
                 }
@@ -427,7 +437,7 @@ export default class FileHandler{
                 }
             }
         }
-        this.diagnosticCollection.set(uri, [...errorsNotFound]);
+        this.diagnosticCollection.set(uri, [...diagnostics]);
         cache.dependencies.reverse();
         cache.definitions.reverse();
         Log(`Cache(${uri.fsPath})`, cache);

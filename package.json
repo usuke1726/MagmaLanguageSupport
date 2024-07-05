@@ -94,6 +94,11 @@
           "enum": ["snippet", "original", "none"],
           "default": "snippet",
           "description": "%config.functionCompletionType%"
+        },
+        "MagmaLanguageSupport.warnsWhenRedefiningIntrinsic": {
+          "type": "boolean",
+          "default": "true",
+          "description": "%config.warnsWhenRedefiningIntrinsic%"
         }
       }
     }

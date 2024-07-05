@@ -4,5 +4,6 @@
     "config.enableHover": "Hover機能を有効化する",
     "config.enableDefinition": "Definition機能を有効化する",
     "config.onChangeDelay": "未保存の変更があったときにファイルの再読み込みを開始するまでの遅延時間 [ms]",
-    "config.functionCompletionType": "function, procedureの補完方法:\n\tsnippet: スニペット機能を使用 (サジェストあり, タブのカーソル移動あり)\n\toriginal: オリジナルの方法 (サジェストなし, タブ移動なし)\n\tnone: 補完機能を無効化"
+    "config.functionCompletionType": "function, procedureの補完方法:\n\tsnippet: スニペット機能を使用 (サジェストあり, タブのカーソル移動あり)\n\toriginal: オリジナルの方法 (サジェストなし, タブ移動なし)\n\tnone: 補完機能を無効化",
+    "config.warnsWhenRedefiningIntrinsic": "関数がMagmaの組み込み関数を再定義している際に警告を表示する"
 }

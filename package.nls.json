@@ -4,5 +4,6 @@
     "config.enableHover": "Enables hover provider",
     "config.enableDefinition": "Enables definition provider",
     "config.onChangeDelay": "A delay [ms] to load file having unsaved change",
-    "config.functionCompletionType": "The completion type of function|procedure:\n\tsnippet: as snippet (with suggestion, with tabstops)\n\toriginal: as original method (no suggestion, no tabstops)\n\tnone: disable function completion"
+    "config.functionCompletionType": "The completion type of function|procedure:\n\tsnippet: as snippet (with suggestion, with tabstops)\n\toriginal: as original method (no suggestion, no tabstops)\n\tnone: disable function completion",
+    "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics"
 }
