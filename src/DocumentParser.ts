@@ -1,6 +1,7 @@
 
 import * as vscode from 'vscode';
-import Log from './Log';
+import LogObject from './Log';
+const { Log } = LogObject.bind("DocumentParser");
 
 export default class DocumentParser{
     private uri: vscode.Uri;

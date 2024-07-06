@@ -2,8 +2,9 @@
 import * as vscode from 'vscode';
 import FileHandler from './FileHandler';
 import CompletionProvider from './Completion';
-import Log from './Log';
 import { registerCompletionProviders } from './CompletionProviders';
+import LogObject from './Log';
+const { Log } = LogObject.bind("extension");
 
 export function activate(context: vscode.ExtensionContext) {
     try{

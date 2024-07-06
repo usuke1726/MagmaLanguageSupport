@@ -1,7 +1,8 @@
 
 import * as vscode from 'vscode';
-import Log from './Log';
 import getConfig from './config';
+import LogObject from './Log';
+const { Log } = LogObject.bind("Config");
 
 class ProviderBase{
     private trigger;

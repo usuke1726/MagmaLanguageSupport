@@ -1,10 +1,11 @@
 
 import * as vscode from 'vscode';
 import path from 'path';
-import Log from './Log';
 import getConfig from './config';
 import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
+import LogObject from './Log';
+const { Log, Output } = LogObject.bind("FileHandler");
 
 type Definition = {
     name: string;
@@ -304,6 +305,7 @@ export default class FileHandler{
         const lines = (fullText ?? (
             (new TextDecoder()).decode(await vscode.workspace.fs.readFile(uri))
         )).replaceAll("\r", "").split("\n");
+        Output(`Start loading ${uri.path}`);
         let scope: "global" | "inComment";
         scope = "global";
         const parser = new DocumentParser(uri);
@@ -380,6 +382,7 @@ export default class FileHandler{
                             new vscode.Position(idx, start),
                             new vscode.Position(idx, start + loadFilePattern.length)
                         );
+                        Output(`Not found ${loadFilePattern} at ${uri.path}`);
                         diagnostics.push(new vscode.Diagnostic(
                             range,
                             `ファイルが見つかりません． パターン: ${loadFilePattern}`,
@@ -440,7 +443,8 @@ export default class FileHandler{
         this.diagnosticCollection.set(uri, [...diagnostics]);
         cache.dependencies.reverse();
         cache.definitions.reverse();
-        Log(`Cache(${uri.fsPath})`, cache);
+        Log(`Cache(${uri.path})`, cache);
+        Output(`Successfully loaded ${uri.path}`);
         this.FileCache[this.uriToID(uri)] = cache;
     }
     private static formatFunctionName(name: string): string{
