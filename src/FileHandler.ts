@@ -321,6 +321,8 @@ export default class FileHandler{
         const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
         const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$/;
+        const invalidDefinedComment1 = /^(\s*\/\/\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
+        const invalidDefinedComment2 = /^(\s*\/\/\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
         const cache: Cache = {
             uri,
             definitions: [],
@@ -422,6 +424,41 @@ export default class FileHandler{
                     }
                     scope = "global";
                     continue;
+                }
+                m = invalidDefinedComment1.exec(line);
+                if(m){
+                    const functionType = m[2].trim();
+                    if(!["function", "procedure", "intrinsic"].includes(functionType)){
+                        LogObject.log("debug", "HIT");
+                        const start = m[1].length;
+                        const range = new vscode.Range(
+                            new vscode.Position(idx, start),
+                            new vscode.Position(idx, start + m[2].length)
+                        );
+                        diagnostics.push(new vscode.Diagnostic(
+                            range,
+                            (
+                                functionType ?
+                                `${functionType} は無効な識別子です．\nfunction, procedure, intrinsic のいずれかを指定してください．` :
+                                `function, procedure, intrinsic のいずれかを指定する必要があります．`
+                            ),
+                            vscode.DiagnosticSeverity.Warning
+                        ));
+                    }
+                }
+                m = invalidDefinedComment2.exec(line);
+                if(m){
+                    LogObject.log("debug", "HIT");
+                    const start = m[1].length;
+                    const range = new vscode.Range(
+                        new vscode.Position(idx, start),
+                        new vscode.Position(idx, start + m[2].length)
+                    );
+                    diagnostics.push(new vscode.Diagnostic(
+                        range,
+                        `括弧と引数も含めて定義してください．`,
+                        vscode.DiagnosticSeverity.Warning
+                    ));
                 }
                 if(line.trim()){
                     Log("NOT startFunction", line);
