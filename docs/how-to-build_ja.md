@@ -7,7 +7,7 @@
 1. リポジトリをダウンロードする．
     - `git clone https://github.com/usuke1726/MagmaLanguageSupport.git` を実行，あるいはGitHubサイトの `<> Code` ボタンから 「Download ZIP」をクリック
     - ダウンロードしたら，そのディレクトリに移動しておく．
-1. `npm install` を実行．
+1. `npm ci` を実行．
     - `node_modules` フォルダが作成されればOK．
     - `deprecated` 関連の警告が出力されるかもしれないが，これは無視してOK．
 1. `npx vsce package` を実行． 
