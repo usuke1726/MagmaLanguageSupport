@@ -101,7 +101,31 @@
           "description": "%config.warnsWhenRedefiningIntrinsic%"
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "extension.magmaLoader.run",
+        "title": "MagmaLoader を実行",
+        "category": "Magma",
+        "icon": "$(play)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "editorLangId == magma",
+          "command": "extension.magmaLoader.run",
+          "group": "navigation@0"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "extension.magmaLoader.run",
+        "key": "F5",
+        "when": "editorTextFocus && editorLangId == 'magma'"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

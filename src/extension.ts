@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import FileHandler from './FileHandler';
 import CompletionProvider from './Completion';
 import { registerCompletionProviders } from './CompletionProviders';
+import setMagmaLoaderCommand from './Loader';
 import LogObject from './Log';
 const { Log } = LogObject.bind("extension");
 
@@ -24,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
         });
         FileHandler.setProviders(context);
         registerCompletionProviders(context);
+        setMagmaLoaderCommand(context);
     }catch(e){
         const mes = `MagmaLanguageSupport couldn't start ${String(e)}`;
         Log(mes);
