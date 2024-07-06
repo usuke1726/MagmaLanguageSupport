@@ -1,6 +1,7 @@
 
 import * as vscode from 'vscode';
 import path from 'path';
+import { glob } from 'glob';
 import getConfig from './config';
 import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
@@ -456,13 +457,12 @@ export default class FileHandler{
         }
     }
     private static uriToBaseDir(uri: vscode.Uri): string{
-        const relPath = vscode.workspace.asRelativePath(uri).replaceAll("\\", "/");
-        const idx = relPath.lastIndexOf("/");
-        if(idx >= 0){
-            return relPath.substring(0, idx) || ".";
-        }else{
-            return ".";
-        }
+        return vscode.Uri.joinPath(uri, "..").fsPath;
+    }
+    private static isMagmaFile(uri: vscode.Uri): boolean{
+        const extensions = [".m", ".mag", ".magma", "..magmarc", "..magmarc-dev"];
+        const path = uri.fsPath;
+        return extensions.some(ext => path.endsWith(ext));
     }
     private static async resolveLoadFile(name: string, uri: vscode.Uri, allowsGlob: boolean): Promise<vscode.Uri[]>{
         const baseDir = this.uriToBaseDir(uri);
@@ -475,9 +475,14 @@ export default class FileHandler{
                 return `\\${char}`;
             });
         }
-        const filePath = path.join(baseDir, name);
+        const filePath = path.join(baseDir, name).replaceAll("\\", "/");
+        Log("filePath", filePath);
         try{
-            return await vscode.workspace.findFiles(filePath);
+            const res = (await glob(filePath, {absolute: true, nodir: true}))
+                .map(path => vscode.Uri.file(path))
+                .filter(uri => this.isMagmaFile(uri));
+            Log("resolve matched", res.map(uri => uri.fsPath));
+            return res;
         }catch(e){
             return [];
         }
