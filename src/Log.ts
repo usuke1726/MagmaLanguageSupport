@@ -17,8 +17,12 @@ class Log{
     }
     static output(tag: string, ...messages: any[]){
         this.log(tag, ...messages);
-        const line = `[${tag}] ${messages.map(m => String(m)).join(" ")}`;
+        const line = `${this.getDate()} [${tag}] ${messages.map(m => String(m)).join(" ")}`;
         this.outputChannel.appendLine(line);
+    }
+    private static getDate(){
+        const d = new Date();
+        return `${d.toLocaleString("sv-SE")}.${d.getMilliseconds().toString().padStart(3, "0")}`;
     }
     static bind(tag: string){
         return {
