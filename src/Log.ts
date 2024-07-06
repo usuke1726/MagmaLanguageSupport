@@ -4,10 +4,11 @@ import * as vscode from 'vscode';
 class Log{
     private static readonly isDebug: boolean = false;
     private static allowedTags = new Set<string>([
+        "debug", "important",
         // "FileHandler",
         // "extension",
         // "DocumentParser",
-        "Loader",
+        // "Loader",
     ]);
     private static outputChannel = vscode.window.createOutputChannel("MAGMA Language");
     static log(tag: string, ...messages: any[]){
