@@ -129,10 +129,12 @@ class LoadFileComp implements vscode.CompletionItemProvider{
                     title: "re-trigger"
                 };
                 item.kind = vscode.CompletionItemKind.Folder;
+                item.sortText = `0-${res.name.toLowerCase()}`;
                 return item;
             }else{
                 const item = new vscode.CompletionItem(res.name);
                 item.kind = vscode.CompletionItemKind.File;
+                item.sortText = `1-${res.name.toLowerCase()}`;
                 return item;
             }
         });
