@@ -312,7 +312,7 @@ export default class FileHandler{
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
-        const requireComment = /^(\s*\/\/\s+@requires?\s+")(.+?)";?/;
+        const requireComment = /^(\s*\/\/\s+@requires?\s+")(.+?)";?\s*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
@@ -428,8 +428,11 @@ export default class FileHandler{
                 m = invalidDefinedComment1.exec(line);
                 if(m){
                     const functionType = m[2].trim();
-                    if(!["function", "procedure", "intrinsic"].includes(functionType)){
-                        LogObject.log("debug", "HIT");
+                    const isInvalid = (
+                        !["function", "procedure", "intrinsic"].includes(functionType) &&
+                        !["function ", "procedure ", "intrinsic "].some(t => functionType.startsWith(t))
+                    );
+                    if(isInvalid){
                         const start = m[1].length;
                         const range = new vscode.Range(
                             new vscode.Position(idx, start),
@@ -448,7 +451,6 @@ export default class FileHandler{
                 }
                 m = invalidDefinedComment2.exec(line);
                 if(m){
-                    LogObject.log("debug", "HIT");
                     const start = m[1].length;
                     const range = new vscode.Range(
                         new vscode.Position(idx, start),
