@@ -63,6 +63,22 @@ class DefinitionComp implements vscode.CompletionItemProvider{
     }
 };
 
+class DefinedCommentComp implements vscode.CompletionItemProvider{
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
+        const trigger = context.triggerCharacter;
+        if(trigger === "@"){
+            const pattern = /^\s*\/\/\s+@/;
+            if(!pattern.test(document.lineAt(position.line).text)) return [];
+            const item = new vscode.CompletionItem("defined");
+            item.kind = vscode.CompletionItemKind.Snippet;
+            item.insertText = new vscode.SnippetString('defined ${1|intrinsic,function,procedure|} ${2:functionName}();');
+            return [item];
+        }else{
+            return [];
+        }
+    }
+};
+
 class LoadFileComp implements vscode.CompletionItemProvider{
     static isExclusive(document: vscode.TextDocument, position: vscode.Position): boolean{
         const pattern1 = /^\s*\/\/\s+@requires?\s+"([^"]*)/;
@@ -156,4 +172,10 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
             language: "magma",
         }
     ], new LoadFileComp(), "@", "/"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
+        {
+            scheme: "file",
+            language: "magma",
+        }
+    ], new DefinedCommentComp(), "@"));
 };
