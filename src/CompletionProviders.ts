@@ -67,12 +67,38 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
-            const pattern = /^\s*\/\/\s+@/;
-            if(!pattern.test(document.lineAt(position.line).text)) return [];
+            const pattern = /^\s*\/\/\s+@$/;
+            if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("defined");
             item.kind = vscode.CompletionItemKind.Snippet;
             item.insertText = new vscode.SnippetString('defined ${1|intrinsic,function,procedure|} ${2:functionName}();');
             return [item];
+        }else{
+            return [];
+        }
+    }
+};
+
+class DocTagComp implements vscode.CompletionItemProvider{
+    private readonly paramTags = ["param", "arg", "argument"];
+    private readonly reservedTags = ["returns", "example", "remarks"];
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
+        const trigger = context.triggerCharacter;
+        if(trigger === "@"){
+            const pattern = /^\s*(\/\*\*|\*)\s*@$/;
+            if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
+            const normalItems = [...this.reservedTags, ...this.paramTags].map(tag => {
+                const item = new vscode.CompletionItem(tag);
+                item.kind = vscode.CompletionItemKind.Keyword;
+                return item;
+            });
+            const snippetItems = [...this.paramTags].map(tag => {
+                const item = new vscode.CompletionItem(`${tag} {Type} Variable`);
+                item.insertText = new vscode.SnippetString(`${tag} {\${1:type}} \${2:variable}`);
+                item.sortText = `~with-type-${tag}`;
+                return item;
+            });
+            return [...normalItems, ...snippetItems];
         }else{
             return [];
         }
@@ -180,4 +206,10 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
             language: "magma",
         }
     ], new DefinedCommentComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
+        {
+            scheme: "file",
+            language: "magma",
+        }
+    ], new DocTagComp(), "@"));
 };
