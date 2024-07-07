@@ -4,7 +4,7 @@ import getConfig from './config';
 import INTRINSICS from './Intrinsics';
 import FileHandler from './FileHandler';
 import LogObject from './Log';
-const { Log } = LogObject.bind("Config");
+const { Log } = LogObject.bind("CompletionProvider");
 
 class FunctionComp implements vscode.CompletionItemProvider{
     provideCompletionItems(): vscode.CompletionItem[]{

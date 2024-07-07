@@ -5,10 +5,12 @@ class Log{
     private static readonly isDebug: boolean = false;
     private static allowedTags = new Set<string>([
         "debug", "important",
+        // "Config",
         // "FileHandler",
         // "extension",
         // "DocumentParser",
         // "Loader",
+        // "CompletionProvider",
     ]);
     private static outputChannel = vscode.window.createOutputChannel("MAGMA Language");
     static log(tag: string, ...messages: any[]){
