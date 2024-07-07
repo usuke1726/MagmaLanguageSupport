@@ -3,13 +3,15 @@ import * as vscode from 'vscode';
 import getConfig from './config';
 import INTRINSICS from './Intrinsics';
 import FileHandler from './FileHandler';
+import search from './FileSearch';
 import LogObject from './Log';
 const { Log } = LogObject.bind("CompletionProvider");
 
 class FunctionComp implements vscode.CompletionItemProvider{
-    provideCompletionItems(): vscode.CompletionItem[]{
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
         Log(getConfig().functionCompletionType);
         if(getConfig().functionCompletionType !== "snippet") return [];
+        if(LoadFileComp.isExclusive(document, position)) return [];
         const item_func = new vscode.CompletionItem("function");
         const item_proc = new vscode.CompletionItem("procedure");
         item_func.commitCharacters = [" "];
@@ -41,13 +43,15 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
         this.initted = true;
         Log("INIT END");
     }
-    async provideCompletionItems(): Promise<vscode.CompletionItem[]> {
+    async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]> {
+        if(LoadFileComp.isExclusive(document, position)) return [];
         return this.initted ? this.items : [];
     }
 };
 
 class DefinitionComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]>{
+        if(LoadFileComp.isExclusive(document, position)) return [];
         const definitions = await FileHandler.searchAllDefinitions(document, position);
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
@@ -56,6 +60,66 @@ class DefinitionComp implements vscode.CompletionItemProvider{
             return item;
         });
         return items;
+    }
+};
+
+class LoadFileComp implements vscode.CompletionItemProvider{
+    static isExclusive(document: vscode.TextDocument, position: vscode.Position): boolean{
+        const pattern1 = /^\s*\/\/\s+@requires?\s+"([^"]*)/;
+        const pattern2 = /^\s*load\s+"([^"]*)/;
+        const prefix = document.lineAt(position.line).text.substring(0, position.character);
+        return pattern1.test(prefix) || pattern2.test(prefix);
+    }
+    async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]>{
+        const trigger = context.triggerCharacter;
+        Log("LoadFile check start");
+        if(trigger === "@"){
+            Log("trigger @");
+            return this.requireCompletion(document, position);
+        }else{
+            Log("trigger non @");
+            const pattern1 = /^\s*\/\/\s+@requires?\s+"([^"]*\/)/;
+            const pattern2 = /^\s*load\s+"([^"]*\/)/;
+            const prefix = document.lineAt(position.line).text.substring(0, position.character);
+            const m = pattern1.exec(prefix) ?? pattern2.exec(prefix);
+            if(m){
+                Log("fired");
+                const query = m[1];
+                return this.fileCompletion(vscode.Uri.joinPath(document.uri, "..").fsPath, query);
+            }else{
+                return [];
+            }
+        }
+    }
+    private requireCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
+        const pattern = /^\s*\/\/\s+@/;
+        if(!pattern.test(document.lineAt(position.line).text)) return [];
+        const item = new vscode.CompletionItem("@require");
+        item.kind = vscode.CompletionItemKind.Snippet;
+        item.insertText = new vscode.SnippetString('require "@/$1";');
+        item.command = {
+            command: "editor.action.triggerSuggest",
+            title: "re-trigger"
+        };
+        return [item];
+    }
+    private async fileCompletion(baseDir: string, query: string): Promise<vscode.CompletionItem[]>{
+        const results = await search(baseDir, query);
+        return results.map(res => {
+            if(res.isFolder){
+                const item = new vscode.CompletionItem(`${res.name}/`);
+                item.command = {
+                    command: "editor.action.triggerSuggest",
+                    title: "re-trigger"
+                };
+                item.kind = vscode.CompletionItemKind.Folder;
+                return item;
+            }else{
+                const item = new vscode.CompletionItem(res.name);
+                item.kind = vscode.CompletionItemKind.File;
+                return item;
+            }
+        });
     }
 };
 
@@ -86,4 +150,10 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
             language: "magma"
         }
     ], new IntrinsicComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
+        {
+            scheme: "file",
+            language: "magma",
+        }
+    ], new LoadFileComp(), "@", "/"));
 };
