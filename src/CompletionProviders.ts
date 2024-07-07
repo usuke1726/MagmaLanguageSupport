@@ -94,7 +94,7 @@ class LoadFileComp implements vscode.CompletionItemProvider{
     private requireCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
         const pattern = /^\s*\/\/\s+@/;
         if(!pattern.test(document.lineAt(position.line).text)) return [];
-        const item = new vscode.CompletionItem("@require");
+        const item = new vscode.CompletionItem("require");
         item.kind = vscode.CompletionItemKind.Snippet;
         item.insertText = new vscode.SnippetString('require "@/$1";');
         item.command = {
