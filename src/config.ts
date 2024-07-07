@@ -1,7 +1,7 @@
 
 import * as vscode from 'vscode';
 import LogObject from './Log';
-const { Log } = LogObject.bind("Config");
+const { Log, Output } = LogObject.bind("Config");
 
 type Config = {
     enableAutoCompletion: boolean;
@@ -40,11 +40,13 @@ let configCache: Config | undefined = undefined;
 let initted = false;
 const loadConfig = (): Config => {
     const config = vscode.workspace.getConfiguration("MagmaLanguageSupport");
-    const obj = Object.fromEntries(keys.map(k => [k, config.get<boolean>(k)]));
+    const obj = Object.fromEntries(keys.map(k => [k, config.get<any>(k)]));
     if(isConfig(obj)){
         configCache = obj;
+        Output(`successfully ${initted ? "re" : ""}loaded config.`);
     }else{
         Log("FAILED LOADING CONFIG");
+        Output(`FAILED LOADING CONFIG (will use default values)\n\tvalue: ${JSON.stringify(obj)}`);
         configCache = defaultConfig;
     }
     if(!initted){

@@ -100,7 +100,7 @@
         },
         "MagmaLanguageSupport.warnsWhenRedefiningIntrinsic": {
           "type": "boolean",
-          "default": "true",
+          "default": true,
           "description": "%config.warnsWhenRedefiningIntrinsic%"
         }
       }
