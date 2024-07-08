@@ -312,7 +312,7 @@ export default class FileHandler{
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
-        const requireComment = /^(\s*\/\/\s+@requires?\s+")(.+?)";?\s*$/;
+        const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
         const startComment = /^\s*\/\*\*(.*)$/;
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;

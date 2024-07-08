@@ -133,29 +133,39 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^\s*//\s+(@requires?)(?:\s+("[^"]*");?)?\s*$</string>
+			<string>^(\s*//\s+)(@requires?)(?:\s+("[^"]*")(;?))?(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
-				<key>0</key>
-				<dict>
-					<key>name</key>
-					<string>punctuation.definition.comment.magma</string>
-				</dict>
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>storage.type.required-in-comment.magma</string>
+					<string>comment.line.double-slash-with-require.magma</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
+					<string>storage.type.required-in-comment.magma</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
 					<string>string.required-file-pattern.magma</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>source.end.required-in-comment.magma</string>
+				</dict>
+				<key>5</key>
+				<dict>
+					<key>name</key>
+					<string>comment.line.after-end.required-in-comment.magma</string>
 				</dict>
 			</dict>
 			<key>end</key>
 			<string>$\n?</string>
 			<key>name</key>
-			<string>comment.line.double-slash-with-require.magma</string>
+			<string>source.required-in-comment.magma</string>
 		</dict>
 		<dict>
 			<key>begin</key>
