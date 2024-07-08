@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import getConfig from './config';
 import INTRINSICS from './Intrinsics';
 import DefinitionHandler from './DefinitionHandler';
-import search from './FileSearch';
+import FileHandler from './FileHandler';
 import LogObject from './Log';
 const { Log } = LogObject.bind("CompletionProvider");
 
@@ -127,7 +127,7 @@ class LoadFileComp implements vscode.CompletionItemProvider{
             if(m){
                 Log("fired");
                 const query = m[1];
-                return this.fileCompletion(vscode.Uri.joinPath(document.uri, "..").fsPath, query);
+                return this.fileCompletion(FileHandler.base(document.uri), query);
             }else{
                 return [];
             }
@@ -145,8 +145,8 @@ class LoadFileComp implements vscode.CompletionItemProvider{
         };
         return [item];
     }
-    private async fileCompletion(baseDir: string, query: string): Promise<vscode.CompletionItem[]>{
-        const results = await search(baseDir, query);
+    private async fileCompletion(baseUri: vscode.Uri, query: string): Promise<vscode.CompletionItem[]>{
+        const results = await FileHandler.readdir(baseUri, query);
         return results.map(res => {
             if(res.isFolder){
                 const item = new vscode.CompletionItem(`${res.name}/`);

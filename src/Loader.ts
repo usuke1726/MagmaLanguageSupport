@@ -1,6 +1,7 @@
 
 import * as vscode from 'vscode';
 import LogObject from './Log';
+import FileHandler from './FileHandler';
 const { Log, Output } = LogObject.bind("Loader");
 
 const searchedFiles: Set<string> = new Set();
@@ -49,28 +50,13 @@ const removeComments = (text: string): string => {
     return res.join("\n");
 };
 
-const parentDir = (uri: vscode.Uri): vscode.Uri => {
-    return vscode.Uri.joinPath(uri, "..");
-};
-
-const resolve = async (baseUri: vscode.Uri, uri: vscode.Uri, path: any): Promise<vscode.Uri> => {
-    if(typeof path !== "string"){
-        throw new Error("pathが不正です");
-    }
-    path = path.replaceAll("\\", "/");
-    let newUri: vscode.Uri;
-    if(path.startsWith("@")){
-        path = path.replace("@", ".");
-        newUri = vscode.Uri.joinPath(parentDir(uri), path);
+const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[]) => {
+    const path = vscode.Uri.joinPath(FileHandler.base(base), query).fsPath;
+    if(files.length === 0){
+        throw new Error(`ファイル ${path} が見つかりません`);
     }else{
-        newUri = vscode.Uri.joinPath(parentDir(baseUri), path);
+        throw new Error(`${path} に合致するファイルが多すぎます (個数: ${files.length})`);
     }
-    try{
-        await vscode.workspace.fs.stat(newUri);
-    }catch(e){
-        throw new Error(`ファイル ${newUri.fsPath} が見つかりません`);
-    }
-    return newUri;
 };
 
 const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<string> => {
@@ -81,11 +67,7 @@ const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<st
     }
     searchedFiles.add(uri.fsPath);
     // 行またぎのload構文にも対応できるようにするため，行ごとでなく全文から検索をかける
-    let body = removeComments(
-        (new TextDecoder()).decode(
-            await vscode.workspace.fs.readFile(uri)
-        ).replaceAll("\r", "")
-    );
+    let body = removeComments((await FileHandler.readFile(uri)).join("\n"));
     const patterns = /(?:^|(?<=\n))\s*load\s+"(.+?)"\s*;/;
     let m: RegExpExecArray | null;
     let ret: string = "";
@@ -93,7 +75,19 @@ const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<st
         m = patterns.exec(body);
         if(!m) break;
         ret += body.substring(0, m.index);
-        ret += await loadRecursively(baseUri, await resolve(baseUri, uri, m[1]));
+        const query = m[1];
+        const base = FileHandler.usingAtMark(query) ? uri : baseUri;
+        const loadFiles = await FileHandler.resolve(
+            base, query, {
+                useGlob: false,
+                onlyAtMark: false,
+            }
+        );
+        if(loadFiles.length !== 1){
+            throwError(base, query, loadFiles);
+        }
+        const fileUri = loadFiles[0];
+        ret += await loadRecursively(baseUri, fileUri);
         body = body.substring(m.index + m[0].length);
     }
     Output(`Successfully loaded ${uri.path}`);

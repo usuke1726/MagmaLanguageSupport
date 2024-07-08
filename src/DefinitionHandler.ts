@@ -1,11 +1,10 @@
 
 import * as vscode from 'vscode';
-import path from 'path';
-import { glob } from 'glob';
 import getConfig from './config';
 import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
 import LogObject from './Log';
+import FileHandler from './FileHandler';
 const { Log, Output } = LogObject.bind("DefinitionHandler");
 
 type Definition = {
@@ -304,9 +303,7 @@ export default class DefinitionHandler{
         }
     }
     private static async load(uri: vscode.Uri, fullText?: string): Promise<void>{
-        const lines = (fullText ?? (
-            (new TextDecoder()).decode(await vscode.workspace.fs.readFile(uri))
-        )).replaceAll("\r", "").split("\n");
+        const lines = await FileHandler.readFile(uri);
         Output(`Start loading ${uri.path}`);
         let scope: "global" | "inComment";
         scope = "global";
@@ -354,13 +351,19 @@ export default class DefinitionHandler{
                     if(m){
                         loadPrefix = m[1];
                         loadFilePattern = m[2];
-                        return await this.resolveLoadFile(loadFilePattern, uri, false);
+                        return FileHandler.resolve(uri, loadFilePattern, {
+                            useGlob: false,
+                            onlyAtMark: true,
+                        });
                     }
                     m = requireComment.exec(line);
                     if(m){
                         loadPrefix = m[1];
                         loadFilePattern = m[2];
-                        return await this.resolveLoadFile(loadFilePattern, uri, true);
+                        return FileHandler.resolve(uri, loadFilePattern, {
+                            useGlob: true,
+                            onlyAtMark: true,
+                        });
                     }
                     return undefined;
                 })();
@@ -491,37 +494,6 @@ export default class DefinitionHandler{
             return m[1];
         }else{
             return name;
-        }
-    }
-    private static uriToBaseDir(uri: vscode.Uri): string{
-        return vscode.Uri.joinPath(uri, "..").fsPath;
-    }
-    private static isMagmaFile(uri: vscode.Uri): boolean{
-        const extensions = [".m", ".mag", ".magma", "..magmarc", "..magmarc-dev"];
-        const path = uri.fsPath;
-        return extensions.some(ext => path.endsWith(ext));
-    }
-    private static async resolveLoadFile(name: string, uri: vscode.Uri, allowsGlob: boolean): Promise<vscode.Uri[]>{
-        const baseDir = this.uriToBaseDir(uri);
-        const escapedChars = /[\[\]*{}?]/g;
-        name = name
-            .replaceAll("\\", "/")
-            .replace(/@\//, "./");
-        if(!allowsGlob){
-            name = name.replaceAll(escapedChars, char => {
-                return `\\${char}`;
-            });
-        }
-        const filePath = path.join(baseDir, name).replaceAll("\\", "/");
-        Log("filePath", filePath);
-        try{
-            const res = (await glob(filePath, {absolute: true, nodir: true}))
-                .map(path => vscode.Uri.file(path))
-                .filter(uri => this.isMagmaFile(uri));
-            Log("resolve matched", res.map(uri => uri.fsPath));
-            return res;
-        }catch(e){
-            return [];
         }
     }
 };
