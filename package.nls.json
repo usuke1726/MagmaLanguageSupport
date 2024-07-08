@@ -7,5 +7,18 @@
     "config.onChangeDelay": "A delay \\[ms\\] to load file having unsaved change",
     "config.functionCompletionType": "The completion type of function|procedure:\n- snippet: as snippet (with suggestion, with tabstops)\n- original: as original method (no suggestion, no tabstops)\n- none: disable function completion",
     "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics",
-    "config.paths": "`@...` patterns configuring path aliases of `load`/`@require` statement"
+    "config.paths": "`@...` patterns configuring path aliases of `load`/`@require` statement",
+    "message.DefinitionHandler.openFile": "Open file",
+    "message.DefinitionHandler.notFound": "Files not found. pattern: {0}",
+    "message.DefinitionHandler.alreadyDefined": "The function {0} has already been defined as intrinsic. It is recommended to change the name.",
+    "message.DefinitionHandler.invalidFunctionType": "{0} is invalid.\nOnly function, procedure, and intrinsic are avaiable.",
+    "message.DefinitionHandler.functionTypeUndefined": "You need to add function, procedure, or intrinsic.",
+    "message.DefinitionHandler.missingArguments": "You need to add arguments",
+    "message.Loader.notFound": "The file {0} was not found.",
+    "message.Loader.tooManyFiles": "Too many files found: {0} (number: {1})",
+    "message.Loader.circularReference": "A circular reference occured. (Reloading {0})",
+    "message.Loader.activeTextEditorUndefined": "Execute this command after opening a magma file.",
+    "message.Loader.unsavedFile": "Execute this command on a saved file.",
+    "message.Loader.running": "running MagmaLoader...",
+    "message.Loader.failed": "Failed to execute MagmaLoader."
 }

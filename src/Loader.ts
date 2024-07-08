@@ -2,7 +2,9 @@
 import * as vscode from 'vscode';
 import LogObject from './Log';
 import FileHandler from './FileHandler';
+import getLocaleStringBody from './locale';
 const { Log, Output } = LogObject.bind("Loader");
+const getLocaleString = getLocaleStringBody.bind(undefined, "message.Loader");
 
 const searchedFiles: Set<string> = new Set();
 
@@ -53,9 +55,9 @@ const removeComments = (text: string): string => {
 const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[]) => {
     const path = FileHandler.join(FileHandler.base(base), query).fsPath;
     if(files.length === 0){
-        throw new Error(`ファイル ${path} が見つかりません`);
+        throw new Error(getLocaleString("notFound", path));
     }else{
-        throw new Error(`${path} に合致するファイルが多すぎます (個数: ${files.length})`);
+        throw new Error(getLocaleString("tooManyFiles", path, files.length));
     }
 };
 
@@ -63,7 +65,7 @@ const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<st
     Output(`Start loading ${uri.path}`);
     if(searchedFiles.has(uri.fsPath)){
         Output(`Circular reference ${uri.path}\n\t(base: ${baseUri.path})`);
-        throw new Error(`循環参照が発生しています．\n再参照: ${uri.path}`);
+        throw new Error(getLocaleString("circularReference", uri.path));
     }
     searchedFiles.add(uri.fsPath);
     // 行またぎのload構文にも対応できるようにするため，行ごとでなく全文から検索をかける
@@ -104,17 +106,17 @@ const main = async () => {
     Log("MagmaLoader");
     const editor = vscode.window.activeTextEditor;
     if(!editor){
-        vscode.window.setStatusBarMessage("MAGMA Loader Error: Magmaファイルを開いて実行してください", 2000);
+        vscode.window.setStatusBarMessage(`MAGMA Loader Error: ${getLocaleString("activeTextEditorUndefined")}`, 2000);
         return;
     }
     if(editor.document.uri.scheme !== "file"){
-        vscode.window.setStatusBarMessage("MAGMA Loader Error: 保存済みのファイルから実行してください", 2000);
+        vscode.window.setStatusBarMessage(`MAGMA Loader Error: ${getLocaleString("unsavedFile")}`, 2000);
         return;
     }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "MagmaLoader running..."
+        title: getLocaleString("running")
     }, async () => {
         try{
             const text = await load(editor.document.uri);
@@ -123,7 +125,7 @@ const main = async () => {
             await vscode.env.clipboard.writeText(text);
         }catch(e){
             const mes = (e instanceof Error) ? e.message : String(e);
-            vscode.window.showErrorMessage(`MagmaLoaderの実行に失敗しました\n${mes}`);
+            vscode.window.showErrorMessage(`${getLocaleString("failed")}\n${mes}`);
         }
     });
 };

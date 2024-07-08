@@ -5,7 +5,9 @@ import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
 import LogObject from './Log';
 import FileHandler from './FileHandler';
+import getLocaleStringBody from './locale';
 const { Log, Output } = LogObject.bind("DefinitionHandler");
+const getLocaleString = getLocaleStringBody.bind(undefined, "message.DefinitionHandler");
 
 type Definition = {
     name: string;
@@ -145,7 +147,7 @@ export default class DefinitionHandler{
                 return {
                     contents: [
                         new vscode.MarkdownString(forward.definition.document),
-                        new vscode.MarkdownString(`[ファイルの場所を開く](${forward.uri})`),
+                        new vscode.MarkdownString(`[${getLocaleString("openFile")}](${forward.uri})`),
                         new vscode.MarkdownString("---"),
                         new vscode.MarkdownString(selfDef.document)
                     ]
@@ -392,7 +394,7 @@ export default class DefinitionHandler{
                         Output(`Not found ${loadFilePattern} at ${uri.path}`);
                         diagnostics.push(new vscode.Diagnostic(
                             range,
-                            `ファイルが見つかりません． パターン: ${loadFilePattern}`,
+                            getLocaleString("notFound", loadFilePattern),
                             vscode.DiagnosticSeverity.Error
                         ));
                     }
@@ -421,7 +423,7 @@ export default class DefinitionHandler{
                         if(INTRINSICS.includes(functionName)){
                             diagnostics.push(new vscode.Diagnostic(
                                 nameRange,
-                                `関数 ${functionName} はMagmaの組み込み関数として定義されています．他の関数名への変更をお勧めします．`,
+                                getLocaleString("alreadyDefined", functionName),
                                 vscode.DiagnosticSeverity.Warning
                             ));
                         }
@@ -446,8 +448,8 @@ export default class DefinitionHandler{
                             range,
                             (
                                 functionType ?
-                                `${functionType} は無効な識別子です．\nfunction, procedure, intrinsic のいずれかを指定してください．` :
-                                `function, procedure, intrinsic のいずれかを指定する必要があります．`
+                                getLocaleString("invalidFunctionType", functionType) :
+                                getLocaleString("functionTypeUndefined")
                             ),
                             vscode.DiagnosticSeverity.Warning
                         ));
@@ -462,7 +464,7 @@ export default class DefinitionHandler{
                     );
                     diagnostics.push(new vscode.Diagnostic(
                         range,
-                        `括弧と引数も含めて定義してください．`,
+                        getLocaleString("missingArguments"),
                         vscode.DiagnosticSeverity.Warning
                     ));
                 }
