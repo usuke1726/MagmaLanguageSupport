@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import getConfig from './config';
 import INTRINSICS from './Intrinsics';
-import FileHandler from './FileHandler';
+import DefinitionHandler from './DefinitionHandler';
 import search from './FileSearch';
 import LogObject from './Log';
 const { Log } = LogObject.bind("CompletionProvider");
@@ -52,7 +52,7 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
 class DefinitionComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]>{
         if(LoadFileComp.isExclusive(document, position)) return [];
-        const definitions = await FileHandler.searchAllDefinitions(document, position);
+        const definitions = await DefinitionHandler.searchAllDefinitions(document, position);
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
             item.kind = def.isForward ? vscode.CompletionItemKind.Interface : vscode.CompletionItemKind.Function;

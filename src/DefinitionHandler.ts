@@ -6,7 +6,7 @@ import getConfig from './config';
 import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
 import LogObject from './Log';
-const { Log, Output } = LogObject.bind("FileHandler");
+const { Log, Output } = LogObject.bind("DefinitionHandler");
 
 type Definition = {
     name: string;
@@ -44,7 +44,7 @@ type SearchResult = {
 class DefProvider implements vscode.DefinitionProvider{
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
         if(getConfig().enableDefinition){
-            return FileHandler.onDefinitionCall(document, position);
+            return DefinitionHandler.onDefinitionCall(document, position);
         }else{
             return undefined;
         }
@@ -53,14 +53,14 @@ class DefProvider implements vscode.DefinitionProvider{
 class HoverProvider implements vscode.HoverProvider{
     provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
         if(getConfig().enableHover){
-            return FileHandler.onHoverCall(document, position);
+            return DefinitionHandler.onHoverCall(document, position);
         }else{
             return undefined;
         }
     }
 };
 
-export default class FileHandler{
+export default class DefinitionHandler{
     private static FileCache: Caches = {};
     private static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
     private static diagnosticCollection: vscode.DiagnosticCollection;

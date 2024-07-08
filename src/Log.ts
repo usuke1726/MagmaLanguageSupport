@@ -6,7 +6,7 @@ class Log{
     private static allowedTags = new Set<string>([
         "debug", "important",
         // "Config",
-        // "FileHandler",
+        // "DefinitionHandler",
         // "extension",
         // "DocumentParser",
         // "Loader",

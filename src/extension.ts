@@ -1,6 +1,6 @@
 
 import * as vscode from 'vscode';
-import FileHandler from './FileHandler';
+import DefinitionHandler from './DefinitionHandler';
 import CompletionProvider from './Completion';
 import { registerCompletionProviders } from './CompletionProviders';
 import setMagmaLoaderCommand from './Loader';
@@ -11,19 +11,19 @@ export function activate(context: vscode.ExtensionContext) {
     try{
         vscode.workspace.onDidOpenTextDocument(e => {
             if(e.languageId !== "magma") return;
-            FileHandler.onDidOpen(e);
+            DefinitionHandler.onDidOpen(e);
         });
         vscode.workspace.onDidChangeTextDocument(e => {
             if(e.document.languageId !== "magma") return;
             CompletionProvider.exec(e);
             if(e.document.isDirty){
                 Log("isDirty");
-                FileHandler.onDidDirtyChange(e);
+                DefinitionHandler.onDidDirtyChange(e);
             }else{
-                FileHandler.onDidChange(e);
+                DefinitionHandler.onDidChange(e);
             }
         });
-        FileHandler.setProviders(context);
+        DefinitionHandler.setProviders(context);
         registerCompletionProviders(context);
         setMagmaLoaderCommand(context);
     }catch(e){
@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
     try{
         vscode.workspace.textDocuments.forEach((document: vscode.TextDocument) => {
             if(document.languageId === "magma"){
-                FileHandler.onDidOpen(document);
+                DefinitionHandler.onDidOpen(document);
             }
         });
     }catch(e){}
