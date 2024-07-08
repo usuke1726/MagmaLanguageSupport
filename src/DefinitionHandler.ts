@@ -306,7 +306,7 @@ export default class DefinitionHandler{
         }
     }
     private static async load(uri: vscode.Uri, fullText?: string): Promise<void>{
-        const lines = await FileHandler.readFile(uri);
+        const lines = (fullText?.replaceAll("\r", "").split("\n")) ?? (await FileHandler.readFile(uri));
         Output(`Start loading ${uri.path}`);
         let scope: "global" | "inComment";
         scope = "global";
