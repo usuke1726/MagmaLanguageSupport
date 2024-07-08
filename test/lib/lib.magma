@@ -1,0 +1,7 @@
+
+
+/**
+ *  これが表示されたら @lib/ の読み込みは成功！
+ */
+function lib()
+end function;

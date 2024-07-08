@@ -102,6 +102,18 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "%config.warnsWhenRedefiningIntrinsic%"
+        },
+        "MagmaLanguageSupport.paths": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "%config.paths%",
+          "patternProperties": {
+            "^@\\w+/$": {
+              "type": "string",
+              "pattern": "^\\./([^~?/<>\\\\*\"|:]+/)+$"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },

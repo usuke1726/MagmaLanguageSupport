@@ -1,4 +1,7 @@
 
+// @require "@lib/lib.magma";
+
+lib();
 load "@/test1.magma";
 
 OK("");

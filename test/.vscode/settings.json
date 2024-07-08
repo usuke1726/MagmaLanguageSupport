@@ -1,0 +1,5 @@
+{
+	"MagmaLanguageSupport.paths": {
+		"@lib/": "./lib/"
+	}
+}

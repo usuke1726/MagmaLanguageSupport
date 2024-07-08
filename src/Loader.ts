@@ -51,7 +51,7 @@ const removeComments = (text: string): string => {
 };
 
 const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[]) => {
-    const path = vscode.Uri.joinPath(FileHandler.base(base), query).fsPath;
+    const path = FileHandler.join(FileHandler.base(base), query).fsPath;
     if(files.length === 0){
         throw new Error(`ファイル ${path} が見つかりません`);
     }else{

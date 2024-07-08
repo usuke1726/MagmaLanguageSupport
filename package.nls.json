@@ -5,5 +5,6 @@
     "config.enableDefinition": "Enables definition provider",
     "config.onChangeDelay": "A delay \\[ms\\] to load file having unsaved change",
     "config.functionCompletionType": "The completion type of function|procedure:\n- snippet: as snippet (with suggestion, with tabstops)\n- original: as original method (no suggestion, no tabstops)\n- none: disable function completion",
-    "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics"
+    "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics",
+    "config.paths": "`@...` patterns configuring path aliases of `load`/`@require` statement"
 }
