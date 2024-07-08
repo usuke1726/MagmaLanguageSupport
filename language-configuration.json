@@ -1,23 +1,13 @@
-/*
-Original Copyright (c) 2018 Erkan Tairi - MIT License https://github.com/etairi/vscode-magma/
-Original Copyright (c) 2015 Microsoft Corporation - MIT License https://github.com/microsoft/vscode/tree/1.90.0
-Modified Copyright (c) 2024 usuke1726 - MIT License
-*/
 {
-    // FROM https://github.com/etairi/vscode-magma/blob/21090553d396d099665759b61667240319949efc/language-configuration.json
     "comments": {
-        // symbol used for single line comment. Remove this entry if your language does not support line comments
         "lineComment": "//",
-        // symbols used for start and end a block comment. Remove this entry if your language does not support block comments
         "blockComment": [ "/*", "*/" ]
     },
-    // symbols used as brackets
     "brackets": [
         ["{", "}"],
         ["[", "]"],
         ["(", ")"]
     ],
-    // symbols that are auto closed when typing
     "autoClosingPairs": [
         ["{", "}"],
         ["[", "]"],
@@ -31,7 +21,6 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
             "notIn": ["string"]
         }
     ],
-    // symbols that that can be used to surround a selection
     "surroundingPairs": [
         ["{", "}"],
         ["[", "]"],
@@ -39,7 +28,6 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
         ["\"", "\""],
         ["'", "'"]
     ],
-    // FROM https://github.com/microsoft/vscode/blob/1.90.0/extensions/typescript-basics/language-configuration.json
     "onEnterRules": [
         {
             "beforeText": {
@@ -92,7 +80,6 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
                 "removeText": 1
             },
         },
-    // Original
         {
             "beforeText": {
                 "pattern": "\\b(function|procedure)\\b\\s*(\\s[A-Za-z_][A-Za-z0-9_]*|\\s'[^\n]*?(?<!\\)'))?\\s*\\(.*\\)\\s*$"
