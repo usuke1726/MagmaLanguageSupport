@@ -146,6 +146,7 @@ export default class DefinitionHandler{
                 return {
                     contents: [
                         new vscode.MarkdownString(forward.definition.document),
+                        new vscode.MarkdownString(`[ファイルの場所を開く](${forward.uri})`),
                         new vscode.MarkdownString("---"),
                         new vscode.MarkdownString(selfDef.document)
                     ]
