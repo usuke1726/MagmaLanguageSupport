@@ -365,9 +365,6 @@ export default class FileHandler{
                 })();
                 if(loadFiles !== undefined){
                     if(loadFiles.length){
-                        cache.dependencies = cache.dependencies.filter(dep => {
-                            return !loadFiles.some(uri => uri.fsPath === dep.uri.fsPath);
-                        });
                         loadFiles.forEach(reqUri => {
                             cache.dependencies.push({
                                 uri: reqUri,
