@@ -204,12 +204,20 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
         {
             scheme: "file",
             language: "magma",
+        },
+        {
+            scheme: "untitled",
+            language: "magma"
         }
     ], new DefinedCommentComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
         {
             scheme: "file",
             language: "magma",
+        },
+        {
+            scheme: "untitled",
+            language: "magma"
         }
     ], new DocTagComp(), "@"));
 };
