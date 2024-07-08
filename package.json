@@ -71,22 +71,22 @@
         "MagmaLanguageSupport.enableAutoCompletion": {
           "type": "boolean",
           "default": true,
-          "description": "%config.enableAutoCompletion%"
+          "markdownDescription": "%config.enableAutoCompletion%"
         },
         "MagmaLanguageSupport.enableHover": {
           "type": "boolean",
           "default": true,
-          "description": "%config.enableHover%"
+          "markdownDescription": "%config.enableHover%"
         },
         "MagmaLanguageSupport.enableDefinition": {
           "type": "boolean",
           "default": true,
-          "description": "%config.enableDefinition%"
+          "markdownDescription": "%config.enableDefinition%"
         },
         "MagmaLanguageSupport.onChangeDelay": {
           "type": "integer",
           "default": 1000,
-          "description": "%config.onChangeDelay%"
+          "markdownDescription": "%config.onChangeDelay%"
         },
         "MagmaLanguageSupport.functionCompletionType": {
           "type": "string",
@@ -96,12 +96,12 @@
             "none"
           ],
           "default": "snippet",
-          "description": "%config.functionCompletionType%"
+          "markdownDescription": "%config.functionCompletionType%"
         },
         "MagmaLanguageSupport.warnsWhenRedefiningIntrinsic": {
           "type": "boolean",
           "default": true,
-          "description": "%config.warnsWhenRedefiningIntrinsic%"
+          "markdownDescription": "%config.warnsWhenRedefiningIntrinsic%"
         }
       }
     },
