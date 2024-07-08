@@ -102,7 +102,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^\s*(//\s+)(@define[sd]?)\s+(function|procedure|intrinsic)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$</string>
+			<string>^\s*(//\s+)(@define[sd]?)\s+(function|procedure|intrinsic)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\((.*)\);?\s*$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -124,6 +124,18 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 				<dict>
 					<key>name</key>
 					<string>entity.name.function.definition.defined-in-comment.magma</string>
+				</dict>
+				<key>5</key>
+				<dict>
+					<key>name</key>
+					<string>source.arguments.defined-in-comment.magma</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>$base</string>
+						</dict>
+					</array>
 				</dict>
 			</dict>
 			<key>end</key>
