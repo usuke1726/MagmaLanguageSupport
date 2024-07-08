@@ -174,7 +174,7 @@ export default class DefinitionHandler{
         const stack: Cache[] = [];
         const selfCache: MaybeCache = this.FileCache[id];
         const searchedFiles = new Set<string>();
-        const query: ((def: Definition) => boolean) = (options?.onlyForward)
+        const queryBody: ((def: Definition) => boolean) = (options?.onlyForward)
             ? def => def.isForward && def.name === functionName
             : def => def.name === functionName;
         if(isCache(selfCache)){
@@ -184,6 +184,9 @@ export default class DefinitionHandler{
             const cache: Cache | undefined = stack.pop();
             if(!cache) continue;
             const uri = cache.uri;
+            const query = (uri.fsPath === baseUri.fsPath)
+                ? (dep: Definition) => queryBody(dep) && position.line > dep.range.start.line
+                : queryBody;
             searchedFiles.add(this.uriToID(uri));
             const definition = cache.definitions.find(query);
             if(definition){
