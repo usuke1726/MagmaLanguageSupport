@@ -37,10 +37,6 @@ This extension adds language support and IntelliSense for [Magma computational a
     - `// @use {cell index}` enables to load previous code blocks.
     - Automatically disables [Vim Extension](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim) on the notebooks.
 
-## Installation
-
-Use the VSIX file or build it yourself.
-
 ## License
 
 Licensed under the MIT License.
