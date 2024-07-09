@@ -4,14 +4,43 @@ import getConfig from './config';
 import INTRINSICS from './Intrinsics';
 import DefinitionHandler from './DefinitionHandler';
 import FileHandler from './FileHandler';
+import DocumentParser from './DocumentParser';
 import LogObject from './Log';
 const { Log } = LogObject.bind("CompletionProvider");
+
+const exculusiveConditions: Readonly<{
+    [key: string]: (scheme: string, beforeText: string) => boolean
+}> = {
+    LoadFileComp: (scheme, beforeText) => {
+        const patterns = [
+            /^\s*\/\/\s+@requires?\s+"([^"]*)/,
+            /^\s*load\s+"([^"]*)/
+        ];
+        return (
+            scheme === "file" &&
+            patterns.some(p => p.test(beforeText))
+        );
+    },
+    NotebookUseStatementComp: (scheme, beforeText) => {
+        const pattern = /^\s*\/\/\s+@uses?\s+\d*$/;
+        return (
+            scheme === "vscode-notebook-cell" &&
+            pattern.test(beforeText)
+        );
+    }
+};
+const isExclusive = (document: vscode.TextDocument, position: vscode.Position, ignore: string[] = []): boolean => {
+    const beforeText = document.lineAt(position.line).text.substring(0, position.character);
+    return Object.entries(exculusiveConditions)
+    .filter(([key]) => !ignore.includes(key))
+    .some(([key, func]) => func(document.uri.scheme, beforeText));
+};
 
 class FunctionComp implements vscode.CompletionItemProvider{
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
         Log(getConfig().functionCompletionType);
         if(getConfig().functionCompletionType !== "snippet") return [];
-        if(LoadFileComp.isExclusive(document, position)) return [];
+        if(isExclusive(document, position)) return [];
         const item_func = new vscode.CompletionItem("function");
         const item_proc = new vscode.CompletionItem("procedure");
         item_func.commitCharacters = [" "];
@@ -44,14 +73,14 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
         Log("INIT END");
     }
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]> {
-        if(LoadFileComp.isExclusive(document, position)) return [];
+        if(isExclusive(document, position)) return [];
         return this.initted ? this.items : [];
     }
 };
 
 class DefinitionComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]>{
-        if(LoadFileComp.isExclusive(document, position)) return [];
+        if(isExclusive(document, position)) return [];
         const definitions = await DefinitionHandler.searchAllDefinitions(document, position);
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
@@ -65,6 +94,7 @@ class DefinitionComp implements vscode.CompletionItemProvider{
 
 class DefinedCommentComp implements vscode.CompletionItemProvider{
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
+        if(isExclusive(document, position)) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
             const pattern = /^\s*\/\/\s+@$/;
@@ -83,6 +113,7 @@ class DocTagComp implements vscode.CompletionItemProvider{
     private readonly paramTags = ["param", "arg", "argument"];
     private readonly reservedTags = ["returns", "example", "remarks"];
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
+        if(isExclusive(document, position)) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
             const pattern = /^\s*(\/\*\*|\*)\s*@$/;
@@ -106,13 +137,8 @@ class DocTagComp implements vscode.CompletionItemProvider{
 };
 
 class LoadFileComp implements vscode.CompletionItemProvider{
-    static isExclusive(document: vscode.TextDocument, position: vscode.Position): boolean{
-        const pattern1 = /^\s*\/\/\s+@requires?\s+"([^"]*)/;
-        const pattern2 = /^\s*load\s+"([^"]*)/;
-        const prefix = document.lineAt(position.line).text.substring(0, position.character);
-        return pattern1.test(prefix) || pattern2.test(prefix);
-    }
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]>{
+        if(isExclusive(document, position, ["LoadFileComp"])) return [];
         const trigger = context.triggerCharacter;
         Log("LoadFile check start");
         if(trigger === "@"){
@@ -167,6 +193,55 @@ class LoadFileComp implements vscode.CompletionItemProvider{
     }
 };
 
+class NotebookUseStatementComp implements vscode.CompletionItemProvider{
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList<vscode.CompletionItem>> {
+        if(isExclusive(document, position, ["NotebookUseStatementComp"])) return [];
+        const editor = vscode.window.activeNotebookEditor;
+        if(!editor) return [];
+        const trigger = context.triggerCharacter;
+        if(trigger === "@"){
+            return this.tagCompletion(document, position);
+        }else{
+            Log(editor.selection.start, editor.selection.end, editor.selection.isEmpty);
+            return this.numberCompletion(document, position, editor.notebook);
+        }
+    }
+    private tagCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
+        const pattern = /^\s*\/\/\s+@/;
+        if(pattern.test(document.lineAt(position.line).text)){
+            const item = new vscode.CompletionItem("use");
+            item.kind = vscode.CompletionItemKind.Snippet;
+            item.insertText = "use ";
+            item.command = {
+                command: "editor.action.triggerSuggest",
+                title: "re-trigger"
+            };
+            return [item];
+        }else{
+            return [];
+        }
+    }
+    private numberCompletion(document: vscode.TextDocument, position: vscode.Position, notebook: vscode.NotebookDocument): vscode.CompletionItem[]{
+        const pattern = /^\s*\/\/\s+@uses?\s+\d*$/;
+        const beforeText = document.lineAt(position.line).text.substring(0, position.character);
+        if(pattern.test(beforeText)){
+            return notebook.getCells()
+            .filter(cell => cell.kind === vscode.NotebookCellKind.Code)
+            .map(cell => {
+                const text = cell.document.getText();
+                const idx = cell.index;
+                const item = new vscode.CompletionItem(`${idx}`);
+                item.kind = vscode.CompletionItemKind.EnumMember;
+                item.documentation = new vscode.MarkdownString(DocumentParser.wrapWithBlockMagmaCode(text));
+                return item;
+            });
+        }else{
+            return [];
+        }
+    }
+};
+
+
 export const registerCompletionProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
         {
@@ -175,6 +250,10 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
         },
         {
             scheme: "untitled",
+            language: "magma"
+        },
+        {
+            scheme: "vscode-notebook-cell",
             language: "magma"
         }
     ], new FunctionComp()));
@@ -191,6 +270,10 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
         },
         {
             scheme: "untitled",
+            language: "magma"
+        },
+        {
+            scheme: "vscode-notebook-cell",
             language: "magma"
         }
     ], new IntrinsicComp()));
@@ -220,4 +303,10 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
             language: "magma"
         }
     ], new DocTagComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
+        {
+            scheme: "vscode-notebook-cell",
+            language: "magma"
+        }
+    ], new NotebookUseStatementComp(), "@"));
 };

@@ -31,6 +31,10 @@ This extension adds language support and IntelliSense for [Magma computational a
         - `try ... catch e ... end try;`
         - `function ... end function;`
         - `procedure ... end procedure;`
+- Magma Calculator Notebooks
+    - Executes at Magma Calculator.
+    - Only the last code is executed. (Even when selecting the "Run All")
+    - `// @use {cell index}` enables to load previous code blocks.
 
 ## Installation
 

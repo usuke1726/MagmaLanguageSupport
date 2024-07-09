@@ -17,7 +17,9 @@
   "categories": [
     "Programming Languages"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onNotebook:magma-calculator-notebook"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
@@ -39,6 +41,16 @@
           "..magmarc-dev"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "imagma",
+        "icon": {
+          "dark": "./images/icon-imagma-dark.svg",
+          "light": "./images/icon-imagma-light.svg"
+        },
+        "extensions": [
+          ".imagma"
+        ]
       },
       {
         "id": "spec",
@@ -114,6 +126,11 @@
             }
           },
           "additionalProperties": false
+        },
+        "MagmaLanguageSupport.notebookSavesOutputs": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.notebookSavesOutputs%"
         }
       }
     },
@@ -123,9 +140,20 @@
         "title": "%command.magmaLoader.run%",
         "category": "Magma",
         "icon": "$(play)"
+      },
+      {
+        "command": "extension.magmaNotebook.createNewNotebook",
+        "title": "%command.magmaNotebook.createNewNotebook%",
+        "category": "Create",
+        "icon": "$(play)"
       }
     ],
     "menus": {
+      "file/newFile": [
+        {
+          "command": "extension.magmaNotebook.createNewNotebook"
+        }
+      ],
       "editor/title": [
         {
           "when": "editorLangId == magma",
@@ -139,6 +167,27 @@
         "command": "extension.magmaLoader.run",
         "key": "F5",
         "when": "editorTextFocus && editorLangId == 'magma'"
+      },
+      {
+        "command": "notebook.toggleLineNumbers",
+        "key": "ctrl+l",
+        "when": "notebookEditorFocused && activeEditor == 'workbench.editor.notebook'"
+      },
+      {
+        "command": "notebook.cellOutput.copy",
+        "key": "ctrl+shift+c",
+        "when": "notebookEditorFocused && ((notebookCellFocused && notebookCellHasOutputs) || (notebookOutputFocused))"
+      }
+    ],
+    "notebooks": [
+      {
+        "type": "magma-calculator-notebook",
+        "displayName": "Magma Calculator Notebook",
+        "selector": [
+          {
+            "filenamePattern": "*.imagma"
+          }
+        ]
       }
     ]
   },
@@ -164,6 +213,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.8.10",
     "glob": "^10.4.3"
   }
 }

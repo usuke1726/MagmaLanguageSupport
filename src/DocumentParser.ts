@@ -125,11 +125,11 @@ export default class DocumentParser{
         Log(`   buffer:`, this.buffer);
         let out = `*@${this.tag}*`;
         if(this.firstToken){
-            out += ` ${this.wrapWithInlineCode(this.firstToken)}`;
+            out += ` ${DocumentParser.wrapWithInlineCode(this.firstToken)}`;
         }
         if(this.tag === "example"){
             if(this.buffer.length){
-                out += `  \n${this.wrapWithBlockMagmaCode(this.buffer.join("\n"))}`;
+                out += `  \n${DocumentParser.wrapWithBlockMagmaCode(this.buffer.join("\n"))}`;
             }
         }else{
             if(this.buffer.length > 1){
@@ -150,12 +150,12 @@ export default class DocumentParser{
         this.tag = undefined;
         this.buffer = [];
     }
-    private wrapWithInlineCode(code: string){
+    static wrapWithInlineCode(code: string){
         const num = Math.max(0, ...[...code.matchAll(/`+/g)].map(m => m[0].length)) + 1;
         const brac = "`".repeat(num);
         return `${brac}${code}${brac}`;
     }
-    private wrapWithBlockMagmaCode(code: string){
+    static wrapWithBlockMagmaCode(code: string){
         const num = Math.max(2, ...[...code.matchAll(/`+/g)].map(m => m[0].length)) + 1;
         const brac = "`".repeat(num);
         return `${brac}magma\n${code}\n${brac}`;
@@ -166,7 +166,7 @@ export default class DocumentParser{
         }
         const body = this.lines.join("\n");
         if(this.firstLine){
-            const code = this.firstLine ? this.wrapWithBlockMagmaCode(this.firstLine) : "";
+            const code = this.firstLine ? DocumentParser.wrapWithBlockMagmaCode(this.firstLine) : "";
             this.reset();
             return `${code}\n\n${body}`;
         }else{

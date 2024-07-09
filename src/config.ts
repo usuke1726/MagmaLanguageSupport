@@ -37,6 +37,7 @@ type Config = {
     functionCompletionType: "snippet" | "original" | "none";
     warnsWhenRedefiningIntrinsic: boolean;
     paths: Paths;
+    notebookSavesOutputs: boolean;
 };
 const defaultConfig: Config = {
     enableAutoCompletion: true,
@@ -46,6 +47,7 @@ const defaultConfig: Config = {
     functionCompletionType: "snippet",
     warnsWhenRedefiningIntrinsic: true,
     paths: {},
+    notebookSavesOutputs: true,
 };
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
@@ -56,6 +58,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     functionCompletionType: val => typeof val === "string" && ["snippet", "original", "none"].includes(val),
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",
     paths: val => isPaths(val),
+    notebookSavesOutputs: val => typeof val === "boolean",
 };
 const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];
 const isConfig = (obj: any): obj is Config => {

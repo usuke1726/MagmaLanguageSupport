@@ -145,6 +145,42 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
+			<string>^(\s*//\s+)(@uses?)(?:\s+(\d*)(;?))?(.*?)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>comment.line.double-slash-with-require.magma</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.use-in-comment.magma</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>constant.numeric.use-index.magma</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>source.end.use-in-comment.magma</string>
+				</dict>
+				<key>5</key>
+				<dict>
+					<key>name</key>
+					<string>comment.line.after-end.use-in-comment.magma</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>$\n?</string>
+			<key>name</key>
+			<string>source.use-in-comment.magma</string>
+		</dict>
+		<dict>
+			<key>begin</key>
 			<string>^(\s*//\s+)(@requires?)(?:\s+("[^"]*")(;?))?(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>

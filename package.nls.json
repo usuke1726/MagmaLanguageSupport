@@ -1,6 +1,7 @@
 {
     "extension.description": "Magma Language Support for Visual Studio Code",
     "command.magmaLoader.run": "execute MagmaLoader",
+    "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
     "config.enableHover": "Enables hover provider",
     "config.enableDefinition": "Enables definition provider",
@@ -8,6 +9,7 @@
     "config.functionCompletionType": "The completion type of function|procedure:\n- snippet: as snippet (with suggestion, with tabstops)\n- original: as original method (no suggestion, no tabstops)\n- none: disable function completion",
     "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics",
     "config.paths": "`@...` patterns configuring path aliases of `load`/`@require` statement",
+    "config.notebookSavesOutputs": "Whether .imagma files include execution results (Magma Calculator Notebook)",
     "message.DefinitionHandler.openFile": "Open file",
     "message.DefinitionHandler.notFound": "Files not found. pattern: {0}",
     "message.DefinitionHandler.alreadyDefined": "The function {0} has already been defined as intrinsic. It is recommended to change the name.",
@@ -16,9 +18,14 @@
     "message.DefinitionHandler.missingArguments": "You need to add arguments",
     "message.Loader.notFound": "The file {0} was not found.",
     "message.Loader.tooManyFiles": "Too many files found: {0} (number: {1})",
-    "message.Loader.circularReference": "A circular reference occured. (Reloading {0})",
+    "message.Loader.circularReference": "A circular reference occurred. (Reloading {0})",
     "message.Loader.activeTextEditorUndefined": "Execute this command after opening a magma file.",
     "message.Loader.unsavedFile": "Execute this command on a saved file.",
     "message.Loader.running": "running MagmaLoader...",
-    "message.Loader.failed": "Failed to execute MagmaLoader."
+    "message.Loader.failed": "Failed to execute MagmaLoader.",
+    "message.Notebook.calledImmediately": "It has not been long enough since you executed codes frequently.\nPlease re-run this code after {0} minutes.",
+    "message.Notebook.timeout": "Error: This execution has been timed out.",
+    "message.Notebook.failedParsing": "Error: An error occurred during parsing",
+    "message.Notebook.blocked": "Error: You executed codes too frequently.\nPlease wait for about {0} minutes",
+    "message.Notebook.otherErrors": "Error: {0}"
 }
