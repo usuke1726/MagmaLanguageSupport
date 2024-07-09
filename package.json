@@ -1,7 +1,7 @@
 {
   "name": "magma-language-support",
   "displayName": "MAGMA Language Support",
-  "description": "%extension.description%",
+  "description": "Magma Language Support for Visual Studio Code",
   "version": "0.0.1",
   "license": "MIT",
   "publisher": "usuke1726",

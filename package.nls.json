@@ -1,5 +1,4 @@
 {
-    "extension.description": "Magma Language Support for Visual Studio Code",
     "command.magmaLoader.run": "execute MagmaLoader",
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
