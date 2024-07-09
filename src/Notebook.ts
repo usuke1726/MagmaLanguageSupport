@@ -126,6 +126,50 @@ class Status implements vscode.NotebookCellStatusBarItemProvider{
     }
 }
 
+const removeComments = (text: string): string => {
+    let inComment: boolean = false;
+    const res: string[] = [];
+    const lines = text.split("\n");
+    let m: RegExpExecArray | null;
+    const closnigPattern = /^\s*\*\/(.*)$/;
+    const inlineBlockPattern = /^\s*\/\*.*?\*\/(.*)/;
+    const openingPattern = /^\s*\/\*/;
+    const inlinePattern = /^\s*\/\/.+$/;
+    const push = (text?: string) => {
+        if(text?.trim()) res.push(text.trim());
+    };
+    lines.forEach(line => {
+        if(inComment){
+            m = closnigPattern.exec(line);
+            if(m){
+                inComment = false;
+                line = m[1];
+            }else{
+                return;
+            }
+        }
+        while(true){
+            m = inlineBlockPattern.exec(line);
+            if(m){
+                line = m[1];
+            }else{
+                break;
+            }
+        }
+        m = openingPattern.exec(line);
+        if(m){
+            inComment = true;
+            return;
+        }
+        m = inlinePattern.exec(line);
+        if(m){
+            return;
+        }
+        push(line);
+    });
+    return res.join("\n");
+};
+
 type ExecuttionResult= {
     output: string;
     success: boolean;
@@ -203,7 +247,11 @@ class Controller{
             exe.end(false, Date.now());
             return;
         }
-        const code = this.load(cell).join("\n");
+        const code = removeComments(this.load(cell).join("\n"));
+        if(!code.trim()){
+            exe.end(true, Date.now());
+            return;
+        }
         const result = await this.requests(code, exe.token);
         exe.appendOutput(new vscode.NotebookCellOutput([
             vscode.NotebookCellOutputItem.text(result.output)
