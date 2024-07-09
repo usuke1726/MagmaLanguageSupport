@@ -35,6 +35,7 @@ This extension adds language support and IntelliSense for [Magma computational a
     - Executes at Magma Calculator.
     - Only the last code is executed. (Even when selecting the "Run All")
     - `// @use {cell index}` enables to load previous code blocks.
+    - Automatically disables [Vim Extension](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim) on the notebooks.
 
 ## Installation
 
