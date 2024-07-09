@@ -1,5 +1,5 @@
 
-# MAGMA Language Support
+# MAGMA Language Support & IntelliSense
 
 This extension adds language support and IntelliSense for [Magma computational algebra system](http://magma.maths.usyd.edu.au/magma/) to Visual Studio Code.
 
