@@ -12,9 +12,12 @@ type SearchResults = {
     isFolder: boolean;
 };
 type ResolveOptions = {
-    useGlob?: boolean;
-    maxLength?: number;
-    onlyAtMark?: boolean;
+    useGlob: boolean;
+    maxLength: number;
+    onlyAtMark: boolean;
+};
+type ResolveOptionsOptional = {
+    [key in keyof ResolveOptions]?: ResolveOptions[key];
 };
 const defaultOptions: ResolveOptions = {
     useGlob: false,
@@ -47,11 +50,11 @@ export default class FileHandler{
         const path = (typeof uri === "string") ? uri : uri.fsPath;
         return this.MagmaExtensions.some(ext => path.endsWith(ext));
     }
-    static async resolve(baseUri: vscode.Uri, query: string, options?: ResolveOptions): Promise<vscode.Uri[]>{
+    static async resolve(baseUri: vscode.Uri, query: string, options?: ResolveOptionsOptional): Promise<vscode.Uri[]>{
         if(!options) options = {...defaultOptions};
-        options.useGlob = options.useGlob ?? defaultOptions.useGlob;
-        options.maxLength = options.maxLength ?? defaultOptions.maxLength;
-        options.onlyAtMark = options.onlyAtMark ?? defaultOptions.onlyAtMark;
+        options.useGlob ??= defaultOptions.useGlob;
+        options.maxLength ??= defaultOptions.maxLength;
+        options.onlyAtMark ??= defaultOptions.onlyAtMark;
         if(options.onlyAtMark && !this.usingAtMark(query)){
             return [];
         }
@@ -70,7 +73,7 @@ export default class FileHandler{
             })).map(path => vscode.Uri.file(path))
             .filter(uri => this.isMagmaFile(uri));
             Log("resolve matched", res.map(uri => uri.fsPath));
-            return res;
+            return res.slice(0, options.maxLength);
         }catch(e){
             return [];
         }
