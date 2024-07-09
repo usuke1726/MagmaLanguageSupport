@@ -6,6 +6,7 @@ import { registerCompletionProviders } from './CompletionProviders';
 import setMagmaLoaderCommand from './Loader';
 import LogObject from './Log';
 import setNotebookProviders from './Notebook';
+import setDisableVimProviders from './DisableVim';
 const { Log } = LogObject.bind("extension");
 
 export function activate(context: vscode.ExtensionContext) {
@@ -30,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
         registerCompletionProviders(context);
         setMagmaLoaderCommand(context);
         setNotebookProviders(context);
+        setDisableVimProviders(context);
     }catch(e){
         const mes = `MagmaLanguageSupport couldn't start ${String(e)}`;
         Log(mes);

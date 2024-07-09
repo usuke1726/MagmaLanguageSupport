@@ -10,6 +10,7 @@
     "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics",
     "config.paths": "`@...` patterns configuring path aliases of `load`/`@require` statement",
     "config.notebookSavesOutputs": "Whether .imagma files include execution results (Magma Calculator Notebook)",
+    "config.notebookDisablesVim": "Disables Vim keybinds on Magma Calculator Notebook\n\n(only works when [Vim Extension](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim) is enabled)",
     "message.DefinitionHandler.openFile": "Open file",
     "message.DefinitionHandler.notFound": "Files not found. pattern: {0}",
     "message.DefinitionHandler.alreadyDefined": "The function {0} has already been defined as intrinsic. It is recommended to change the name.",
@@ -27,5 +28,7 @@
     "message.Notebook.timeout": "Error: This execution has been timed out.",
     "message.Notebook.failedParsing": "Error: An error occurred during parsing",
     "message.Notebook.blocked": "Error: You executed codes too frequently.\nPlease wait for about {0} minutes",
-    "message.Notebook.otherErrors": "Error: {0}"
+    "message.Notebook.otherErrors": "Error: {0}",
+    "message.DisableVim.suggestsReloading": "Window reloading is recommended to change the configuration notebookDisablesVim successfully.",
+    "message.DisableVim.reload": "Reload the window"
 }

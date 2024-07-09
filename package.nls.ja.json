@@ -10,6 +10,7 @@
     "config.warnsWhenRedefiningIntrinsic": "関数がMagmaの組み込み関数を再定義している際に警告を表示する",
     "config.paths": "`load`や`@require`構文のファイルパスのエイリアスを指定する (書式は`@.../`)",
     "config.notebookSavesOutputs": "Magma Calculator Notebookにて実行結果も .imagma ファイルに含める",
+    "config.notebookDisablesVim": "Magma Calculator Notebookでは Vim キーバインドを無効にする\n\n※[Vim 拡張機能](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim)を有効にしている場合のみ機能する",
     "message.DefinitionHandler.openFile": "ファイルの場所を開く",
     "message.DefinitionHandler.notFound": "ファイルが見つかりません．パターン: {0}",
     "message.DefinitionHandler.alreadyDefined": "関数 {0} はMagmaの組み込み関数として定義されています．他の関数名への変更をお勧めします．",
@@ -27,5 +28,7 @@
     "message.Notebook.timeout": "エラー：タイムアウトが発生しました．",
     "message.Notebook.failedParsing": "エラー：結果のパースに失敗しました",
     "message.Notebook.blocked": "エラー：短時間に実行しすぎたようです．\n少し時間を置いてから再実行してください．(目安: {0}分)",
-    "message.Notebook.otherErrors": "エラー：{0}"
+    "message.Notebook.otherErrors": "エラー：{0}",
+    "message.DisableVim.suggestsReloading": "notebookDisablesVimの変更を正常に行うためにウィンドウの再読み込みをお勧めします．",
+    "message.DisableVim.reload": "ウィンドウの再読み込み"
 }

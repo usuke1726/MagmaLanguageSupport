@@ -131,6 +131,11 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "%config.notebookSavesOutputs%"
+        },
+        "MagmaLanguageSupport.notebookDisablesVim": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.notebookDisablesVim%"
         }
       }
     },

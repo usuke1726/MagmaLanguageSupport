@@ -38,6 +38,7 @@ type Config = {
     warnsWhenRedefiningIntrinsic: boolean;
     paths: Paths;
     notebookSavesOutputs: boolean;
+    notebookDisablesVim: boolean;
 };
 const defaultConfig: Config = {
     enableAutoCompletion: true,
@@ -48,6 +49,7 @@ const defaultConfig: Config = {
     warnsWhenRedefiningIntrinsic: true,
     paths: {},
     notebookSavesOutputs: true,
+    notebookDisablesVim: true,
 };
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
@@ -59,6 +61,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",
     paths: val => isPaths(val),
     notebookSavesOutputs: val => typeof val === "boolean",
+    notebookDisablesVim: val => typeof val === "boolean",
 };
 const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];
 const isConfig = (obj: any): obj is Config => {
