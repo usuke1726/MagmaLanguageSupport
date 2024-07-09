@@ -42,7 +42,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 			<array>
 				<dict>
 					<key>match</key>
-					<string>(@(?:param|arg|argument))\s+(\{[^}]*?\})?\s*([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')</string>
+					<string>^\s*\*?\s*(@(?:param|arg|argument))\s+(\{[^}]*?\})?\s*([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')</string>
 					<key>captures</key>
 					<dict>
 						<key>1</key>
@@ -66,9 +66,17 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 				</dict>
 				<dict>
 					<key>match</key>
-					<string>^\s*@[A-Za-z_][A-Za-z0-9_]*</string>
+					<string>^\s*\*?\s*(@[A-Za-z_][A-Za-z0-9_]*)</string>
+					<key>captures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>storage.type.tag.document-comment.magma</string>
+						</dict>
+					</dict>
 					<key>name</key>
-					<string>storage.type.tag.document-comment.magma</string>
+					<string>source.tag.document-comment.magma</string>
 				</dict>
 			</array>
 		</dict>
