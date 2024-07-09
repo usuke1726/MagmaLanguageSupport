@@ -30,8 +30,8 @@
           "magma"
         ],
         "icon": {
-          "light": "./images/icon-magma-light.svg",
-          "dark": "./images/icon-magma-dark.svg"
+          "light": "./images/icon-magma-light.png",
+          "dark": "./images/icon-magma-dark.png"
         },
         "extensions": [
           ".m",
@@ -45,8 +45,8 @@
       {
         "id": "imagma",
         "icon": {
-          "dark": "./images/icon-imagma-dark.svg",
-          "light": "./images/icon-imagma-light.svg"
+          "dark": "./images/icon-imagma-dark.png",
+          "light": "./images/icon-imagma-light.png"
         },
         "extensions": [
           ".imagma"
