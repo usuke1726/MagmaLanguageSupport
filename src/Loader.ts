@@ -8,7 +8,7 @@ const getLocaleString = getLocaleStringBody.bind(undefined, "message.Loader");
 
 const searchedFiles: Set<string> = new Set();
 
-const removeComments = (text: string): string => {
+export const removeComments = (text: string): string => {
     let inComment: boolean = false;
     const res: string[] = [];
     const lines = text.split("\n");
@@ -52,7 +52,7 @@ const removeComments = (text: string): string => {
     return res.join("\n");
 };
 
-const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[]) => {
+export const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[]) => {
     const path = FileHandler.join(FileHandler.base(base), query).fsPath;
     if(files.length === 0){
         throw new Error(getLocaleString("notFound", path));
@@ -61,7 +61,7 @@ const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[]) => {
     }
 };
 
-const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<string> => {
+export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<string> => {
     Output(`Start loading ${uri.path}`);
     if(searchedFiles.has(uri.fsPath)){
         Output(`Circular reference ${uri.path}\n\t(base: ${baseUri.path})`);
@@ -96,8 +96,9 @@ const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<st
     return ret + body;
 };
 
-const load = async (uri: vscode.Uri): Promise<string> => {
-    searchedFiles.clear();
+export const clearSearchedFiles = () => searchedFiles.clear();
+export const load = async (uri: vscode.Uri): Promise<string> => {
+    clearSearchedFiles();
     return await loadRecursively(uri, uri);
 };
 
@@ -130,10 +131,8 @@ const main = async () => {
     });
 };
 
-const setMagmaLoaderCommand = (context: vscode.ExtensionContext) => {
+export const setMagmaLoaderCommand = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaLoader.run", () => {
         main();
     }));
 };
-
-export default setMagmaLoaderCommand;

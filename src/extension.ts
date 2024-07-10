@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import DefinitionHandler from './DefinitionHandler';
 import CompletionProvider from './Completion';
 import { registerCompletionProviders } from './CompletionProviders';
-import setMagmaLoaderCommand from './Loader';
+import { setMagmaLoaderCommand } from './Loader';
 import LogObject from './Log';
 import setNotebookProviders from './Notebook';
 import setDisableVimProviders from './DisableVim';

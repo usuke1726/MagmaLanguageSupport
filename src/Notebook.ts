@@ -5,7 +5,9 @@ import * as http from "http";
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import getConfig from './config';
-const { Log } = LogObject.bind("Notebook");
+import FileHandler from './FileHandler';
+import { clearSearchedFiles, loadRecursively, removeComments, throwError } from './Loader';
+const { Log, Output } = LogObject.bind("Notebook");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.Notebook");
 
 const ID = "magma-calculator-notebook";
@@ -126,50 +128,6 @@ class Status implements vscode.NotebookCellStatusBarItemProvider{
     }
 }
 
-const removeComments = (text: string): string => {
-    let inComment: boolean = false;
-    const res: string[] = [];
-    const lines = text.split("\n");
-    let m: RegExpExecArray | null;
-    const closnigPattern = /^\s*\*\/(.*)$/;
-    const inlineBlockPattern = /^\s*\/\*.*?\*\/(.*)/;
-    const openingPattern = /^\s*\/\*/;
-    const inlinePattern = /^\s*\/\/.+$/;
-    const push = (text?: string) => {
-        if(text?.trim()) res.push(text.trim());
-    };
-    lines.forEach(line => {
-        if(inComment){
-            m = closnigPattern.exec(line);
-            if(m){
-                inComment = false;
-                line = m[1];
-            }else{
-                return;
-            }
-        }
-        while(true){
-            m = inlineBlockPattern.exec(line);
-            if(m){
-                line = m[1];
-            }else{
-                break;
-            }
-        }
-        m = openingPattern.exec(line);
-        if(m){
-            inComment = true;
-            return;
-        }
-        m = inlinePattern.exec(line);
-        if(m){
-            return;
-        }
-        push(line);
-    });
-    return res.join("\n");
-};
-
 type ExecuttionResult= {
     output: string;
     success: boolean;
@@ -199,9 +157,11 @@ class Controller{
     private getLines(cell: vscode.NotebookCell): string[]{
         return cell.document.getText().replaceAll("\r", "").split("\n");
     }
-    private readLine(line: string, currentIdx: number): string[]{
+    private async readLine(baseUri: vscode.Uri, line: string, currentIdx: number): Promise<string[]>{
+        let m: RegExpExecArray | null;
         const usePattern = /^\s*\/\/\s+@uses?\s+(\d+);?.*?$/;
-        const m = usePattern.exec(line);
+        const loadPattern = /^\s*load\s+"(.+)";\s*$/;
+        m = usePattern.exec(line);
         if(m){
             Log("use hit", m[1]);
             const idx = Number(m[1]);
@@ -221,15 +181,32 @@ class Controller{
                     return [];
                 }
             }
-        }else{
-            return [line];
         }
+        m = loadPattern.exec(line);
+        if(m){
+            const query = m[1];
+            const loadFiles = await FileHandler.resolve(
+                baseUri, query, {
+                    useGlob: false,
+                    onlyAtMark: false,
+                }
+            );
+            clearSearchedFiles();
+            if(loadFiles.length !== 1) throwError(baseUri, query, loadFiles);
+            const fileUri = loadFiles[0];
+            return (
+                await loadRecursively(baseUri, fileUri)
+            ).split("\n");
+        }
+        return [line];
     }
-    private load(cell: vscode.NotebookCell): string[]{
+    private async load(cell: vscode.NotebookCell): Promise<string[]>{
         Log(`load cell ${cell.index}`);
         const idx = cell.index;
         const lines = this.getLines(cell);
-        return lines.map(line => this.readLine(line, idx)).flat();
+        return (await Promise.all(lines.map(line => {
+            return this.readLine(cell.document.uri, line, idx);
+        }))).flat();
     }
     async execute(cells: vscode.NotebookCell[], notebook: vscode.NotebookDocument, controller: vscode.NotebookController){
         Log("EXECUTE");
@@ -238,7 +215,20 @@ class Controller{
         this.cells = notebook.getCells();
         const cell = cells.length > 1 ? cells[cells.length-1] : cells[0];
         const exe = controller.createNotebookCellExecution(cell);
+        const [code, success] = await (async () => {
+            try{
+                return [removeComments((await this.load(cell)).join("\n")), true];
+            }catch(e){
+                const mes = (e instanceof Error) ? e.message : String(e);
+                vscode.window.showErrorMessage(`${getLocaleStringBody("message.Loader", "failed")}\n${mes}`);
+                return ["", false];
+            }
+        })();
         exe.start(Date.now());
+        if(!success){
+            exe.end(false);
+            return;
+        }
         exe.clearOutput();
         if(this.calledImmediatelyAfterBlocked()){
             exe.appendOutput(new vscode.NotebookCellOutput([
@@ -247,7 +237,6 @@ class Controller{
             exe.end(false, Date.now());
             return;
         }
-        const code = removeComments(this.load(cell).join("\n"));
         if(!code.trim()){
             exe.end(true, Date.now());
             return;
