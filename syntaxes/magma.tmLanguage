@@ -153,7 +153,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*//\s+)(@uses?)(?:\s+(\d*)(;?))?(.*?)$</string>
+			<string>^(\s*//\s+)(@uses?)(?:\s+([0-9]*)(;?))?(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>

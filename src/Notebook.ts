@@ -159,7 +159,7 @@ class Controller{
     }
     private async readLine(baseUri: vscode.Uri, line: string, currentIdx: number): Promise<string[]>{
         let m: RegExpExecArray | null;
-        const usePattern = /^\s*\/\/\s+@uses?\s+(\d+);?.*?$/;
+        const usePattern = /^\s*\/\/\s+@uses?\s+([0-9]+);?.*?$/;
         const loadPattern = /^\s*load\s+"(.+)";\s*$/;
         m = usePattern.exec(line);
         if(m){
