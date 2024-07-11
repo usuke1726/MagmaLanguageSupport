@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.1.1 - 2024-07-11
+
+- Modified CHANGELOG.md.
+
 ## 0.1.0 - 2024-07-11
 
 - Enabled completions, hovering documentation and jumping definitions in untitled files/notebooks.
