@@ -225,15 +225,18 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
     private numberCompletion(document: vscode.TextDocument, position: vscode.Position, notebook: vscode.NotebookDocument): vscode.CompletionItem[]{
         const pattern = /^\s*\/\/\s+@uses?\s+\d*$/;
         const beforeText = document.lineAt(position.line).text.substring(0, position.character);
+        const cells = notebook.getCells();
+        const selfIndex = cells.find(cell => cell.document.uri.fragment === document.uri.fragment)?.index ?? Infinity;
         if(pattern.test(beforeText)){
-            return notebook.getCells()
-            .filter(cell => cell.kind === vscode.NotebookCellKind.Code)
+            return cells
+            .filter(cell => cell.kind === vscode.NotebookCellKind.Code && cell.index < selfIndex)
             .map(cell => {
                 const text = cell.document.getText();
                 const idx = cell.index;
                 const item = new vscode.CompletionItem(`${idx}`);
                 item.kind = vscode.CompletionItemKind.EnumMember;
                 item.documentation = new vscode.MarkdownString(DocumentParser.wrapWithBlockMagmaCode(text));
+                if(cell.index === selfIndex - 1) item.preselect = true;
                 return item;
             });
         }else{
