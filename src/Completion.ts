@@ -96,6 +96,22 @@ const patterns: ProviderBase[] = [
     }),
     new FunctionLikeProvider("function"),
     new FunctionLikeProvider("procedure"),
+    new ProviderBase(
+        (char) => [" ", "-", "="].includes(char),
+        (beforeText, afterText, wholeLine) => {
+            const prefix = /^\s*([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*/.source;
+            const patterns = [": =", ": -", ":- "];
+            return patterns.some(p => RegExp(`${prefix}${p}`).test(beforeText));
+        },
+        (line, character, wholeText) => {
+            vscode.window.activeTextEditor?.edit(editBuilder => {
+                editBuilder.replace(new vscode.Range(
+                    new vscode.Position(line, character - 2),
+                    new vscode.Position(line, character + 1)
+                ), ":= ");
+            });
+        }
+    )
 ];
 
 const insertTo = (pos: vscode.Position, text: string) => {
