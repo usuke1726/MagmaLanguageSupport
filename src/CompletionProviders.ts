@@ -17,7 +17,6 @@ const exculusiveConditions: Readonly<{
             /^\s*load\s+"([^"]*)/
         ];
         return (
-            scheme === "file" &&
             patterns.some(p => p.test(beforeText))
         );
     },
