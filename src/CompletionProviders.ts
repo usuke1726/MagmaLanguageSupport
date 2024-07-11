@@ -55,6 +55,15 @@ class FunctionComp implements vscode.CompletionItemProvider{
         return [item_func, item_proc];
     }
 };
+class ForwardComp implements vscode.CompletionItemProvider{
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] {
+        if(isExclusive(document, position)) return [];
+        const item = new vscode.CompletionItem("forward");
+        item.insertText = new vscode.SnippetString("forward ${1:name};");
+        item.kind = vscode.CompletionItemKind.Snippet;
+        return [item];
+    }
+};
 
 class IntrinsicComp implements vscode.CompletionItemProvider{
     private initted = false;
@@ -263,6 +272,7 @@ const FullScheme = [
 
 export const registerCompletionProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new FunctionComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new ForwardComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DefinitionComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IntrinsicComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new LoadFileComp(), "@", "/"));
