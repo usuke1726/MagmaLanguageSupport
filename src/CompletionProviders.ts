@@ -139,6 +139,7 @@ class DocTagComp implements vscode.CompletionItemProvider{
 class LoadFileComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]>{
         if(isExclusive(document, position, ["LoadFileComp"])) return [];
+        if(!FileHandler.hasSaveLocation(document.uri)) return [];
         const trigger = context.triggerCharacter;
         Log("LoadFile check start");
         if(trigger === "@"){
@@ -241,72 +242,28 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
     }
 };
 
+const FileScheme = {
+    scheme: "file",
+    language: "magma"
+};
+const UntitledScheme = {
+    scheme: "untitled",
+    language: "magma"
+};
+const NotebookScheme = {
+    scheme: "vscode-notebook-cell",
+    language: "magma"
+};
+const FullScheme = [
+    FileScheme, UntitledScheme, NotebookScheme
+];
 
 export const registerCompletionProviders = (context: vscode.ExtensionContext) => {
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "file",
-            language: "magma"
-        },
-        {
-            scheme: "untitled",
-            language: "magma"
-        },
-        {
-            scheme: "vscode-notebook-cell",
-            language: "magma"
-        }
-    ], new FunctionComp()));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "file",
-            language: "magma"
-        }
-    ], new DefinitionComp()));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "file",
-            language: "magma"
-        },
-        {
-            scheme: "untitled",
-            language: "magma"
-        },
-        {
-            scheme: "vscode-notebook-cell",
-            language: "magma"
-        }
-    ], new IntrinsicComp()));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "file",
-            language: "magma",
-        }
-    ], new LoadFileComp(), "@", "/"));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "file",
-            language: "magma",
-        },
-        {
-            scheme: "untitled",
-            language: "magma"
-        }
-    ], new DefinedCommentComp(), "@"));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "file",
-            language: "magma",
-        },
-        {
-            scheme: "untitled",
-            language: "magma"
-        }
-    ], new DocTagComp(), "@"));
-    context.subscriptions.push(vscode.languages.registerCompletionItemProvider([
-        {
-            scheme: "vscode-notebook-cell",
-            language: "magma"
-        }
-    ], new NotebookUseStatementComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new FunctionComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DefinitionComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IntrinsicComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new LoadFileComp(), "@", "/"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DefinedCommentComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DocTagComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(NotebookScheme, new NotebookUseStatementComp(), "@"));
 };

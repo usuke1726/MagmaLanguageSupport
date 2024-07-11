@@ -7,6 +7,7 @@ import getLocaleStringBody from './locale';
 import getConfig from './config';
 import FileHandler from './FileHandler';
 import { clearSearchedFiles, loadRecursively, removeComments, throwError } from './Loader';
+import DefinitionHandler from './DefinitionHandler';
 const { Log, Output } = LogObject.bind("Notebook");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.Notebook");
 
@@ -184,6 +185,9 @@ class Controller{
         }
         m = loadPattern.exec(line);
         if(m){
+            if(!FileHandler.hasSaveLocation(baseUri)){
+                throw new Error(getLocaleString("loadingAtUntitledFile"));
+            }
             const query = m[1];
             const loadFiles = await FileHandler.resolve(
                 baseUri, query, {
@@ -348,6 +352,14 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
     controller = new Controller();
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
+    vscode.workspace.onDidChangeNotebookDocument(e => {
+        if(e.notebook.notebookType !== ID) return;
+        DefinitionHandler.onDidChangeNotebook(e.notebook);
+    });
+    vscode.workspace.onDidOpenNotebookDocument(notebook => {
+        if(notebook.notebookType !== ID) return;
+        DefinitionHandler.onDidOpenNotebook(notebook);
+    });
 };
 
 export default setNotebookProviders;

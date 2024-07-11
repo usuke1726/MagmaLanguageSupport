@@ -46,11 +46,17 @@ export default class FileHandler{
             return [];
         }
     }
+    static hasSaveLocation(uri: vscode.Uri): boolean{
+        return !uri.fsPath.startsWith("Untitled");
+    }
     static isMagmaFile(uri: vscode.Uri | string): boolean{
         const path = (typeof uri === "string") ? uri : uri.fsPath;
         return this.MagmaExtensions.some(ext => path.endsWith(ext));
     }
     static async resolve(baseUri: vscode.Uri, query: string, options?: ResolveOptionsOptional): Promise<vscode.Uri[]>{
+        if(!this.hasSaveLocation(baseUri)){
+            return [];
+        }
         if(!options) options = {...defaultOptions};
         options.useGlob ??= defaultOptions.useGlob;
         options.maxLength ??= defaultOptions.maxLength;

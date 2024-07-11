@@ -12,6 +12,7 @@
     "config.notebookDisablesVim": "Magma Calculator Notebookでは Vim キーバインドを無効にする\n\n※[Vim 拡張機能](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim)を有効にしている場合のみ機能する",
     "message.DefinitionHandler.openFile": "ファイルの場所を開く",
     "message.DefinitionHandler.notFound": "ファイルが見つかりません．パターン: {0}",
+    "message.DefinitionHandler.loadingAtUntitledFile": "{0}構文を使う前にファイルを保存してください．",
     "message.DefinitionHandler.alreadyDefined": "関数 {0} はMagmaの組み込み関数として定義されています．他の関数名への変更をお勧めします．",
     "message.DefinitionHandler.invalidFunctionType": "{0} は無効な識別子です．\nfunction, procedure, intrinsic のいずれかを指定してください．",
     "message.DefinitionHandler.functionTypeUndefined": "function, procedure, intrinsic のいずれかを指定する必要があります．",
@@ -28,6 +29,7 @@
     "message.Notebook.failedParsing": "エラー：結果のパースに失敗しました",
     "message.Notebook.blocked": "エラー：短時間に実行しすぎたようです．\n少し時間を置いてから再実行してください．(目安: {0}分)",
     "message.Notebook.otherErrors": "エラー：{0}",
+    "message.Notebook.loadingAtUntitledFile": "未保存のファイルではload構文を利用できません．",
     "message.DisableVim.suggestsReloading": "notebookDisablesVimの変更を正常に行うためにウィンドウの再読み込みをお勧めします．",
     "message.DisableVim.reload": "ウィンドウの再読み込み"
 }

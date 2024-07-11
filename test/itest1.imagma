@@ -1,0 +1,1 @@
+[{"kind":2,"language":"magma","value":"load \"@/test3.magma\";\r\n","outputs":"[]"},{"kind":2,"language":"magma","value":"// @use 0\r\nNG();","outputs":"[]"}]
