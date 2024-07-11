@@ -113,7 +113,7 @@ export default class FileHandler{
         }
         return vscode.Uri.joinPath(baseDir, query);
     }
-    private static resolveQuery(query: string): string{
+    static resolveQuery(query: string): string{
         query = query.replaceAll("\\", "/");
         const paths = getConfig().paths;
         const alias = Object.keys(paths).find(key => query.startsWith(key));

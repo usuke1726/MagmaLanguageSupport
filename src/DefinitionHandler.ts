@@ -5,6 +5,7 @@ import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
 import LogObject from './Log';
 import FileHandler from './FileHandler';
+import { makeRe } from 'minimatch';
 import getLocaleStringBody from './locale';
 const { Log, Output } = LogObject.bind("DefinitionHandler");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.DefinitionHandler");
@@ -54,6 +55,9 @@ type SearchResult = {
     uri: vscode.Uri;
     definition: Definition;
 };
+type ExportData = {
+    [fsPath: string]: RegExp;
+};
 
 class DefProvider implements vscode.DefinitionProvider{
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
@@ -76,6 +80,7 @@ class HoverProvider implements vscode.HoverProvider{
 
 export default class DefinitionHandler{
     private static FileCache: Caches = {};
+    private static FileExports: ExportData = {};
     private static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
     private static diagnosticCollection: vscode.DiagnosticCollection;
     private static isEnabled(){
@@ -485,6 +490,7 @@ export default class DefinitionHandler{
         const diagnostics: vscode.Diagnostic[] = [];
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
         const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
+        const exportComment = /^(\s*\/\/\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
@@ -499,6 +505,17 @@ export default class DefinitionHandler{
         const isNotebook = !FileHandler.isMagmaFile(uri);
         const definitions: Definition[] = [];
         const dependencies: Dependency[] = [];
+        Object.entries(this.FileExports).map(([fsPath, pattern]) => {
+            const exportedFrom = vscode.Uri.file(fsPath);
+            Log("Export Check", pattern, uri.fsPath, pattern.test(uri.fsPath));
+            if(pattern.test(uri.fsPath)){
+                Log(`exported from ${fsPath}`);
+                dependencies.push({
+                    location: exportedFrom,
+                    loadsAt: new vscode.Position(0, 0)
+                });
+            }
+        });
         for(const idx of lines.keys()){
             const line = lines[idx];
             let m: RegExpExecArray | null;
@@ -597,6 +614,22 @@ export default class DefinitionHandler{
                             vscode.DiagnosticSeverity.Error
                         ));
                     }
+                }
+                m = exportComment.exec(line);
+                if(m){
+                    const query = m[2];
+                    const filePattern = FileHandler.join(FileHandler.base(uri), FileHandler.resolveQuery(query)).fsPath;
+                    Log("filePattern", filePattern);
+                    try{
+                        const pattern: RegExp | false = makeRe(filePattern.replaceAll("\\", "\\\\"));
+                        if(pattern){
+                            Log("makeRe:", pattern);
+                            this.FileExports[uri.fsPath] = pattern;
+                        }else{
+                            Log("makeRe: false");
+                        }
+                    }catch{}
+                    continue;
                 }
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??

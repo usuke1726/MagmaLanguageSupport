@@ -13,7 +13,7 @@ const exculusiveConditions: Readonly<{
 }> = {
     LoadFileComp: (scheme, beforeText) => {
         const patterns = [
-            /^\s*\/\/\s+@requires?\s+"([^"]*)/,
+            /^\s*\/\/\s+(@requires?|@exports?)\s+"([^"]*)/,
             /^\s*load\s+"([^"]*)/
         ];
         return (
@@ -157,8 +157,9 @@ class LoadFileComp implements vscode.CompletionItemProvider{
             Log("trigger non @");
             const pattern1 = /^\s*\/\/\s+@requires?\s+"([^"]*\/)/;
             const pattern2 = /^\s*load\s+"([^"]*\/)/;
+            const pattern3 = /^\s*\/\/\s+@exports?\s+"([^"]*\/)/;
             const prefix = document.lineAt(position.line).text.substring(0, position.character);
-            const m = pattern1.exec(prefix) ?? pattern2.exec(prefix);
+            const m = pattern1.exec(prefix) ?? pattern2.exec(prefix) ?? pattern3.exec(prefix);
             if(m){
                 Log("fired");
                 const query = m[1];
@@ -171,14 +172,19 @@ class LoadFileComp implements vscode.CompletionItemProvider{
     private requireCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
         const pattern = /^\s*\/\/\s+@/;
         if(!pattern.test(document.lineAt(position.line).text)) return [];
-        const item = new vscode.CompletionItem("require");
-        item.kind = vscode.CompletionItemKind.Snippet;
-        item.insertText = new vscode.SnippetString('require "@/$1";');
-        item.command = {
+        const requireItem = new vscode.CompletionItem("require");
+        const exportItem = new vscode.CompletionItem("export");
+        const command = {
             command: "editor.action.triggerSuggest",
             title: "re-trigger"
         };
-        return [item];
+        requireItem.kind = vscode.CompletionItemKind.Snippet;
+        exportItem.kind = vscode.CompletionItemKind.Snippet;
+        requireItem.insertText = new vscode.SnippetString('require "@/$1";');
+        exportItem.insertText = new vscode.SnippetString('export "@/$1";');
+        requireItem.command = command;
+        exportItem.command = command;
+        return [requireItem, exportItem];
     }
     private async fileCompletion(baseUri: vscode.Uri, query: string): Promise<vscode.CompletionItem[]>{
         const results = await FileHandler.readdir(baseUri, query);
