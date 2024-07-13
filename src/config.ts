@@ -28,7 +28,7 @@ const formatPath = (paths: Paths): Paths => {
     pathsWithoutInvalid["@/"] = "./";
     return pathsWithoutInvalid;
 };
-type EnableCompletion = boolean | {
+type EnableAutoCompletion = boolean | {
     [id: string]: boolean;
 };
 const availableIds: readonly string[] = [
@@ -42,7 +42,7 @@ const availableIds: readonly string[] = [
 "procedure",
 ":=",
 ];
-const formatEnableCompletion = (IDs: EnableCompletion): EnableCompletion => {
+const formatEnableAutoCompletion = (IDs: EnableAutoCompletion): EnableAutoCompletion => {
     if(typeof IDs === "boolean") return IDs;
     return {
         ...Object.fromEntries(availableIds.map(id => [id, true])),
@@ -51,7 +51,7 @@ const formatEnableCompletion = (IDs: EnableCompletion): EnableCompletion => {
         }))
     };
 };
-const isEnableCompletion = (obj: any) => {
+const isEnableAutoCompletion = (obj: any) => {
     if(typeof obj === "boolean") return true;
     return (
         typeof obj === "object" &&
@@ -60,7 +60,7 @@ const isEnableCompletion = (obj: any) => {
 };
 
 type Config = {
-    enableCompletion: EnableCompletion;
+    enableAutoCompletion: EnableAutoCompletion;
     enableHover: boolean;
     enableDefinition: boolean;
     onChangeDelay: number;
@@ -71,7 +71,7 @@ type Config = {
     notebookDisablesVim: boolean;
 };
 const defaultConfig: Config = {
-    enableCompletion: true,
+    enableAutoCompletion: true,
     enableHover: true,
     enableDefinition: true,
     onChangeDelay: 1000,
@@ -83,7 +83,7 @@ const defaultConfig: Config = {
 };
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
-    enableCompletion: val => isEnableCompletion(val),
+    enableAutoCompletion: val => isEnableAutoCompletion(val),
     enableHover: val => typeof val === "boolean",
     enableDefinition: val => typeof val === "boolean",
     onChangeDelay: val => typeof val === "number",
@@ -103,7 +103,7 @@ const isConfig = (obj: any): obj is Config => {
 const format = (obj: Config): Config => {
     const ret = {...obj};
     ret.paths = formatPath(ret.paths);
-    ret.enableCompletion = formatEnableCompletion(ret.enableCompletion);
+    ret.enableAutoCompletion = formatEnableAutoCompletion(ret.enableAutoCompletion);
     return ret;
 };
 

@@ -5,7 +5,7 @@ import LogObject from './Log';
 const { Log } = LogObject.bind("Completion");
 
 const isEnabledID = (id: string): boolean => {
-    const config = getConfig().enableCompletion;
+    const config = getConfig().enableAutoCompletion;
     if(typeof config === "boolean") return config;
     if(!config.hasOwnProperty(id)) return true;
     return config[id];
@@ -197,7 +197,7 @@ const inString = (beforeText: string) => {
 
 export default class CompletionProvider{
     static async exec(e: vscode.TextDocumentChangeEvent){
-        if(getConfig().enableCompletion === false){
+        if(getConfig().enableAutoCompletion === false){
             return;
         }
         const lastChange = e.contentChanges[e.contentChanges.length - 1];

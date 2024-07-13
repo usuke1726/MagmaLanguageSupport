@@ -82,10 +82,10 @@
       "type": "object",
       "title": "MAGMA Language Support",
       "properties": {
-        "MagmaLanguageSupport.enableCompletion": {
+        "MagmaLanguageSupport.enableAutoCompletion": {
           "type": ["boolean", "object"],
           "default": true,
-          "markdownDescription": "%config.enableCompletion%",
+          "markdownDescription": "%config.enableAutoCompletion%",
           "patternProperties": {
             "^(if|for|while|case|repeat|try|function|procedure|:=)$": {
               "type": "boolean"
