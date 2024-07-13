@@ -189,6 +189,37 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
+			<string>^(\s*//\s+)(@appendResult)\s*(;?)(.*?)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>comment.line.double-slash-with-require.magma</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.appendResult-in-comment.magma</string>
+				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>source.end.appendResult-in-comment.magma</string>
+				</dict>
+				<key>4</key>
+				<dict>
+					<key>name</key>
+					<string>comment.line.after-end.appendResult-in-comment.magma</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>$\n?</string>
+			<key>name</key>
+			<string>source.appendResult-in-comment.magma</string>
+		</dict>
+		<dict>
+			<key>begin</key>
 			<string>^(\s*//\s+)(@requires?|@exports?)(?:\s+("[^"]*")(;?))?(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>

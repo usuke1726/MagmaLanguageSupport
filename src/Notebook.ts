@@ -176,7 +176,8 @@ class Controller{
                 const cell = this.cells[idx];
                 if(cell.kind === vscode.NotebookCellKind.Code){
                     Log("FOUND!");
-                    return this.load(this.cells[idx]);
+                    const [code] = await this.load(this.cells[idx]);
+                    return code;
                 }else{
                     Log("is document");
                     return [];
@@ -204,13 +205,18 @@ class Controller{
         }
         return [line];
     }
-    private async load(cell: vscode.NotebookCell): Promise<string[]>{
+    private async load(cell: vscode.NotebookCell): Promise<[string[], boolean]>{
         Log(`load cell ${cell.index}`);
         const idx = cell.index;
         const lines = this.getLines(cell);
-        return (await Promise.all(lines.map(line => {
+        const appendPattern = /^\s*\/\/\s+@appendResult\s*;?.*?$/;
+        const appends = lines.length > 0 && appendPattern.test(lines[0]);
+        if(appends){
+            lines.splice(0, 1);
+        }
+        return [(await Promise.all(lines.map(line => {
             return this.readLine(cell.document.uri, line, idx);
-        }))).flat();
+        }))).flat(), appends];
     }
     async execute(cells: vscode.NotebookCell[], notebook: vscode.NotebookDocument, controller: vscode.NotebookController){
         Log("EXECUTE");
@@ -219,13 +225,14 @@ class Controller{
         this.cells = notebook.getCells();
         const cell = cells.length > 1 ? cells[cells.length-1] : cells[0];
         const exe = controller.createNotebookCellExecution(cell);
-        const [code, success] = await (async () => {
+        const [code, appends, success] = await (async () => {
             try{
-                return [removeComments((await this.load(cell)).join("\n")), true];
+                const [code, appends] = await this.load(cell);
+                return [removeComments(code.join("\n")), appends, true];
             }catch(e){
                 const mes = (e instanceof Error) ? e.message : String(e);
                 vscode.window.showErrorMessage(`${getLocaleStringBody("message.Loader", "failed")}\n${mes}`);
-                return ["", false];
+                return ["", false, false];
             }
         })();
         exe.start(Date.now());
@@ -233,7 +240,7 @@ class Controller{
             exe.end(false);
             return;
         }
-        exe.clearOutput();
+        if(!appends) exe.clearOutput();
         if(this.calledImmediatelyAfterBlocked()){
             exe.appendOutput(new vscode.NotebookCellOutput([
                 vscode.NotebookCellOutputItem.text(getLocaleString("calledImmediately", this.delayMinutesAfterBlocked))

@@ -224,14 +224,17 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
     private tagCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
         const pattern = /^\s*\/\/\s+@/;
         if(pattern.test(document.lineAt(position.line).text)){
-            const item = new vscode.CompletionItem("use");
-            item.kind = vscode.CompletionItemKind.Snippet;
-            item.insertText = "use ";
-            item.command = {
+            const use = new vscode.CompletionItem("use");
+            use.kind = vscode.CompletionItemKind.Snippet;
+            use.insertText = "use ";
+            use.command = {
                 command: "editor.action.triggerSuggest",
                 title: "re-trigger"
             };
-            return [item];
+            const appendResult = new vscode.CompletionItem("appendResult");
+            appendResult.kind = vscode.CompletionItemKind.Snippet;
+            appendResult.insertText = "appendResult;";
+            return [use, appendResult];
         }else{
             return [];
         }
