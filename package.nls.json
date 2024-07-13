@@ -1,7 +1,7 @@
 {
     "command.magmaLoader.run": "execute MagmaLoader",
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
-    "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
+    "config.enableCompletion": "Enables auto completion (e.g. `if ... end if;`)",
     "config.enableHover": "Enables hover provider",
     "config.enableDefinition": "Enables definition provider",
     "config.onChangeDelay": "A delay \\[ms\\] to load file having unsaved change",

@@ -28,9 +28,39 @@ const formatPath = (paths: Paths): Paths => {
     pathsWithoutInvalid["@/"] = "./";
     return pathsWithoutInvalid;
 };
+type EnableCompletion = boolean | {
+    [id: string]: boolean;
+};
+const availableIds: readonly string[] = [
+"if",
+"for",
+"while",
+"case",
+"repeat",
+"try",
+"function",
+"procedure",
+":=",
+];
+const formatEnableCompletion = (IDs: EnableCompletion): EnableCompletion => {
+    if(typeof IDs === "boolean") return IDs;
+    return {
+        ...Object.fromEntries(availableIds.map(id => [id, true])),
+        ...Object.fromEntries(Object.entries(IDs).filter(([id]) => {
+            return availableIds.includes(id);
+        }))
+    };
+};
+const isEnableCompletion = (obj: any) => {
+    if(typeof obj === "boolean") return true;
+    return (
+        typeof obj === "object" &&
+        availableIds.every(id => !obj.hasOwnProperty(id) || typeof obj[id] === "boolean")
+    );
+};
 
 type Config = {
-    enableAutoCompletion: boolean;
+    enableCompletion: EnableCompletion;
     enableHover: boolean;
     enableDefinition: boolean;
     onChangeDelay: number;
@@ -41,7 +71,7 @@ type Config = {
     notebookDisablesVim: boolean;
 };
 const defaultConfig: Config = {
-    enableAutoCompletion: true,
+    enableCompletion: true,
     enableHover: true,
     enableDefinition: true,
     onChangeDelay: 1000,
@@ -53,7 +83,7 @@ const defaultConfig: Config = {
 };
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
-    enableAutoCompletion: val => typeof val === "boolean",
+    enableCompletion: val => isEnableCompletion(val),
     enableHover: val => typeof val === "boolean",
     enableDefinition: val => typeof val === "boolean",
     onChangeDelay: val => typeof val === "number",
@@ -73,6 +103,7 @@ const isConfig = (obj: any): obj is Config => {
 const format = (obj: Config): Config => {
     const ret = {...obj};
     ret.paths = formatPath(ret.paths);
+    ret.enableCompletion = formatEnableCompletion(ret.enableCompletion);
     return ret;
 };
 

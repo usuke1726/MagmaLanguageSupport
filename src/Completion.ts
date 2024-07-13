@@ -2,17 +2,27 @@
 import * as vscode from 'vscode';
 import getConfig from './config';
 import LogObject from './Log';
-const { Log } = LogObject.bind("Config");
+const { Log } = LogObject.bind("Completion");
+
+const isEnabledID = (id: string): boolean => {
+    const config = getConfig().enableCompletion;
+    if(typeof config === "boolean") return config;
+    if(!config.hasOwnProperty(id)) return true;
+    return config[id];
+};
 
 class ProviderBase{
+    private id;
     private trigger;
     private pattern;
     private insertFunc;
     constructor(
+        id: string,
         trigger: string | ((char: string) => boolean) | null,
         pattern: string | RegExp | ((beforeText: string, afterText: string, wholeLine: string) => boolean),
         insert: ((line: number, character: number, wholeText: string[]) => void)
     ){
+        this.id = id;
         this.trigger = trigger;
         this.pattern = pattern;
         this.insertFunc = insert;
@@ -28,6 +38,7 @@ class ProviderBase{
         }
     }
     public test(beforeText: string, afterText: string, wholeLine: string): boolean{
+        if(!isEnabledID(this.id)) return false;
         switch(typeof this.pattern){
             case "function":
                 return this.pattern(beforeText, afterText, wholeLine);
@@ -44,7 +55,7 @@ class ProviderBase{
 
 class IfLikeProvider extends ProviderBase{
     constructor(name: string){
-        super(" ", (beforeText, afterText, wholeLine) => {
+        super(name, " ", (beforeText, afterText, wholeLine) => {
             return RegExp(`^\\s*${name} $`).test(beforeText) && afterText === "";
         }, (line, character, wholeText) => {
             insertToNextLineWithSameTab(`end ${name};`, line, character, wholeText);
@@ -54,6 +65,7 @@ class IfLikeProvider extends ProviderBase{
 class FunctionLikeProvider extends ProviderBase{
     constructor(name: string){
         super(
+            name,
             (c: string) => [" ", "()"].includes(c),
             (beforeText, afterText, wholeLine) => {
                 if(getConfig().functionCompletionType !== "original") return false;
@@ -84,12 +96,12 @@ const patterns: ProviderBase[] = [
     new IfLikeProvider("for"),
     new IfLikeProvider("while"),
     new IfLikeProvider("case"),
-    new ProviderBase("t", (beforeText, afterText, wholeLine) => {
+    new ProviderBase("repeat", "t", (beforeText, afterText, wholeLine) => {
         return /^[ \t]*repeat$/.test(beforeText) && afterText === "";
     }, (line, character, wholeText) => {
         insertToNextLineWithSameTab("until ", line, character, wholeText);
     }),
-    new ProviderBase("y", (beforeText, afterText, wholeLine) => {
+    new ProviderBase("try", "y", (beforeText, afterText, wholeLine) => {
         return /^[ \t]*try$/.test(beforeText) && afterText === "";
     }, (line, character, wholeText) => {
         insertToNextLineWithSameTab(["catch e", "end try;"], line, character, wholeText);
@@ -97,6 +109,7 @@ const patterns: ProviderBase[] = [
     new FunctionLikeProvider("function"),
     new FunctionLikeProvider("procedure"),
     new ProviderBase(
+        ":=",
         (char) => [" ", "-", "="].includes(char),
         (beforeText, afterText, wholeLine) => {
             const prefix = /^\s*([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*/.source;
@@ -184,7 +197,7 @@ const inString = (beforeText: string) => {
 
 export default class CompletionProvider{
     static async exec(e: vscode.TextDocumentChangeEvent){
-        if(!getConfig().enableAutoCompletion){
+        if(getConfig().enableCompletion === false){
             return;
         }
         const lastChange = e.contentChanges[e.contentChanges.length - 1];

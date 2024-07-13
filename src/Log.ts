@@ -5,6 +5,7 @@ class Log{
     private static readonly isDebug: boolean = false;
     private static allowedTags = new Set<string>([
         "debug", "important",
+        // "Completion",
         // "DisableVim",
         // "Notebook",
         // "Config",

@@ -1,7 +1,7 @@
 {
     "command.magmaLoader.run": "MagmaLoaderを実行",
     "command.magmaNotebook.createNewNotebook": "Magmaノートブックを新規作成",
-    "config.enableAutoCompletion": "自動補完を有効化する (例 `if ... end if;`)",
+    "config.enableCompletion": "自動補完を有効化する (例 `if ... end if;`)",
     "config.enableHover": "Hover機能を有効化する",
     "config.enableDefinition": "Definition機能を有効化する",
     "config.onChangeDelay": "未保存の変更があったときにファイルの再読み込みを開始するまでの遅延時間 \\[ms\\]",
