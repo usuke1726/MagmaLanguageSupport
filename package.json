@@ -48,7 +48,10 @@
           "light": "./images/icon-imagma-light.png"
         },
         "extensions": [
-          ".imagma"
+          ".imagma",
+          ".icmagma",
+          ".imag",
+          ".icmag"
         ]
       },
       {
@@ -190,6 +193,15 @@
         "selector": [
           {
             "filenamePattern": "*.imagma"
+          },
+          {
+            "filenamePattern": "*.icmagma"
+          },
+          {
+            "filenamePattern": "*.imag"
+          },
+          {
+            "filenamePattern": "*.icmag"
           }
         ]
       }
