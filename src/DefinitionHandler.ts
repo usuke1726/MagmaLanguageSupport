@@ -56,7 +56,7 @@ type SearchResult = {
     definition: Definition;
 };
 type ExportData = {
-    [fsPath: string]: RegExp;
+    [fsPath: string]: RegExp[];
 };
 
 class DefProvider implements vscode.DefinitionProvider{
@@ -505,10 +505,10 @@ export default class DefinitionHandler{
         const isNotebook = !FileHandler.isMagmaFile(uri);
         const definitions: Definition[] = [];
         const dependencies: Dependency[] = [];
-        Object.entries(this.FileExports).map(([fsPath, pattern]) => {
+        const fileExports: RegExp[] = [];
+        Object.entries(this.FileExports).map(([fsPath, patterns]) => {
             const exportedFrom = vscode.Uri.file(fsPath);
-            Log("Export Check", pattern, uri.fsPath, pattern.test(uri.fsPath));
-            if(pattern.test(uri.fsPath)){
+            if(patterns.some(pattern => pattern.test(uri.fsPath))){
                 Log(`exported from ${fsPath}`);
                 dependencies.push({
                     location: exportedFrom,
@@ -629,7 +629,7 @@ export default class DefinitionHandler{
                         const pattern: RegExp | false = makeRe(filePattern.replaceAll("\\", "\\\\"));
                         if(pattern){
                             Log("makeRe:", pattern);
-                            this.FileExports[uri.fsPath] = pattern;
+                            fileExports.push(pattern);
                         }else{
                             Log("makeRe: false");
                         }
@@ -724,6 +724,7 @@ export default class DefinitionHandler{
             }
         }
         this.diagnosticCollection.set(uri, [...diagnostics]);
+        this.FileExports[uri.fsPath] = fileExports;
         dependencies.reverse();
         definitions.reverse();
         Log(`Cache(${uri.path})`, definitions, dependencies);
