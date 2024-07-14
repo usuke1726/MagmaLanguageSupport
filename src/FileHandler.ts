@@ -1,11 +1,12 @@
 
 import * as vscode from 'vscode';
 import fs from 'node:fs/promises';
-import path from 'path';
 import { glob } from 'glob';
 import LogObject from './Log';
 import getConfig from './config';
-const { Log } = LogObject.bind("FileHandler");
+import getLocaleStringBody from './locale';
+const { Log, Output } = LogObject.bind("FileHandler");
+const getLocaleString = getLocaleStringBody.bind(undefined, "message.FileHandler");
 
 type SearchResults = {
     name: string;
@@ -42,7 +43,7 @@ export default class FileHandler{
             Log(items);
             return items;
         }catch(e){
-            Log(`Errored: ${e}`);
+            Output(`Error at readdir (baseUri: ${baseUri.fsPath}, query: ${query}): ${e}`);
             return [];
         }
     }
@@ -85,9 +86,17 @@ export default class FileHandler{
         }
     }
     static async readFile(uri: vscode.Uri): Promise<string[]>{
-        return (new TextDecoder()).decode(
-            await vscode.workspace.fs.readFile(uri)
-        ).replaceAll("\r", "").split("\n");
+        try{
+            return (new TextDecoder()).decode(
+                await vscode.workspace.fs.readFile(uri)
+            ).replaceAll("\r", "").split("\n");
+        }catch(e){
+            const mes = e instanceof Error ? e.message : String(e);
+            const fullMes = `${getLocaleString("failedToReadFile", uri.fsPath)} (${mes})`;
+            Output(fullMes);
+            vscode.window.showErrorMessage(fullMes);
+            return [];
+        }
     }
     static async exists(uri: vscode.Uri): Promise<boolean>{
         try{
