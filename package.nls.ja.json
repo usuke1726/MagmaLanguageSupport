@@ -31,5 +31,15 @@
     "message.Notebook.otherErrors": "エラー：{0}",
     "message.Notebook.loadingAtUntitledFile": "未保存のファイルではload構文を利用できません．",
     "message.DisableVim.suggestsReloading": "notebookDisablesVimの変更を正常に行うためにウィンドウの再読み込みをお勧めします．",
-    "message.DisableVim.reload": "ウィンドウの再読み込み"
+    "message.DisableVim.reload": "ウィンドウの再読み込み",
+    "message.Completion.appendResult": "これまでの実行結果を削除しないようにします．\\\n(実行結果を追加していきます)",
+    "message.Completion.use": "前のセルを現在のセルに組み込みます．\n\n引数として，セルのIndex番号を指定する必要があります．\n\n例：\n```\n// @use 1\n```",
+    "message.Completion.defined": "明示的に，指定する関数が定義されていることにします．\n\n特に，Magmaの組み込み関数にドキュメントを記述する際に有用です．\n\n例：\n```\n/**\n *  整数nが素数かどうかを判定します．\n *  [公式ドキュメント](URL)\n */\n// @defined intrinsic IsPrime(n);\n```",
+    "message.Completion.require": "このファイルは，指定したGlobパターンのファイルが事前に読み込まれていることを要求します．\n\n`load` 構文が別の場所で指定されていても，このファイル上で定義ジャンプ等が可能になります．",
+    "message.Completion.export": "このファイルは，指定したGlobパターンのすべてのファイルにおいて読み込まれることを想定します．\n\n`@require` 構文をいちいち記述することなく，定義ジャンプ等が可能になります．",
+    "message.Completion.param": "関数の引数の情報を記述します．\n\n例：\n```\n/**\n *  @param x x座標の値\n *  @param {RngIntElt} idx 添字\n */\n```",
+    "message.Completion.paramAlias": "※`@param` タグと同じ",
+    "message.Completion.returns": "関数の返り値の情報を記述します．",
+    "message.Completion.example": "関数の使い方の例を紹介します．\n\nこのタグ内の文章は，すべてMagmaコードとして扱われます．(ハイライトはされません)\n\n例：\n```\n/**\n *  @example\n *  res := foo();\n *  print(res);\n *  @remarks\n *  次のタグが現れるまでコード扱い\n */\n```",
+    "message.Completion.remarks": "特記事項を記述します．"
 }

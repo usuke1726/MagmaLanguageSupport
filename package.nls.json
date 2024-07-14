@@ -31,5 +31,15 @@
     "message.Notebook.otherErrors": "Error: {0}",
     "message.Notebook.loadingAtUntitledFile": "You cannot load files at the unsaved file.",
     "message.DisableVim.suggestsReloading": "Window reloading is recommended to change the configuration notebookDisablesVim successfully.",
-    "message.DisableVim.reload": "Reload the window"
+    "message.DisableVim.reload": "Reload the window",
+    "message.Completion.appendResult": "Appends execution results, not deletes previous results.",
+    "message.Completion.use": "Joins previous cell to the current cell. The index of the previous cell must be specified.\n\nexample:\n```\n// @use 1\n```",
+    "message.Completion.defined": "This function is assumed to be defined explicitly.\n\nThis is useful when writing documentation for Magma's built-in functions.\n\nexample:\n```\n/**\n *  Returns whether the \n *  integer n is a prime.\n *  see the [handbook](the url)\n */\n// @defined intrinsic IsPrime(n);\n```",
+    "message.Completion.require": "This file requires that the files of specified glob pattern has been preloaded.\n\nEven if the `load` statement is not included in the file, it is possible to jump definitions, etc. in this file.",
+    "message.Completion.export": "This file is assumed to be read in all files of the specified glob pattern.\n\nEven if `@require` statement is not included in each of the files of the pattern, it is possible to jump definition, etc. in the files.",
+    "message.Completion.param": "Specifies a param or an argument of this function and its information.\n\nexample:\n```\n/**\n *  @param x The x coordinate\n *  @param {RngIntElt} idx The index\n */\n```",
+    "message.Completion.paramAlias": "(same as `@param`)",
+    "message.Completion.returns": "Specifies imformation of the return value.",
+    "message.Completion.example": "Specifies usage of this function.",
+    "message.Completion.remarks": "Specifies remarks."
 }

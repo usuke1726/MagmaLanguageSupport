@@ -6,7 +6,9 @@ import DefinitionHandler from './DefinitionHandler';
 import FileHandler from './FileHandler';
 import DocumentParser from './DocumentParser';
 import LogObject from './Log';
+import getLocaleStringBody from './locale';
 const { Log } = LogObject.bind("CompletionProvider");
+const getLocaleString = getLocaleStringBody.bind(undefined, "message.Completion");
 
 const exculusiveConditions: Readonly<{
     [key: string]: (scheme: string, beforeText: string) => boolean
@@ -110,6 +112,7 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
             const item = new vscode.CompletionItem("defined");
             item.kind = vscode.CompletionItemKind.Snippet;
             item.insertText = new vscode.SnippetString('defined ${1|intrinsic,function,procedure|} ${2:functionName}();');
+            item.documentation = new vscode.MarkdownString(getLocaleString("defined"));
             return [item];
         }else{
             return [];
@@ -120,6 +123,20 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
 class DocTagComp implements vscode.CompletionItemProvider{
     private readonly paramTags = ["param", "arg", "argument"];
     private readonly reservedTags = ["returns", "example", "remarks"];
+    private tagToLocaleStringKey(tag: string){
+        return this.paramTags.includes(tag) ? "param" : tag;
+    }
+    private tagToDocument(tag: string): vscode.MarkdownString{
+        const body = getLocaleString(this.tagToLocaleStringKey(tag));
+        const prefix = (() => {
+            if(this.paramTags.includes(tag) && tag !== "param"){
+                return getLocaleString("paramAlias") + "\n\n";
+            }else{
+                return "";
+            }
+        })();
+        return new vscode.MarkdownString(`${prefix}${body}`);
+    }
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
         if(isExclusive(document, position)) return [];
         const trigger = context.triggerCharacter;
@@ -129,12 +146,14 @@ class DocTagComp implements vscode.CompletionItemProvider{
             const normalItems = [...this.reservedTags, ...this.paramTags].map(tag => {
                 const item = new vscode.CompletionItem(tag);
                 item.kind = vscode.CompletionItemKind.Keyword;
+                item.documentation = this.tagToDocument(tag);
                 return item;
             });
             const snippetItems = [...this.paramTags].map(tag => {
                 const item = new vscode.CompletionItem(`${tag} {Type} Variable`);
                 item.insertText = new vscode.SnippetString(`${tag} {\${1:type}} \${2:variable}`);
                 item.sortText = `~with-type-${tag}`;
+                item.documentation = this.tagToDocument(tag);
                 return item;
             });
             return [...normalItems, ...snippetItems];
@@ -184,6 +203,8 @@ class LoadFileComp implements vscode.CompletionItemProvider{
         exportItem.insertText = new vscode.SnippetString('export "@/$1";');
         requireItem.command = command;
         exportItem.command = command;
+        requireItem.documentation = new vscode.MarkdownString(getLocaleString("require"));
+        exportItem.documentation = new vscode.MarkdownString(getLocaleString("export"));
         return [requireItem, exportItem];
     }
     private async fileCompletion(baseUri: vscode.Uri, query: string): Promise<vscode.CompletionItem[]>{
@@ -231,9 +252,11 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
                 command: "editor.action.triggerSuggest",
                 title: "re-trigger"
             };
+            use.documentation = new vscode.MarkdownString(getLocaleString("use"));
             const appendResult = new vscode.CompletionItem("appendResult");
             appendResult.kind = vscode.CompletionItemKind.Snippet;
             appendResult.insertText = "appendResult;";
+            appendResult.documentation = new vscode.MarkdownString(getLocaleString("appendResult"));
             return [use, appendResult];
         }else{
             return [];
