@@ -617,6 +617,9 @@ export default class DefinitionHandler{
                 }
                 m = exportComment.exec(line);
                 if(m){
+                    if(isNotebook){
+                        continue;
+                    }
                     const query = m[2];
                     const filePattern = FileHandler.join(FileHandler.base(uri), FileHandler.resolveQuery(query)).fsPath;
                     Log("filePattern", filePattern);

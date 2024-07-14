@@ -205,7 +205,11 @@ class LoadFileComp implements vscode.CompletionItemProvider{
         exportItem.command = command;
         requireItem.documentation = new vscode.MarkdownString(getLocaleString("require"));
         exportItem.documentation = new vscode.MarkdownString(getLocaleString("export"));
-        return [requireItem, exportItem];
+        if(document.uri.scheme === "vscode-notebook-cell"){
+            return [requireItem];
+        }else{
+            return [requireItem, exportItem];
+        }
     }
     private async fileCompletion(baseUri: vscode.Uri, query: string): Promise<vscode.CompletionItem[]>{
         const results = await FileHandler.readdir(baseUri, query);
