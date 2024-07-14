@@ -8,8 +8,27 @@ const getLocaleString = getLocaleStringBody.bind(undefined, "message.DisableVim"
 
 let isVimActive: boolean = false;
 let isDisabled: boolean = false;
+const maxCount = 20;
+let count = 0;
+const interval = 500;
+let initted = false;
 
 const init = () => {
+    const vimExtension = vscode.extensions.getExtension("vscodevim.vim");
+    if(!vimExtension){
+        initted = true;
+        return;
+    }
+    if(!vimExtension.isActive){
+        count++;
+        if(count < maxCount){
+            setTimeout(init, interval);
+        }else{
+            initted = true;
+        }
+        return;
+    }
+    initted = true;
     try{
         const VimConfig = vscode.workspace.getConfiguration("vim");
         const disabled = VimConfig.get<boolean>("disableExtension");
@@ -20,6 +39,10 @@ const init = () => {
 };
 
 const setDisableVim = (disabled: boolean) => {
+    if(!initted){
+        setTimeout(() => setDisableVim(disabled), interval);
+        return;
+    }
     if(!isVimActive) return;
     Log("setDisableVim", isDisabled, disabled);
     if(isDisabled !== disabled){
@@ -35,6 +58,7 @@ const setDisableVim = (disabled: boolean) => {
 };
 
 let previousScheme: string | undefined = undefined;
+let isInitial = true;
 const setDisableVimProviders = (context: vscode.ExtensionContext) => {
     Log("DisableVim activated");
     init();
@@ -66,6 +90,12 @@ const setDisableVimProviders = (context: vscode.ExtensionContext) => {
         const newScheme = e?.document.uri.scheme;
         Log(newScheme);
         const notebookScheme = "vscode-notebook-cell";
+        if(isInitial && newScheme === notebookScheme){
+            isInitial = false;
+            Log("notebook initially opened: skip");
+            return;
+        }
+        isInitial = false;
         if(newScheme === undefined){
             Log("scheme is undefined");
         }else if(newScheme !== notebookScheme){
