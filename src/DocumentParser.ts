@@ -16,10 +16,17 @@ export default class DocumentParser{
         this.uri = uri;
         this.lines = [];
     }
-    private reset(){
+    reset(){
         this.positionLine = undefined;
         this.firstLine = undefined;
         this.lines = [];
+        this.resetTag();
+    }
+    resetTag(){
+        this.tokenCount = 0;
+        this.firstToken = undefined;
+        this.tag = undefined;
+        this.buffer = [];
     }
     setPositionLine(line: number){
         this.positionLine = line;
@@ -145,10 +152,7 @@ export default class DocumentParser{
         }
         this.lines.push("");
         this.lines.push(out);
-        this.tokenCount = 0;
-        this.firstToken = undefined;
-        this.tag = undefined;
-        this.buffer = [];
+        this.resetTag();
     }
     static wrapWithInlineCode(code: string){
         const num = Math.max(0, ...[...code.matchAll(/`+/g)].map(m => m[0].length)) + 1;

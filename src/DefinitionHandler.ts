@@ -525,12 +525,14 @@ export default class DefinitionHandler{
                 if(m){
                     Log("inlineComment", line);
                     scope = "global";
+                    parser.reset();
                     parser.send(m[1]?.trim());
                     continue;
                 }
                 m = startComment.exec(line);
                 if(m){
                     scope = "inComment";
+                    parser.reset();
                     parser.send(m[1]?.trimStart());
                     continue;
                 }
