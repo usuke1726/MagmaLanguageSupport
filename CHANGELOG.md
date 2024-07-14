@@ -1,6 +1,11 @@
 
 # Change Log
 
+## 0.2.1 - 2024-07-14
+
+- Fixed a bug that the statement `@export` does not work correctly.
+- Fixed a bug not catching file read errors.
+
 ## 0.2.0 - 2024-07-14
 
 - Newly supports other notebook file extensions `.imag`, `.icmag`, `.icmagma`.
@@ -9,8 +14,8 @@
 - Added a new command `extension.magmaLoader.openLoadingResult`
 - Added a new comment statement `@appendResult`. (only available in notebooks)
 - Added documentation of suggestions.
-- Fixed the bug that suggestions include intrinsics at `@require` statements in untitled files.
-- Fixed the bug that the disabling Vim does not work. (perhaps be still incomplete?)
+- Fixed a bug that suggestions include intrinsics at `@require` statements in untitled files.
+- Fixed a bug that the disabling Vim does not work. (perhaps be still incomplete?)
 
 ## 0.1.1 - 2024-07-11
 
