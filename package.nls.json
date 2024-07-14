@@ -15,7 +15,7 @@
     "message.DefinitionHandler.notFound": "Files not found. pattern: {0}",
     "message.DefinitionHandler.loadingAtUntitledFile": "Save this file in order to use {0} statements",
     "message.DefinitionHandler.alreadyDefined": "The function {0} has already been defined as intrinsic. It is recommended to change the name.",
-    "message.DefinitionHandler.invalidFunctionType": "{0} is invalid.\nOnly function, procedure, and intrinsic are avaiable.",
+    "message.DefinitionHandler.invalidFunctionType": "{0} is invalid.\nOnly function, procedure, and intrinsic are available.",
     "message.DefinitionHandler.functionTypeUndefined": "You need to add function, procedure, or intrinsic.",
     "message.DefinitionHandler.missingArguments": "You need to add arguments",
     "message.Loader.notFound": "The file {0} was not found.",
@@ -40,7 +40,7 @@
     "message.Completion.export": "This file is assumed to be read in all files of the specified glob pattern.\n\nEven if `@require` statement is not included in each of the files of the pattern, it is possible to jump definition, etc. in the files.",
     "message.Completion.param": "Specifies a param or an argument of this function and its information.\n\nexample:\n```\n/**\n *  @param x The x coordinate\n *  @param {RngIntElt} idx The index\n */\n```",
     "message.Completion.paramAlias": "(same as `@param`)",
-    "message.Completion.returns": "Specifies imformation of the return value.",
+    "message.Completion.returns": "Specifies information of the return value.",
     "message.Completion.example": "Specifies usage of this function.",
     "message.Completion.remarks": "Specifies remarks."
 }

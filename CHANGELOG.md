@@ -1,6 +1,17 @@
 
 # Change Log
 
+## 0.2.0 - 2024-07-14
+
+- Newly supports other notebook file extensions `.imag`, `.icmag`, `.icmagma`.
+- Newly supports type-specific setting `enableCompletion`.
+- Added a new comment statement `@export`. (only available in non-notebook files)
+- Added a new command `extension.magmaLoader.openLoadingResult`
+- Added a new comment statement `@appendResult`. (only available in notebooks)
+- Added documentation of suggestions.
+- Fixed the bug that suggestions include intrinsics at `@require` statements in untitled files.
+- Fixed the bug that the disabling Vim does not work. (perhaps be still incomplete?)
+
 ## 0.1.1 - 2024-07-11
 
 - Modified CHANGELOG.md.

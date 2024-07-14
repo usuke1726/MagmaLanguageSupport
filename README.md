@@ -32,9 +32,11 @@ This extension adds language support and IntelliSense for [Magma computational a
         - `function ... end function;`
         - `procedure ... end procedure;`
 - Magma Calculator Notebooks
+    - The file extensions `.imagma`, `.icmagma`, `.imag` and `.icmag` are available as the notebooks.
     - Executes at Magma Calculator.
     - Only the last code is executed. (Even when selecting the "Run All")
     - `// @use {cell index}` enables to load previous code blocks.
+    - `// @appendResult` enables to append execute results, not overwriting.
     - Automatically disables [Vim Extension](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim) on the notebooks.
 
 ## License
