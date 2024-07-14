@@ -1,5 +1,6 @@
 {
     "command.magmaLoader.run": "execute MagmaLoader",
+    "command.magmaLoader.openLoadingResult": "execute MagmaLoader and open the result",
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
     "config.enableHover": "Enables hover provider",

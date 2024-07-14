@@ -102,7 +102,7 @@ export const load = async (uri: vscode.Uri): Promise<string> => {
     return await loadRecursively(uri, uri);
 };
 
-const main = async () => {
+const main = async (callback: (text: string) => void) => {
     Output("=== run ===");
     Log("MagmaLoader");
     const editor = vscode.window.activeTextEditor;
@@ -123,7 +123,7 @@ const main = async () => {
             const text = await load(editor.document.uri);
             Log("=== OUTPUT ===");
             Log(text);
-            await vscode.env.clipboard.writeText(text);
+            callback(text);
         }catch(e){
             const mes = (e instanceof Error) ? e.message : String(e);
             vscode.window.showErrorMessage(`${getLocaleString("failed")}\n${mes}`);
@@ -133,6 +133,12 @@ const main = async () => {
 
 export const setMagmaLoaderCommand = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaLoader.run", () => {
-        main();
+        main(text => vscode.env.clipboard.writeText(text));
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaLoader.openLoadingResult", () => {
+        main(text => vscode.workspace.openTextDocument({
+            content: text,
+            language: "magma"
+        }).then(document => vscode.window.showTextDocument(document)));
     }));
 };

@@ -154,10 +154,14 @@
         "icon": "$(play)"
       },
       {
+        "command": "extension.magmaLoader.openLoadingResult",
+        "title": "%command.magmaLoader.openLoadingResult%",
+        "category": "Magma"
+      },
+      {
         "command": "extension.magmaNotebook.createNewNotebook",
         "title": "%command.magmaNotebook.createNewNotebook%",
-        "category": "Create",
-        "icon": "$(play)"
+        "category": "Create"
       }
     ],
     "menus": {
@@ -178,6 +182,11 @@
       {
         "command": "extension.magmaLoader.run",
         "key": "F5",
+        "when": "editorTextFocus && editorLangId == 'magma'"
+      },
+      {
+        "command": "extension.magmaLoader.openLoadingResult",
+        "key": "shift+F5",
         "when": "editorTextFocus && editorLangId == 'magma'"
       },
       {
