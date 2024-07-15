@@ -33,6 +33,8 @@
     "message.Notebook.blocked": "Error: You executed codes too frequently.\nPlease wait for about {0} minutes",
     "message.Notebook.otherErrors": "Error: {0}",
     "message.Notebook.loadingAtUntitledFile": "You cannot load files at the unsaved file.",
+    "message.Notebook.selectRemovingOutputs": "Please select the indices of the outputs to be removed.",
+    "message.Notebook.buttonRemovingOutputs": "Remove the Outputs",
     "message.DisableVim.suggestsReloading": "Window reloading is recommended to change the configuration notebookDisablesVim successfully.",
     "message.DisableVim.reload": "Reload the window",
     "message.Completion.append": "Appends execution results, not deletes previous results.",

@@ -121,11 +121,23 @@ class Serializer implements vscode.NotebookSerializer{
 };
 
 class Status implements vscode.NotebookCellStatusBarItemProvider{
-    provideCellStatusBarItems(cell: vscode.NotebookCell): vscode.NotebookCellStatusBarItem {
-        return {
+    provideCellStatusBarItems(cell: vscode.NotebookCell): vscode.NotebookCellStatusBarItem[] {
+        const removeButton = cell.outputs.length ? [{
             alignment: vscode.NotebookCellStatusBarAlignment.Right,
-            text: `Index: ${cell.index}`
-        };
+            text: getLocaleString("buttonRemovingOutputs"),
+            command: {
+                command: "extension.magmaNotebook.removeCellOutput",
+                title: `delete cell (index ${cell.index})`,
+                arguments: [cell]
+            }
+        }] : [];
+        return [
+            ...removeButton,
+            {
+                alignment: vscode.NotebookCellStatusBarAlignment.Right,
+                text: `Index: ${cell.index}`
+            },
+        ];
     }
 }
 
@@ -358,14 +370,55 @@ class Controller{
             };
         }
     }
+    removeOutputs(cell: vscode.NotebookCell, indices: number[]){
+        const newOutputs = cell.outputs.filter((_o, idx) => !indices.includes(idx));
+        const exe = this.controller.createNotebookCellExecution(cell);
+        exe.start();
+        exe.replaceOutput(newOutputs);
+        exe.end(true);
+    }
+};
+const controller: Controller = new Controller();
+
+const removeCellOutput = async (cell: vscode.NotebookCell) => {
+    const length = cell.outputs.length;
+    if(!length) return;
+    if(length === 1){
+        controller.removeOutputs(cell, [0]);
+        return;
+    }
+    const indices = [...Array(length).keys()];
+    const decoder = new TextDecoder();
+    const maxLength = 80;
+    const format = (desc: string) => {
+        desc = desc.replaceAll("\r", "").replaceAll("\n", " ").trim();
+        if(desc.length > maxLength){
+            return `${desc.substring(0, maxLength)}...`;
+        }else{
+            return desc;
+        }
+    };
+    const items: vscode.QuickPickItem[] = indices.map(i => {
+        const output = cell.outputs[i].items[0];
+        const description = format(decoder.decode(output?.data)) ?? "";
+        return {
+            label: `${i}`,
+            description
+        };
+    });
+    const res = await vscode.window.showQuickPick(items, {
+        canPickMany: true,
+        title: getLocaleString("selectRemovingOutputs")
+    });
+    if(res && res.length){
+        const removed = res.map(s => Number(s.label));
+        controller.removeOutputs(cell, removed);
+    }
 };
 
-
-let controller: Controller;
 const setNotebookProviders = (context: vscode.ExtensionContext) => {
     Log("Notebook activated");
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
-    controller = new Controller();
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
     vscode.workspace.onDidChangeNotebookDocument(e => {
         if(e.notebook.notebookType !== ID) return;
@@ -375,6 +428,12 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
         if(notebook.notebookType !== ID) return;
         DefinitionHandler.onDidOpenNotebook(notebook);
     });
+    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.removeCellOutput", (...args) => {
+        try{
+            const cell = args[0] as vscode.NotebookCell;
+            removeCellOutput(cell).catch();
+        }catch{}
+    }));
 };
 
 export default setNotebookProviders;

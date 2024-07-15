@@ -168,12 +168,23 @@
         "command": "extension.magmaNotebook.createNewNotebook",
         "title": "%command.magmaNotebook.createNewNotebook%",
         "category": "Create"
+      },
+      {
+        "command": "extension.magmaNotebook.removeCellOutput",
+        "title": "Removes selected outputs of a cell",
+        "category": "Notebook"
       }
     ],
     "menus": {
       "file/newFile": [
         {
           "command": "extension.magmaNotebook.createNewNotebook"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "extension.magmaNotebook.removeCellOutput",
+          "when": "false"
         }
       ],
       "editor/title": [
