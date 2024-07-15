@@ -148,6 +148,7 @@ class Controller{
     };
     private cells: vscode.NotebookCell[] = [];
     private lastTimeBlocked: Date | undefined = undefined;
+    private overwrites: boolean = false;
     private readonly delayMinutesAfterBlocked = 10;
     constructor(){
         this.controller = vscode.notebooks.createNotebookController(this.id, this.type, this.label);
@@ -162,6 +163,16 @@ class Controller{
         let m: RegExpExecArray | null;
         const usePattern = /^\s*\/\/\s+@uses?\s+([0-9]+);?.*?$/;
         const loadPattern = /^\s*load\s+"(.+)";\s*$/;
+        const appendPattern = /^\s*\/\/\s+@append(Results?)?\s*;?.*?$/;
+        const overwritePattern = /^\s*\/\/\s+@overwrite(Results?)?\s*;?.*?$/;
+        if(appendPattern.test(line)){
+            this.overwrites = false;
+            return [];
+        }
+        if(overwritePattern.test(line)){
+            this.overwrites = true;
+            return [];
+        }
         m = usePattern.exec(line);
         if(m){
             Log("use hit", m[1]);
@@ -176,8 +187,7 @@ class Controller{
                 const cell = this.cells[idx];
                 if(cell.kind === vscode.NotebookCellKind.Code){
                     Log("FOUND!");
-                    const [code] = await this.load(this.cells[idx]);
-                    return code;
+                    return this.load(this.cells[idx]);
                 }else{
                     Log("is document");
                     return [];
@@ -205,18 +215,13 @@ class Controller{
         }
         return [line];
     }
-    private async load(cell: vscode.NotebookCell): Promise<[string[], boolean]>{
+    private async load(cell: vscode.NotebookCell): Promise<string[]>{
         Log(`load cell ${cell.index}`);
         const idx = cell.index;
         const lines = this.getLines(cell);
-        const appendPattern = /^\s*\/\/\s+@appendResult\s*;?.*?$/;
-        const appends = lines.length > 0 && appendPattern.test(lines[0]);
-        if(appends){
-            lines.splice(0, 1);
-        }
-        return [(await Promise.all(lines.map(line => {
+        return (await Promise.all(lines.map(line => {
             return this.readLine(cell.document.uri, line, idx);
-        }))).flat(), appends];
+        }))).flat();
     }
     async execute(cells: vscode.NotebookCell[], notebook: vscode.NotebookDocument, controller: vscode.NotebookController){
         Log("EXECUTE");
@@ -225,22 +230,25 @@ class Controller{
         this.cells = notebook.getCells();
         const cell = cells.length > 1 ? cells[cells.length-1] : cells[0];
         const exe = controller.createNotebookCellExecution(cell);
-        const [code, appends, success] = await (async () => {
+        this.overwrites = getConfig().notebookOutputResultMode === "overwrite";
+        const [code, success] = await (async () => {
             try{
-                const [code, appends] = await this.load(cell);
-                return [removeComments(code.join("\n")), appends, true];
+                const code = await this.load(cell);
+                Log(code);
+                return [removeComments(code.join("\n")), true];
             }catch(e){
                 const mes = (e instanceof Error) ? e.message : String(e);
                 vscode.window.showErrorMessage(`${getLocaleStringBody("message.Loader", "failed")}\n${mes}`);
-                return ["", false, false];
+                return ["", false];
             }
         })();
+        Log(code);
         exe.start(Date.now());
         if(!success){
             exe.end(false);
             return;
         }
-        if(!appends) exe.clearOutput();
+        if(this.overwrites) exe.clearOutput();
         if(this.calledImmediatelyAfterBlocked()){
             exe.appendOutput(new vscode.NotebookCellOutput([
                 vscode.NotebookCellOutputItem.text(getLocaleString("calledImmediately", this.delayMinutesAfterBlocked))

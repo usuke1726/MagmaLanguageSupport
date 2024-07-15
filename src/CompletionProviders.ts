@@ -257,11 +257,15 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
                 title: "re-trigger"
             };
             use.documentation = new vscode.MarkdownString(getLocaleString("use"));
-            const appendResult = new vscode.CompletionItem("appendResult");
-            appendResult.kind = vscode.CompletionItemKind.Snippet;
-            appendResult.insertText = "appendResult;";
-            appendResult.documentation = new vscode.MarkdownString(getLocaleString("appendResult"));
-            return [use, appendResult];
+            const append = new vscode.CompletionItem("append");
+            append.kind = vscode.CompletionItemKind.Snippet;
+            append.insertText = "append;";
+            append.documentation = new vscode.MarkdownString(getLocaleString("append"));
+            const overwrite = new vscode.CompletionItem("overwrite");
+            overwrite.kind = vscode.CompletionItemKind.Snippet;
+            overwrite.insertText = "overwrite;";
+            overwrite.documentation = new vscode.MarkdownString(getLocaleString("overwrite"));
+            return [use, append, overwrite];
         }else{
             return [];
         }

@@ -68,6 +68,7 @@ type Config = {
     warnsWhenRedefiningIntrinsic: boolean;
     paths: Paths;
     notebookSavesOutputs: boolean;
+    notebookOutputResultMode: "append" | "overwrite";
     notebookDisablesVim: boolean;
 };
 const defaultConfig: Config = {
@@ -79,6 +80,7 @@ const defaultConfig: Config = {
     warnsWhenRedefiningIntrinsic: true,
     paths: {},
     notebookSavesOutputs: true,
+    notebookOutputResultMode: "append",
     notebookDisablesVim: true,
 };
 type ConfigKey = keyof Config;
@@ -91,6 +93,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",
     paths: val => isPaths(val),
     notebookSavesOutputs: val => typeof val === "boolean",
+    notebookOutputResultMode: val => val === "append" || val === "overwrite",
     notebookDisablesVim: val => typeof val === "boolean",
 };
 const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];

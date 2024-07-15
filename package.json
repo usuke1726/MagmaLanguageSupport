@@ -139,6 +139,12 @@
           "default": true,
           "markdownDescription": "%config.notebookSavesOutputs%"
         },
+        "MagmaLanguageSupport.notebookOutputResultMode": {
+          "type": "string",
+          "enum": ["append", "overwrite"],
+          "default": "append",
+          "markdownDescription": "%config.notebookOutputResultMode%"
+        },
         "MagmaLanguageSupport.notebookDisablesVim": {
           "type": "boolean",
           "default": true,
