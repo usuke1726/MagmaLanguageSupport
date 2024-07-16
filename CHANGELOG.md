@@ -1,6 +1,18 @@
 
 # Change Log
 
+## 0.3.0 - 2024-07-16
+
+- Added a new command `extension.magma.executeInBackground`.
+    - Runs a magma code on the Magma distribution in background.
+    - Outputs will be redirected to the specified files.
+    - The processes will continue to run even after this extension is deactivated or this window is closed.
+- Enabled removing some of outputs of notebook cells.
+- Added a new setting `notebookOutputResultMode`.
+    - Configures whether appends outputs of notebook cells by default.
+- Newly supports a new comment statement `@append`, `@overwrite`. (only available in notebooks)
+    - `@append` is the alias of `@appendResult`.
+
 ## 0.2.1 - 2024-07-14
 
 - Fixed a bug that the statement `@export` does not work correctly.
