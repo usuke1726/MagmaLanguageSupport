@@ -114,6 +114,11 @@
             "original",
             "none"
           ],
+          "enumDescriptions": [
+            "%config.functionCompletionType.snippet%",
+            "%config.functionCompletionType.original%",
+            "%config.functionCompletionType.none%"
+          ],
           "default": "snippet",
           "markdownDescription": "%config.functionCompletionType%"
         },
