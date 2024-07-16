@@ -102,25 +102,40 @@ export const load = async (uri: vscode.Uri): Promise<string> => {
     return await loadRecursively(uri, uri);
 };
 
+export const getMagmaDocument = (showStatusBar: boolean = true): vscode.TextDocument | undefined => {
+    const editor = vscode.window.activeTextEditor;
+    const show = showStatusBar ? (mes: string) => {
+        vscode.window.setStatusBarMessage(mes, 2000);
+    } : (mes: string) => {
+        vscode.window.showErrorMessage(mes);
+    };
+    if(!editor){
+        show(`MAGMA Loader Error: ${getLocaleString("activeTextEditorUndefined")}`);
+        return undefined;
+    }
+    if(editor.document.uri.scheme === "untitled"){
+        show(`MAGMA Loader Error: ${getLocaleString("unsavedFile")}`);
+        return undefined;
+    }
+    if(editor.document.uri.scheme !== "file" || editor.document.languageId !== "magma"){
+        show(`MAGMA Loader Error: ${getLocaleString("nonMagmaFile")}`);
+        return undefined;
+    }
+    return editor.document;
+};
+
 const main = async (callback: (text: string) => void) => {
     Output("=== run ===");
     Log("MagmaLoader");
-    const editor = vscode.window.activeTextEditor;
-    if(!editor){
-        vscode.window.setStatusBarMessage(`MAGMA Loader Error: ${getLocaleString("activeTextEditorUndefined")}`, 2000);
-        return;
-    }
-    if(editor.document.uri.scheme !== "file"){
-        vscode.window.setStatusBarMessage(`MAGMA Loader Error: ${getLocaleString("unsavedFile")}`, 2000);
-        return;
-    }
+    const document = getMagmaDocument();
+    if(!document) return;
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: getLocaleString("running")
     }, async () => {
         try{
-            const text = await load(editor.document.uri);
+            const text = await load(document.uri);
             Log("=== OUTPUT ===");
             Log(text);
             callback(text);

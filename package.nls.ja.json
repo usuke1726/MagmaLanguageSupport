@@ -25,6 +25,7 @@
     "message.Loader.circularReference": "循環参照が発生しています．\n再参照: {0}",
     "message.Loader.activeTextEditorUndefined": "Magmaファイルを開いて実行してください",
     "message.Loader.unsavedFile": "保存済みのファイルから実行してください",
+    "message.Loader.nonMagmaFile": "開いているファイルがMagmaファイルではありません",
     "message.Loader.running": "MagmaLoaderを実行中...",
     "message.Loader.failed": "MagmaLoaderの実行に失敗しました",
     "message.Notebook.calledImmediately": "頻繁にアクセスしてからまだ十分な時間が経っていません．\nブロック後{0}分を目安に再実行してください．",

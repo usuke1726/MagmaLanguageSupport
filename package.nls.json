@@ -25,6 +25,7 @@
     "message.Loader.circularReference": "A circular reference occurred. (Reloading {0})",
     "message.Loader.activeTextEditorUndefined": "Execute this command after opening a magma file.",
     "message.Loader.unsavedFile": "Execute this command on a saved file.",
+    "message.Loader.nonMagmaFile": "The opened file is not a Magma file.",
     "message.Loader.running": "running MagmaLoader...",
     "message.Loader.failed": "Failed to execute MagmaLoader.",
     "message.Notebook.calledImmediately": "It has not been long enough since you executed codes frequently.\nPlease re-run this code after {0} minutes.",
