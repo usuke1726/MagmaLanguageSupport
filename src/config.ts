@@ -70,6 +70,8 @@ type Config = {
     notebookSavesOutputs: boolean;
     notebookOutputResultMode: "append" | "overwrite";
     notebookDisablesVim: boolean;
+    magmaPath: string;
+    redirectsStderr: "yes" | "separately" | "select" | "no";
 };
 const defaultConfig: Config = {
     enableAutoCompletion: true,
@@ -82,6 +84,8 @@ const defaultConfig: Config = {
     notebookSavesOutputs: true,
     notebookOutputResultMode: "append",
     notebookDisablesVim: true,
+    magmaPath: "",
+    redirectsStderr: "select",
 };
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
@@ -95,6 +99,8 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     notebookSavesOutputs: val => typeof val === "boolean",
     notebookOutputResultMode: val => val === "append" || val === "overwrite",
     notebookDisablesVim: val => typeof val === "boolean",
+    magmaPath: val => typeof val === "string",
+    redirectsStderr: val => typeof val === "string" && ["yes", "separately", "select", "no"].includes(val),
 };
 const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];
 const isConfig = (obj: any): obj is Config => {

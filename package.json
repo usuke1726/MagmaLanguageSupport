@@ -149,6 +149,23 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "%config.notebookDisablesVim%"
+        },
+        "MagmaLanguageSupport.magmaPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%config.magmaPath%"
+        },
+        "MagmaLanguageSupport.redirectsStderr": {
+          "type": "string",
+          "default": "select",
+          "enum": ["yes", "separately", "select", "no"],
+          "enumDescriptions": [
+            "%config.redirectsStderr.yes%",
+            "%config.redirectsStderr.separately%",
+            "%config.redirectsStderr.select%",
+            "%config.redirectsStderr.no%"
+          ],
+          "markdownDescription": "%config.redirectsStderr%"
         }
       }
     },
@@ -173,6 +190,11 @@
         "command": "extension.magmaNotebook.removeCellOutput",
         "title": "Removes selected outputs of a cell",
         "category": "Notebook"
+      },
+      {
+        "command": "extension.magma.executeInBackground",
+        "title": "%command.magma.executeInBackground%",
+        "category": "Magma"
       }
     ],
     "menus": {

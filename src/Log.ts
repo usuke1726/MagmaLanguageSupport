@@ -15,6 +15,7 @@ class Log{
         // "Loader",
         // "CompletionProvider",
         // "FileSearch",
+        // "Execute",
     ]);
     private static outputChannel = vscode.window.createOutputChannel("MAGMA Language");
     static log(tag: string, ...messages: any[]){
