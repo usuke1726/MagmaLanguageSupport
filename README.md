@@ -36,8 +36,15 @@ This extension adds language support and IntelliSense for [Magma computational a
     - Executes at Magma Calculator.
     - Only the last code is executed. (Even when selecting the "Run All")
     - `// @use {cell index}` enables to load previous code blocks.
-    - `// @appendResult` enables to append execute results, not overwriting.
+    - `// @append` or `// @overwrite` determines whether execute results are appended or overwritten.
+        - You can specify the default mode by the setting `MagmaLanguageSupport.notebookOutputResultMode`.
     - Automatically disables [Vim Extension](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim) on the notebooks.
+- Execution on Magma
+    - The command `extension.magma.executeInBackground`.
+    - Runs a magma code on the Magma distribution in background.
+    - Outputs will be redirected to the specified files.
+    - The processes will continue to run even after this extension is deactivated or this window is closed.
+    - You must configure the Magma path with the setting `MagmaLanguageSupport.magmaPath`.
 
 ## License
 
