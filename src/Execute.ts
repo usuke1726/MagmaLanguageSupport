@@ -134,7 +134,7 @@ const main = async () => {
         });
         const {pid} = process;
         if(pid && process.stdin){
-            Output(`start execute magma with\n\tmagmaFile: ${uri.fsPath}\n\toutPath: ${outPath}\n\terrPath: ${errPath}\n\tPID: ${pid}`);
+            Output(`start execute magma with\n\tmagmaFile: ${uri.fsPath}\n\toutPath: ${outPath} (fd: ${fd})\n\terrPath: ${errPath}${typeof errfd === "number" ? ` (fd: ${errfd})` : ""}\n\tPID: ${pid}`);
             file.write(new TextEncoder().encode(`\n=== PID: ${pid} ===\n`));
             process.stdin.end(code);
             process.unref();
