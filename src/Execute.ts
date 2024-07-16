@@ -128,16 +128,21 @@ const main = async () => {
                 case "no": return undefined;
             }
         })() ?? "ignore";
-        const process = spawn(magmaPath, [], {
+        const proc = spawn(magmaPath, [], {
             stdio: ["pipe", fd, errfd],
+            env: {
+                ...process.env,
+                MAGMA_OUTPUT_FILE: outPath,
+                MAGMA_ERROR_FILE: errPath ?? ""
+            },
             detached: true
         });
-        const {pid} = process;
-        if(pid && process.stdin){
+        const {pid} = proc;
+        if(pid && proc.stdin){
             Output(`start execute magma with\n\tmagmaFile: ${uri.fsPath}\n\toutPath: ${outPath} (fd: ${fd})\n\terrPath: ${errPath}${typeof errfd === "number" ? ` (fd: ${errfd})` : ""}\n\tPID: ${pid}`);
             file.write(new TextEncoder().encode(`\n=== PID: ${pid} ===\n`));
-            process.stdin.end(code);
-            process.unref();
+            proc.stdin.end(code);
+            proc.unref();
         }else{
             vscode.window.showErrorMessage(getLocaleString("processError"));
         }

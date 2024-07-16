@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.3.1 - 2024-07-16
+
+- Enabled getting output file paths as the environment variables `MAGMA_OUTPUT_FILE` and `MAGMA_ERROR_FILE` on the running Magma processes.
+
 ## 0.3.0 - 2024-07-16
 
 - Added a new command `extension.magma.executeInBackground`.
