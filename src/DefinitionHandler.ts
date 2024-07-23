@@ -21,6 +21,7 @@ type Definition = {
 type Dependency = {
     location: vscode.Uri | number;
     loadsAt: vscode.Position;
+    type: "load" | "require" | "export" | "use";
 };
 type NotebookCache = {
     uri: vscode.Uri;
@@ -236,6 +237,8 @@ export default class DefinitionHandler{
         }
     }
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
+        const depResult = await this.searchDependency(document, position);
+        if(depResult) return depResult;
         const selfDef = this.searchDefinitionAtPosition(document, position);
         if(selfDef){
             if(selfDef.isForward){
@@ -393,6 +396,57 @@ export default class DefinitionHandler{
             ? (cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache)
             : cache;
         return docCache?.definitions.find(def => def.range.contains(position));
+    }
+    private static async searchDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
+        const line = document.lineAt(position.line).text;
+        const ch = position.character;
+        const pattern = /^(\s*)(load|\/\/\s+@requires?)\s+"[^"]+";?/;
+        const m = pattern.exec(line);
+        if(!m) return undefined;
+        const start = m[1].length;
+        const end = m[0].length;
+        if(ch < start || end <= ch) return undefined;
+        const isLoad = m[2].startsWith("load");
+
+        const cache = await this.requestCache(document.uri);
+        if(!cache) return undefined;
+        const docCache = isNotebookCache(cache)
+            ? cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache
+            : cache;
+        if(docCache){
+            const getName = (uri: vscode.Uri) => {
+                try{
+                    return vscode.workspace.asRelativePath(uri);
+                }catch{
+                    return uri.fsPath;
+                }
+            };
+            if(isLoad){
+                const dep = docCache.dependencies.find(dep => {
+                    return dep.type === "load" && dep.loadsAt.line === position.line;
+                });
+                if(dep && typeof dep.location !== "number"){
+                    return {
+                        contents: [
+                            new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})`)
+                        ]
+                    };
+                }
+            }else{
+                const deps = docCache.dependencies.filter(dep => {
+                    return dep.type === "require" && dep.loadsAt.line === position.line;
+                });
+                const files = deps.map(dep => {
+                    const loc = dep.location;
+                    if(typeof loc === "number") return undefined;
+                    if(loc.fsPath === document.uri.fsPath) return undefined;
+                    return `- [${getName(loc)}](${loc})`;
+                }).filter(doc => doc !== undefined);
+                return {
+                    contents: [new vscode.MarkdownString(`マッチしたファイル：\n${files.join("\n")}`)]
+                };
+            }
+        }
     }
     private static getFunctionNameOfPosition(document: vscode.TextDocument, position: vscode.Position): string | undefined{
         const def = this.searchDefinitionAtPosition(document, position);
@@ -561,7 +615,8 @@ export default class DefinitionHandler{
                 Log(`exported from ${fsPath}`);
                 dependencies.push({
                     location: exportedFrom,
-                    loadsAt: new vscode.Position(0, 0)
+                    loadsAt: new vscode.Position(0, 0),
+                    type: "export"
                 });
             }
         });
@@ -592,14 +647,13 @@ export default class DefinitionHandler{
                         if(Number.isFinite(index)){
                             dependencies.push({
                                 location: index,
-                                loadsAt: new vscode.Position(idx, m[1].length)
+                                loadsAt: new vscode.Position(idx, m[1].length),
+                                type: "use"
                             });
                         }
                         continue;
                     }
                 }
-                let loadPrefix: string = "";
-                let loadFilePattern: string = "";
                 if(!FileHandler.hasSaveLocation(uri)){
                     const loadStatementWithAtMark = /^\s*(load)\s+".*$/;
                     const requireComment = /^\s*\/\/\s+(@requires?)\s*.*$/;
@@ -618,33 +672,48 @@ export default class DefinitionHandler{
                         continue;
                     }
                 }
-                const loadFiles = await (async () => {
+                type LoadInfo = {
+                    files: vscode.Uri[];
+                    type: "load" | "require";
+                    prefix: string;
+                    query: string;
+                };
+                const loadInfo: LoadInfo | undefined = await (async () => {
                     m = loadStatementWithAtMark.exec(line);
                     if(m){
-                        loadPrefix = m[1];
-                        loadFilePattern = m[2];
-                        return FileHandler.resolve(uri, loadFilePattern, {
-                            useGlob: false,
-                            onlyAtMark: true,
-                        });
+                        const prefix = m[1];
+                        const query = m[2];
+                        return {
+                            files: await FileHandler.resolve(uri, query, {
+                                useGlob: false,
+                                onlyAtMark: true,
+                            }),
+                            prefix, query,
+                            type: "load"
+                        };
                     }
                     m = requireComment.exec(line);
                     if(m){
-                        loadPrefix = m[1];
-                        loadFilePattern = m[2];
-                        return FileHandler.resolve(uri, loadFilePattern, {
-                            useGlob: true,
-                            onlyAtMark: true,
-                        });
+                        const prefix = m[1];
+                        const query = m[2];
+                        return {
+                            files: await FileHandler.resolve(uri, query, {
+                                useGlob: true,
+                                onlyAtMark: true,
+                            }),
+                            prefix, query,
+                            type: "require"
+                        };
                     }
                     return undefined;
                 })();
-                if(loadFiles !== undefined){
-                    if(loadFiles.length){
-                        loadFiles.forEach(reqUri => {
+                if(loadInfo){
+                    if(loadInfo.files.length){
+                        loadInfo.files.forEach(reqUri => {
                             dependencies.push({
                                 location: reqUri,
-                                loadsAt: new vscode.Position(idx, 0)
+                                loadsAt: new vscode.Position(idx, 0),
+                                type: loadInfo.type
                             });
                             if(!this.isRegistered(reqUri)){
                                 this.reserveLoad(reqUri);
@@ -653,15 +722,15 @@ export default class DefinitionHandler{
                         continue;
                     }else{
                         Log("ERROR FOUND");
-                        const start = loadPrefix.length;
+                        const start = loadInfo.prefix.length;
                         const range = new vscode.Range(
                             new vscode.Position(idx, start),
-                            new vscode.Position(idx, start + loadFilePattern.length)
+                            new vscode.Position(idx, start + loadInfo.query.length)
                         );
-                        Output(`Not found ${loadFilePattern} at ${uri.path}`);
+                        Output(`Not found ${loadInfo.query} at ${uri.path}`);
                         diagnostics.push(new vscode.Diagnostic(
                             range,
-                            getLocaleString("notFound", loadFilePattern),
+                            getLocaleString("notFound", loadInfo.query),
                             vscode.DiagnosticSeverity.Error
                         ));
                     }
