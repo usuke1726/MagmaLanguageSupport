@@ -7,6 +7,7 @@ import LogObject from './Log';
 import FileHandler from './FileHandler';
 import { makeRe } from 'minimatch';
 import getLocaleStringBody from './locale';
+import { setTimeout as setTimeoutAsync } from 'node:timers/promises';
 const { Log, Output } = LogObject.bind("DefinitionHandler");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.DefinitionHandler");
 
@@ -172,6 +173,17 @@ export default class DefinitionHandler{
             Log("Already registered");
         }
     }
+    private static async requestCache(uri: vscode.Uri, timeout: number = 10): Promise<Cache | undefined>{
+        const maxCount = timeout * 2;
+        if(!FileHandler.hasSaveLocation(uri)) return undefined;
+        const id = this.uriToID(uri);
+        for(let i = 0; i < maxCount; i++){
+            const cache = this.FileCache[id];
+            if(isCache(cache)) return cache;
+            await setTimeoutAsync(500);
+        }
+        return undefined;
+    }
     static async onDefinitionCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Definition | undefined>{
         const result = await this.searchDefinition(document, position);
         if(result){
@@ -225,17 +237,15 @@ export default class DefinitionHandler{
         }
     }
     private static async searchDefinition(document: vscode.TextDocument, position: vscode.Position, options?: SearchDefinitionOptions): Promise<SearchResult | undefined>{
-        const baseUri = document.uri;
-        const id = this.uriToID(baseUri);
         const functionName = (options?.functionName) ?? this.getFunctionNameOfPosition(document, position);
         if(!functionName) return undefined;
         const stack: DocumentCache[] = [];
-        const selfCache: MaybeCache = this.FileCache[id];
+        const selfCache = await this.requestCache(document.uri, 2);
         const searchedFiles = new Set<string>();
         const queryBody: ((def: Definition) => boolean) = (options?.onlyForward)
             ? def => def.isForward && def.name === functionName
             : def => def.name === functionName;
-        if(!isCache(selfCache)) return undefined;
+        if(!selfCache) return undefined;
         if(isNotebookCache(selfCache)){
             const cell = selfCache.cells.find(cell => cell.fragment === document.uri.fragment);
             if(cell){
@@ -287,13 +297,11 @@ export default class DefinitionHandler{
         return undefined;
     }
     static async searchAllDefinitions(document: vscode.TextDocument, position: vscode.Position): Promise<Definition[]>{
-        const baseUri = document.uri;
-        const id = this.uriToID(baseUri);
         const stack: DocumentCache[] = [];
-        const selfCache: MaybeCache = this.FileCache[id];
+        const selfCache = await this.requestCache(document.uri);
         const searchedFiles = new Set<string>();
         const ret: Definition[] = [];
-        if(!isCache(selfCache)) return [];
+        if(!selfCache) return [];
         if(isNotebookCache(selfCache)){
             const cell = selfCache.cells.find(cell => cell.fragment === document.uri.fragment);
             if(cell){
@@ -340,7 +348,7 @@ export default class DefinitionHandler{
     private static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Definition | undefined{
         const id = this.uriToID(document.uri);
         const cache = this.FileCache[id];
-        if(!cache || cache === "reserved") return undefined;
+        if(!isCache(cache)) return undefined;
         const docCache = (isNotebookCache(cache))
             ? (cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache)
             : cache;
