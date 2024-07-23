@@ -112,9 +112,7 @@ const patterns: ProviderBase[] = [
         ":=",
         (char) => [" ", "-", "="].includes(char),
         (beforeText, afterText, wholeLine) => {
-            const prefix = /^\s*([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*/.source;
-            const patterns = [": =", ": -", ":- "];
-            return patterns.some(p => RegExp(`${prefix}${p}`).test(beforeText));
+            return /(: =|:- )$/.test(beforeText);
         },
         (line, character, wholeText) => {
             vscode.window.activeTextEditor?.edit(editBuilder => {
