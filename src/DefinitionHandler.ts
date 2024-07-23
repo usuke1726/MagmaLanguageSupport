@@ -16,6 +16,7 @@ type Definition = {
     document: string;
     isForward: boolean;
     range: vscode.Range;
+    endsAt: vscode.Position | null | undefined;
 };
 type Dependency = {
     location: vscode.Uri | number;
@@ -78,6 +79,11 @@ class HoverProvider implements vscode.HoverProvider{
         }
     }
 };
+class SymbolProvider implements vscode.DocumentSymbolProvider{
+    provideDocumentSymbols(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SymbolInformation[] | vscode.DocumentSymbol[]> {
+        return DefinitionHandler.onSymbolCall(document);
+    }
+}
 
 export default class DefinitionHandler{
     private static FileCache: Caches = {};
@@ -119,6 +125,16 @@ export default class DefinitionHandler{
         ], new HoverProvider()));
         this.diagnosticCollection = vscode.languages.createDiagnosticCollection("magma");
         context.subscriptions.push(this.diagnosticCollection);
+        vscode.languages.registerDocumentSymbolProvider([
+            {
+                scheme: "file",
+                language: "magma"
+            },
+            {
+                scheme: "untitled",
+                language: "magma"
+            }
+        ], new SymbolProvider());
     }
     static onDidChange(e: vscode.TextDocumentChangeEvent){
         this.dirtyChangeTimeout = undefined;
@@ -183,6 +199,30 @@ export default class DefinitionHandler{
             await setTimeoutAsync(500);
         }
         return undefined;
+    }
+    static async onSymbolCall(document: vscode.TextDocument): Promise<vscode.SymbolInformation[]>{
+        const uri = document.uri;
+        const cache = await this.requestCache(uri);
+        if(!cache || isNotebookCache(cache)) return [];
+        const definitions = cache.definitions.map<vscode.SymbolInformation>(def => {
+            return {
+                kind: vscode.SymbolKind.Function,
+                name: def.name,
+                location: {
+                    uri: uri,
+                    range: def.endsAt
+                        ? new vscode.Range(
+                            new vscode.Position(def.range.start.line, 0),
+                            def.endsAt
+                        )
+                        : def.range
+                },
+                containerName: "Functions"
+            };
+        });
+        return [
+            ...definitions
+        ];
     }
     static async onDefinitionCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Definition | undefined>{
         const result = await this.searchDefinition(document, position);
@@ -507,6 +547,7 @@ export default class DefinitionHandler{
         const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
         const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$/;
+        const endFunction = /^(end\s+(?:function|procedure)\s*;)/;
         const invalidDefinedComment1 = /^(\s*\/\/\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
         const invalidDefinedComment2 = /^(\s*\/\/\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
         const notebookUseStatement = /^(\s*\/\/\s+@uses?\s+)([0-9]+);?.*?$/;
@@ -662,7 +703,8 @@ export default class DefinitionHandler{
                         name: functionName,
                         document: parser.pop(),
                         isForward: m[1].startsWith("forward"),
-                        range: nameRange
+                        range: nameRange,
+                        endsAt: startFunction1.test(line) ? null : undefined
                     });
                     if(getConfig().warnsWhenRedefiningIntrinsic && !m[1].includes("@define")){
                         if(INTRINSICS.includes(functionName)){
@@ -674,6 +716,16 @@ export default class DefinitionHandler{
                         }
                     }
                     scope = "global";
+                    continue;
+                }
+                m = endFunction.exec(line);
+                if(m){
+                    const target = Array.from(definitions.keys()).reverse().find(i => {
+                        return definitions[i].endsAt === null;
+                    });
+                    if(target !== undefined){
+                        definitions[target].endsAt = new vscode.Position(idx, m[1].length - 1);
+                    }
                     continue;
                 }
                 m = invalidDefinedComment1.exec(line);
