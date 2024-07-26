@@ -22,7 +22,7 @@ This extension adds language support and IntelliSense for [Magma computational a
     - Suggests defined functions.
     - Suggests `forward` statements.
     - Suggests file/directory names on `load`/`@require` statements.
-    - Suggests the following statements (completions without suggestions are also available):
+    - Autocompletes the following statements (without suggestions):
         - `if ... end if;`
         - `for ... end for;`
         - `while ... end while;`
