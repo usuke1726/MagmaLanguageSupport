@@ -443,7 +443,7 @@ export default class DefinitionHandler{
                     return `- [${getName(loc)}](${loc})`;
                 }).filter(doc => doc !== undefined);
                 return {
-                    contents: [new vscode.MarkdownString(`マッチしたファイル：\n${files.join("\n")}`)]
+                    contents: [new vscode.MarkdownString(`${getLocaleString("matchedFiles")}\n${files.join("\n")}`)]
                 };
             }
         }
@@ -534,19 +534,19 @@ export default class DefinitionHandler{
                     if(cells.length <= idx || idx < 0 || cells[idx].kind === vscode.NotebookCellKind.Markup){
                         return new vscode.Diagnostic(
                             range,
-                            `インデックス ${idx} のセルが見つかりません．`,
+                            getLocaleString("cellNotFound", idx),
                             vscode.DiagnosticSeverity.Error
                         );
                     }else if(cell.index === idx){
                         return new vscode.Diagnostic(
                             range,
-                            `自分自身は参照できません．`,
+                            getLocaleString("cellSelfReference"),
                             vscode.DiagnosticSeverity.Error
                         );
                     }else if(cell.index < idx){
                         return new vscode.Diagnostic(
                             range,
-                            `自分よりも後ろのセルは参照できません．`,
+                            getLocaleString("cellBackReference"),
                             vscode.DiagnosticSeverity.Error
                         );
                     }
