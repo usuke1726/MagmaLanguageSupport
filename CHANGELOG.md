@@ -1,6 +1,13 @@
 
 # Change Log
 
+## 0.4.0 - 2024-07-27
+
+- Added outlines of definitions.
+- Added hovers of `load` statements. (show links of loaded files)
+- Fixed a bug not autocompleting `P<x> := ` and `a, b, c := `.
+- Vim disabling feature got disabled as default.
+
 ## 0.3.1 - 2024-07-16
 
 - Enabled getting output file paths as the environment variables `MAGMA_OUTPUT_FILE` and `MAGMA_ERROR_FILE` on the running Magma processes.
