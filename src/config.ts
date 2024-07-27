@@ -83,7 +83,7 @@ const defaultConfig: Config = {
     paths: {},
     notebookSavesOutputs: true,
     notebookOutputResultMode: "append",
-    notebookDisablesVim: true,
+    notebookDisablesVim: false,
     magmaPath: "",
     redirectsStderr: "select",
 };
