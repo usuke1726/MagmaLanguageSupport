@@ -1,5 +1,6 @@
 
 import * as vscode from 'vscode';
+import * as Def from './Definition';
 import getConfig from './config';
 import DocumentParser from './DocumentParser';
 import INTRINSICS from './Intrinsics';
@@ -10,57 +11,6 @@ import getLocaleStringBody from './locale';
 import { setTimeout as setTimeoutAsync } from 'node:timers/promises';
 const { Log, Output } = LogObject.bind("DefinitionHandler");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.DefinitionHandler");
-
-type Definition = {
-    name: string;
-    document: string;
-    isForward: boolean;
-    range: vscode.Range;
-    endsAt: vscode.Position | null | undefined;
-};
-type Dependency = {
-    location: vscode.Uri | number;
-    loadsAt: vscode.Position;
-    type: "load" | "require" | "export" | "use";
-};
-type NotebookCache = {
-    uri: vscode.Uri;
-    notebook: vscode.NotebookDocument;
-    cells: {
-        index: number;
-        fragment: string;
-        cache: DocumentCache;
-    }[];
-};
-type DocumentCache = {
-    uri: vscode.Uri;
-    definitions: Definition[];
-    dependencies: Dependency[];
-};
-type Cache = DocumentCache | NotebookCache;
-const isCache = (obj: MaybeCache): obj is Cache => {
-    return (
-        obj !== "reserved" && obj !== undefined
-    );
-};
-const isNotebookCache = (cache: Cache): cache is NotebookCache => {
-    return cache.hasOwnProperty("cells");
-};
-type MaybeCache = Cache | "reserved" | undefined;
-type Caches = {
-    [filepath: string]: MaybeCache;
-};
-type SearchDefinitionOptions = {
-    onlyForward?: boolean;
-    functionName?: string;
-};
-type SearchResult = {
-    uri: vscode.Uri;
-    definition: Definition;
-};
-type ExportData = {
-    [fsPath: string]: RegExp[];
-};
 
 class DefProvider implements vscode.DefinitionProvider{
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
@@ -87,8 +37,8 @@ class SymbolProvider implements vscode.DocumentSymbolProvider{
 }
 
 export default class DefinitionHandler{
-    private static FileCache: Caches = {};
-    private static FileExports: ExportData = {};
+    private static FileCache: Def.Caches = {};
+    private static FileExports: Def.ExportData = {};
     private static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
     private static diagnosticCollection: vscode.DiagnosticCollection;
     private static isEnabled(){
@@ -190,13 +140,13 @@ export default class DefinitionHandler{
             Log("Already registered");
         }
     }
-    private static async requestCache(uri: vscode.Uri, timeout: number = 10): Promise<Cache | undefined>{
+    private static async requestCache(uri: vscode.Uri, timeout: number = 10): Promise<Def.Cache | undefined>{
         const maxCount = timeout * 2;
         if(!FileHandler.hasSaveLocation(uri)) return undefined;
         const id = this.uriToID(uri);
         for(let i = 0; i < maxCount; i++){
             const cache = this.FileCache[id];
-            if(isCache(cache)) return cache;
+            if(Def.isCache(cache)) return cache;
             await setTimeoutAsync(500);
         }
         return undefined;
@@ -204,7 +154,7 @@ export default class DefinitionHandler{
     static async onSymbolCall(document: vscode.TextDocument): Promise<vscode.SymbolInformation[]>{
         const uri = document.uri;
         const cache = await this.requestCache(uri);
-        if(!cache || isNotebookCache(cache)) return [];
+        if(!cache || Def.isNotebookCache(cache)) return [];
         const definitions = cache.definitions.map<vscode.SymbolInformation>(def => {
             return {
                 kind: vscode.SymbolKind.Function,
@@ -279,17 +229,17 @@ export default class DefinitionHandler{
             }
         }
     }
-    private static async searchDefinition(document: vscode.TextDocument, position: vscode.Position, options?: SearchDefinitionOptions): Promise<SearchResult | undefined>{
+    private static async searchDefinition(document: vscode.TextDocument, position: vscode.Position, options?: Def.SearchDefinitionOptions): Promise<Def.SearchResult | undefined>{
         const functionName = (options?.functionName) ?? this.getFunctionNameOfPosition(document, position);
         if(!functionName) return undefined;
-        const stack: DocumentCache[] = [];
+        const stack: Def.DocumentCache[] = [];
         const selfCache = await this.requestCache(document.uri, 2);
         const searchedFiles = new Set<string>();
-        const queryBody: ((def: Definition) => boolean) = (options?.onlyForward)
+        const queryBody: ((def: Def.Definition) => boolean) = (options?.onlyForward)
             ? def => def.isForward && def.name === functionName
             : def => def.name === functionName;
         if(!selfCache) return undefined;
-        if(isNotebookCache(selfCache)){
+        if(Def.isNotebookCache(selfCache)){
             const cell = selfCache.cells.find(cell => cell.fragment === document.uri.fragment);
             if(cell){
                 stack.push(cell.cache);
@@ -299,11 +249,11 @@ export default class DefinitionHandler{
         }
         let isSelfCache = true;
         while(stack.length){
-            const cache: DocumentCache | undefined = stack.pop();
+            const cache: Def.DocumentCache | undefined = stack.pop();
             if(!cache) continue;
             const uri = cache.uri;
             const query = (isSelfCache)
-                ? (dep: Definition) => queryBody(dep) && position.line > dep.range.start.line
+                ? (dep: Def.Definition) => queryBody(dep) && position.line > dep.range.start.line
                 : queryBody;
             searchedFiles.add(this.uriToID(uri));
             const definition = cache.definitions.find(query);
@@ -317,7 +267,7 @@ export default class DefinitionHandler{
                 }
                 const { location } = dep;
                 if(typeof location === "number"){
-                    if(isNotebookCache(selfCache)){
+                    if(Def.isNotebookCache(selfCache)){
                         const depCell = selfCache.cells.find(cell => cell.index === location);
                         if(depCell){
                             stack.push(depCell.cache);
@@ -330,7 +280,7 @@ export default class DefinitionHandler{
                         await this.load(location);
                     }
                     const depCache = this.FileCache[id];
-                    if(isCache(depCache) && !isNotebookCache(depCache) && !searchedFiles.has(id)){
+                    if(Def.isCache(depCache) && !Def.isNotebookCache(depCache) && !searchedFiles.has(id)){
                         stack.push(depCache);
                     }
                 }
@@ -339,13 +289,13 @@ export default class DefinitionHandler{
         }
         return undefined;
     }
-    static async searchAllDefinitions(document: vscode.TextDocument, position: vscode.Position): Promise<Definition[]>{
-        const stack: DocumentCache[] = [];
+    static async searchAllDefinitions(document: vscode.TextDocument, position: vscode.Position): Promise<Def.Definition[]>{
+        const stack: Def.DocumentCache[] = [];
         const selfCache = await this.requestCache(document.uri);
         const searchedFiles = new Set<string>();
-        const ret: Definition[] = [];
+        const ret: Def.Definition[] = [];
         if(!selfCache) return [];
-        if(isNotebookCache(selfCache)){
+        if(Def.isNotebookCache(selfCache)){
             const cell = selfCache.cells.find(cell => cell.fragment === document.uri.fragment);
             if(cell){
                 stack.push(cell.cache);
@@ -355,7 +305,7 @@ export default class DefinitionHandler{
         }
         let isSelfCache = true;
         while(stack.length){
-            const cache: DocumentCache | undefined = stack.pop();
+            const cache: Def.DocumentCache | undefined = stack.pop();
             if(!cache) continue;
             const uri = cache.uri;
             searchedFiles.add(this.uriToID(uri));
@@ -366,7 +316,7 @@ export default class DefinitionHandler{
                 }
                 const { location } = dep;
                 if(typeof location === "number"){
-                    if(isNotebookCache(selfCache)){
+                    if(Def.isNotebookCache(selfCache)){
                         const depCell = selfCache.cells.find(cell => cell.index === location);
                         if(depCell){
                             stack.push(depCell.cache);
@@ -379,7 +329,7 @@ export default class DefinitionHandler{
                         await this.load(location);
                     }
                     const depCache = this.FileCache[id];
-                    if(isCache(depCache) && !isNotebookCache(depCache) && !searchedFiles.has(id)){
+                    if(Def.isCache(depCache) && !Def.isNotebookCache(depCache) && !searchedFiles.has(id)){
                         stack.push(depCache);
                     }
                 }
@@ -388,11 +338,11 @@ export default class DefinitionHandler{
         }
         return ret;
     }
-    private static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Definition | undefined{
+    private static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Def.Definition | undefined{
         const id = this.uriToID(document.uri);
         const cache = this.FileCache[id];
-        if(!isCache(cache)) return undefined;
-        const docCache = (isNotebookCache(cache))
+        if(!Def.isCache(cache)) return undefined;
+        const docCache = (Def.isNotebookCache(cache))
             ? (cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache)
             : cache;
         return docCache?.definitions.find(def => def.range.contains(position));
@@ -410,7 +360,7 @@ export default class DefinitionHandler{
 
         const cache = await this.requestCache(document.uri);
         if(!cache) return undefined;
-        const docCache = isNotebookCache(cache)
+        const docCache = Def.isNotebookCache(cache)
             ? cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache
             : cache;
         if(docCache){
@@ -495,7 +445,7 @@ export default class DefinitionHandler{
     }
     private static isRegistered(uri: vscode.Uri){
         const id = this.uriToID(uri);
-        return this.FileCache.hasOwnProperty(id) && isCache(this.FileCache[id]);
+        return this.FileCache.hasOwnProperty(id) && Def.isCache(this.FileCache[id]);
     }
     private static reserveLoad(uri: vscode.Uri, fullText?: string): void{
         const id = this.uriToID(uri);
@@ -520,7 +470,7 @@ export default class DefinitionHandler{
         const cells = notebook.getCells();
         const fullData = await Promise.all(cells
             .filter(cell => cell.kind === vscode.NotebookCellKind.Code)
-            .map(async (cell): Promise<[vscode.NotebookCell, DocumentCache]> => {
+            .map(async (cell): Promise<[vscode.NotebookCell, Def.DocumentCache]> => {
                 const curi = cell.document.uri;
                 const data = await this.createCacheData(curi, cell.document.getText());
                 const diagnostics = data.dependencies
@@ -558,7 +508,7 @@ export default class DefinitionHandler{
                 }
                 return [cell, data];
         }));
-        const cache: NotebookCache = {
+        const cache: Def.NotebookCache = {
             uri, notebook,
             cells: fullData.map(([cell, data]) => {
                 return {
@@ -575,7 +525,7 @@ export default class DefinitionHandler{
         this.FileCache[this.uriToID(uri)] = cache;
         Log("notebook cache:", this.uriToID(uri), cache);
     }
-    private static async createCacheData(uri: vscode.Uri, fullText?: string): Promise<DocumentCache>{
+    private static async createCacheData(uri: vscode.Uri, fullText?: string): Promise<Def.DocumentCache>{
         if(fullText === undefined && uri.scheme === "untitled"){
             Log("untitled skip");
             return {
@@ -606,8 +556,8 @@ export default class DefinitionHandler{
         const invalidDefinedComment2 = /^(\s*\/\/\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
         const notebookUseStatement = /^(\s*\/\/\s+@uses?\s+)([0-9]+);?.*?$/;
         const isNotebook = !FileHandler.isMagmaFile(uri);
-        const definitions: Definition[] = [];
-        const dependencies: Dependency[] = [];
+        const definitions: Def.Definition[] = [];
+        const dependencies: Def.Dependency[] = [];
         const fileExports: RegExp[] = [];
         Object.entries(this.FileExports).map(([fsPath, patterns]) => {
             const exportedFrom = vscode.Uri.file(fsPath);
