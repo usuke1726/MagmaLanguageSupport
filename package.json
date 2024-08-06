@@ -76,6 +76,16 @@
         "language": "spec",
         "scopeName": "source.magma.spec",
         "path": "./syntaxes/spec.tmLanguage"
+      },
+      {
+        "scopeName": "markdown.magma.codeblock",
+        "path": "./syntaxes/markdown-injection.tmLanguage",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.magma": "magma"
+        }
       }
     ],
     "configuration": {
