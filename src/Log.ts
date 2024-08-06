@@ -9,6 +9,7 @@ class Log{
         // "DisableVim",
         // "Notebook",
         // "Config",
+        // "DefinitionCore",
         // "DefinitionHandler",
         // "extension",
         // "DocumentParser",
