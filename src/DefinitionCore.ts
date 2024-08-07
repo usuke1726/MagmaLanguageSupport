@@ -39,9 +39,7 @@ class DefinitionParser{
         }
         const lines = (fullText?.replaceAll("\r", "").split("\n")) ?? (await FileHandler.readFile(uri));
         Output(`Start loading ${uri.path}`);
-        const commentScope = "inComment";
-        const globalScope = "global";
-        let scope: string = globalScope;
+        const scope = new Def.Scope();
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
@@ -56,11 +54,11 @@ class DefinitionParser{
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
         const comp3 = `^(\\s*)(${comp2}(\\s*,\\s*${comp2})*)\\s*:=\\s*`;
         const assignVariable = RegExp(comp3);
-        const startFunction1 = /^((?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
-        const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
-        const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
+        const startFunction1 = /^(\s*(?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+        const startFunction2 = /^(\s*)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
+        const startFunction3 = /^(\s*forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
         const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$/;
-        const endFunction = /^(end\s+(?:function|procedure)\s*;)/;
+        const endFunction = /^(\s*end\s+(?:function|procedure)\s*;)/;
         const invalidDefinedComment1 = /^(\s*\/\/\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
         const invalidDefinedComment2 = /^(\s*\/\/\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
         const notebookUseStatement = /^(\s*\/\/\s+@uses?\s+)([0-9]+);?.*?$/;
@@ -83,11 +81,11 @@ class DefinitionParser{
             const line = lines[idx];
             let m: RegExpExecArray | null;
             Log(`line ${idx}\n    ${line}\n    scope: ${scope}`);
-            if(scope !== commentScope){
+            if(!scope.inComment){
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
-                    scope = globalScope;
+                    scope.inComment = false;
                     parser.reset();
                     parser.send(m[1]?.trim());
                     continue;
@@ -105,7 +103,7 @@ class DefinitionParser{
                 }
                 m = startComment.exec(line);
                 if(m){
-                    scope = commentScope;
+                    scope.inComment = true;
                     parser.reset();
                     parser.send(m[1]?.trimStart());
                     continue;
@@ -250,12 +248,14 @@ class DefinitionParser{
                                     new vscode.Position(idx, start),
                                     new vscode.Position(idx, start + name.length)
                                 );
-                                definitions.push({
+                                scope.next();
+                                scope.parent().toDefinitions(definitions)?.push({
                                     name: this.formatFunctionName(name),
                                     kind: Def.DefinitionKind.variable,
                                     document: doc,
                                     range,
-                                    endsAt: undefined
+                                    endsAt: undefined,
+                                    definitions: []
                                 });
                             }
                             start += m[0].length;
@@ -283,15 +283,22 @@ class DefinitionParser{
                     );
                     const firstLine = line.trim();
                     parser.setFirstLine(firstLine);
-                    definitions.push({
+                    const startScope = startFunction1.test(line);
+                    Log("pushed:", definitions, scope, scope.toDefinitions(definitions));
+                    scope.next();
+                    scope.parent().toDefinitions(definitions)?.push({
                         name: functionName,
                         kind: m[1].startsWith("forward")
                             ? Def.DefinitionKind.forward
                             : Def.DefinitionKind.function,
                         document: parser.pop(),
                         range: nameRange,
-                        endsAt: startFunction1.test(line) ? null : undefined
+                        endsAt: startScope ? null : undefined,
+                        definitions: []
                     });
+                    if(startScope){
+                        scope.down();
+                    }
                     if(getConfig().warnsWhenRedefiningIntrinsic && !m[1].includes("@define")){
                         if(INTRINSICS.includes(functionName)){
                             diagnostics.push(new vscode.Diagnostic(
@@ -301,17 +308,16 @@ class DefinitionParser{
                             ));
                         }
                     }
-                    scope = globalScope;
+                    scope.inComment = false;
                     continue;
                 }
                 m = endFunction.exec(line);
                 if(m){
                     parser.reset();
-                    const target = Array.from(definitions.keys()).reverse().find(i => {
-                        return definitions[i].endsAt === null;
-                    });
-                    if(target !== undefined){
-                        definitions[target].endsAt = new vscode.Position(idx, m[1].length - 1);
+                    scope.up();
+                    const target = scope.toDefinition(definitions);
+                    if(target){
+                        target.endsAt = new vscode.Position(idx, m[1].length - 1);
                     }
                     continue;
                 }
@@ -356,7 +362,7 @@ class DefinitionParser{
                 }
                 if(line.trim()){
                     Log("NOT startFunction", line);
-                    scope = globalScope;
+                    scope.inComment = false;
                     parser.reset();
                 }else if(parser.maybeDocument){
                     Log("An empty line after maybeDocumentInlineComment");
@@ -365,7 +371,7 @@ class DefinitionParser{
             }else{
                 m = endComment.exec(line);
                 if(m){
-                    scope = globalScope;
+                    scope.inComment = false;
                     parser.send(m[1]?.trim());
                     continue;
                 }
@@ -379,7 +385,6 @@ class DefinitionParser{
         this.diagnosticCollection.set(uri, [...diagnostics]);
         this.FileExports[uri.fsPath] = fileExports;
         dependencies.reverse();
-        definitions.reverse();
         Log(`Cache(${uri.path})`, definitions, dependencies);
         Output(`Successfully loaded ${uri.path}`);
         return { uri, definitions, dependencies };
@@ -508,6 +513,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
             stack.push(selfCache);
         }
         let isSelfCache = true;
+        const scope = Def.Scope.positionToScope(position, stack[stack.length-1].definitions);
         while(stack.length){
             const cache: Def.DocumentCache | undefined = stack.pop();
             if(!cache) continue;
@@ -516,10 +522,17 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 ? (dep: Def.Definition) => queryBody(dep) && position.line > dep.range.start.line
                 : queryBody;
             searchedFiles.add(this.uriToID(uri));
-            const definition = cache.definitions.find(query);
-            if(definition){
-                Log(`Definition found!`, definition);
-                return { uri, definition };
+            while(true){
+                const defs = scope.toDefinitions(cache.definitions);
+                if(defs){
+                    const definition = [...defs].reverse().find(query);
+                    if(definition){
+                        Log(`Definition found!`, definition);
+                        return { uri, definition };
+                    }
+                }
+                if(scope.isGlobal()) break;
+                scope.up();
             }
             for(const dep of cache.dependencies){
                 if(isSelfCache && position.line < dep.loadsAt.line){
@@ -564,19 +577,31 @@ export default class DefinitionSearcher extends DefinitionLoader{
             stack.push(selfCache);
         }
         let isSelfCache = true;
+        const scope = Def.Scope.positionToScope(position, stack[stack.length-1].definitions);
+        Log("scope", scope);
         while(stack.length){
             const cache: Def.DocumentCache | undefined = stack.pop();
             if(!cache) continue;
             const uri = cache.uri;
             searchedFiles.add(this.uriToID(uri));
-            if(onlyLastDefined){
-                cache.definitions.forEach(def => {
-                    if(ret.every(d => d.name !== def.name)){
-                        ret.push(def);
+            while(true){
+                const defs = scope.toDefinitions(cache.definitions);
+                if(defs){
+                    const definedDefs = defs.filter(def => {
+                        return def.range.end.line < position.line;
+                    }).reverse();
+                    if(onlyLastDefined){
+                        definedDefs.forEach(def => {
+                            if(ret.every(d => d.name !== def.name)){
+                                ret.push(def);
+                            }
+                        });
+                    }else{
+                        ret.push(...definedDefs);
                     }
-                });
-            }else{
-                ret.push(...cache.definitions);
+                }
+                if(scope.isGlobal()) break;
+                scope.up();
             }
             for(const dep of cache.dependencies){
                 if(isSelfCache && position.line < dep.loadsAt.line){
@@ -613,7 +638,18 @@ export default class DefinitionSearcher extends DefinitionLoader{
         const docCache = (Def.isNotebookCache(cache))
             ? (cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache)
             : cache;
-        return docCache?.definitions.find(def => def.range.contains(position));
+        const flat = (definitions: Def.Definition[]): Def.Definition[] => {
+            const ret = [...definitions];
+            definitions.forEach(def => {
+                ret.push(...flat(def.definitions));
+            });
+            return ret;
+        };
+        if(docCache){
+            return flat(docCache.definitions).find(def => def.range.contains(position));
+        }else{
+            return undefined;
+        }
     }
     protected static async searchDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const line = document.lineAt(position.line).text;

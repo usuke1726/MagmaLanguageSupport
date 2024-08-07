@@ -1,0 +1,30 @@
+
+
+// The variable `ggggg`
+globalVar := 0;
+
+function foo1(args)
+    // The variable `aaaaa`
+    aaaaa := 10;
+
+    // The function `foo21`
+    function foo21(args)
+        bbbbb := 10;
+    end function;
+    print aaaaa;
+    aaaaa := "3";
+    /**
+     *  The function `foo22`
+     */
+    function foo22(args)
+        ccccc := 10;
+        foo21();
+        function foo221(args)
+            ddddd := 10;
+            print globalVar;
+        end function;
+    end function;
+    print aaaaa;
+end function;
+
+globalVar;

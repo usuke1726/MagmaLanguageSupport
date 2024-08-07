@@ -133,28 +133,35 @@ export default class DefinitionHandler extends DefinitionCore{
             Log("Already registered");
         }
     }
-    static async onSymbolCall(document: vscode.TextDocument): Promise<vscode.SymbolInformation[]>{
+    static async onSymbolCall(document: vscode.TextDocument): Promise<vscode.DocumentSymbol[]>{
         const uri = document.uri;
         const cache = await this.requestCache(uri);
         if(!cache || Def.isNotebookCache(cache)) return [];
+        const toSymbol = (def: Def.Definition): vscode.DocumentSymbol => {
+            const kind = def.kind === Def.DefinitionKind.forward 
+                ? vscode.SymbolKind.Interface
+                : vscode.SymbolKind.Function;
+            const range = def.endsAt
+                ? new vscode.Range(
+                    def.range.start,
+                    def.endsAt
+                )
+                : def.range;
+            const selectionRange = def.range;
+            if(!range.contains(selectionRange)){
+                Log("Bad Symbol Range");
+                Log("range:", range);
+                Log("selectionRange:", selectionRange);
+            }
+            const obj = new vscode.DocumentSymbol(def.name, "", kind, range, selectionRange);
+            obj.children = def.definitions
+                .filter(def => def.kind === Def.DefinitionKind.forward || def.kind === Def.DefinitionKind.function)
+                .map(toSymbol);
+            return obj;
+        };
         const definitions = cache.definitions
         .filter(def => def.kind === Def.DefinitionKind.forward || def.kind === Def.DefinitionKind.function)
-        .map<vscode.SymbolInformation>(def => {
-            return {
-                kind: def.kind === Def.DefinitionKind.forward ? vscode.SymbolKind.Interface : vscode.SymbolKind.Function,
-                name: def.name,
-                location: {
-                    uri: uri,
-                    range: def.endsAt
-                        ? new vscode.Range(
-                            new vscode.Position(def.range.start.line, 0),
-                            def.endsAt
-                        )
-                        : def.range
-                },
-                containerName: "Functions"
-            };
-        });
+        .map<vscode.DocumentSymbol>(toSymbol);
         return [
             ...definitions
         ];

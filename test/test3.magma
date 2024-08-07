@@ -6,3 +6,5 @@
 procedure NG()
     print "NG";
 end procedure;
+
+// @require "@/test4.magma";
