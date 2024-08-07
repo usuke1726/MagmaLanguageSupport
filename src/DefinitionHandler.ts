@@ -139,7 +139,7 @@ export default class DefinitionHandler extends DefinitionCore{
         if(!cache || Def.isNotebookCache(cache)) return [];
         const definitions = cache.definitions.map<vscode.SymbolInformation>(def => {
             return {
-                kind: vscode.SymbolKind.Function,
+                kind: def.kind === Def.DefinitionKind.forward ? vscode.SymbolKind.Interface : vscode.SymbolKind.Function,
                 name: def.name,
                 location: {
                     uri: uri,
