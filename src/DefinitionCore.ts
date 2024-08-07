@@ -245,17 +245,19 @@ class DefinitionParser{
                         m = pat1.exec(variables) ?? pat2.exec(variables);
                         if(m){
                             const name = m[1];
-                            const range = new vscode.Range(
-                                new vscode.Position(idx, start),
-                                new vscode.Position(idx, start + name.length)
-                            );
-                            definitions.push({
-                                name: this.formatFunctionName(name),
-                                kind: Def.DefinitionKind.variable,
-                                document: doc,
-                                range,
-                                endsAt: undefined
-                            });
+                            if(name !== "_"){
+                                const range = new vscode.Range(
+                                    new vscode.Position(idx, start),
+                                    new vscode.Position(idx, start + name.length)
+                                );
+                                definitions.push({
+                                    name: this.formatFunctionName(name),
+                                    kind: Def.DefinitionKind.variable,
+                                    document: doc,
+                                    range,
+                                    endsAt: undefined
+                                });
+                            }
                             start += m[0].length;
                             variables = variables.substring(m[0].length);
                             m = comma.exec(variables);
