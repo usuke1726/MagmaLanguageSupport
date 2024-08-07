@@ -4,6 +4,7 @@
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
     "command.magma.executeInBackground": "Executes this Magma file in background",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
+    "config.intrinsicCompletionAliases": "Aliases of intrinsics for completions",
     "config.enableHover": "Enables hover provider",
     "config.enableDefinition": "Enables definition provider",
     "config.useLastInlineCommentAsDoc": "Treats an inline comment `// ...` on the line immediately preceding a definition as documentation",

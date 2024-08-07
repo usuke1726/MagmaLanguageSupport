@@ -85,7 +85,17 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
     }
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]> {
         if(isExclusive(document, position)) return [];
-        return this.initted ? this.items : [];
+        const aliases = getConfig().intrinsicCompletionAliases;
+        const aliasItems = Object.keys(aliases).map(key => {
+            const name = aliases[key];
+            const item = new vscode.CompletionItem(key);
+            item.kind = vscode.CompletionItemKind.Function;
+            item.insertText = name;
+            item.detail = name;
+            item.sortText = `.alias.${key}`;
+            return item;
+        });
+        return this.initted ? [...aliasItems, ...this.items] : [];
     }
 };
 

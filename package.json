@@ -102,6 +102,17 @@
             }
           }
         },
+        "MagmaLanguageSupport.intrinsicCompletionAliases": {
+          "type": ["object"],
+          "default": {},
+          "markdownDescription": "%config.intrinsicCompletionAliases%",
+          "patternProperties": {
+            "^[A-Za-z_][A-Za-z0-9_]*$": {
+              "type": "string",
+              "pattern": "^([A-Za-z_][A-Za-z0-9_]*|'[^\\n]*?(?<!\\\\)')$"
+            }
+          }
+        },
         "MagmaLanguageSupport.enableHover": {
           "type": "boolean",
           "default": true,

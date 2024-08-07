@@ -58,9 +58,16 @@ const isEnableAutoCompletion = (obj: any) => {
         availableIds.every(id => !obj.hasOwnProperty(id) || typeof obj[id] === "boolean")
     );
 };
+const isStringValueObject = (obj: any) => {
+    return (
+        typeof obj === "object" &&
+        Object.keys(obj).every(k => typeof obj[k] === "string")
+    );
+};
 
 type Config = {
     enableAutoCompletion: EnableAutoCompletion;
+    intrinsicCompletionAliases: { [alias: string]: string },
     enableHover: boolean;
     enableDefinition: boolean;
     useLastInlineCommentAsDoc: boolean | "tripleSlash";
@@ -76,6 +83,7 @@ type Config = {
 };
 const defaultConfig: Config = {
     enableAutoCompletion: true,
+    intrinsicCompletionAliases: {},
     enableHover: true,
     enableDefinition: true,
     useLastInlineCommentAsDoc: "tripleSlash",
@@ -92,6 +100,7 @@ const defaultConfig: Config = {
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     enableAutoCompletion: val => isEnableAutoCompletion(val),
+    intrinsicCompletionAliases: val => isStringValueObject(val),
     enableHover: val => typeof val === "boolean",
     enableDefinition: val => typeof val === "boolean",
     useLastInlineCommentAsDoc: val => val === "tripleSlash" || typeof val === "boolean",
