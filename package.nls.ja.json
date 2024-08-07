@@ -3,6 +3,7 @@
     "command.magmaLoader.openLoadingResult": "MagmaLoaderを実行して結果を開く",
     "command.magmaNotebook.createNewNotebook": "Magmaノートブックを新規作成",
     "command.magmaNotebook.exportToMarkdown": "ノートブックの内容をマークダウンに書き出す",
+    "command.magmaNotebook.openLoadingResult": "実行内容をプレビュー",
     "command.magma.executeInBackground": "Magmaファイルをバックグラウンドで実行する",
     "config.enableAutoCompletion": "自動補完を有効化する (例 `if ... end if;`)",
     "config.intrinsicCompletionAliases": "組み込み関数の補完用のエイリアス",

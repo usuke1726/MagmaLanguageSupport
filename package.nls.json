@@ -3,6 +3,7 @@
     "command.magmaLoader.openLoadingResult": "execute MagmaLoader and open the result",
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
     "command.magmaNotebook.exportToMarkdown": "Exports this notebook contents to markdown",
+    "command.magmaNotebook.openLoadingResult": "Preview the execution contents",
     "command.magma.executeInBackground": "Executes this Magma file in background",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
     "config.intrinsicCompletionAliases": "Aliases of intrinsics for completions",

@@ -236,6 +236,10 @@ class Controller{
             return this.readLine(cell.document.uri, line, idx);
         }))).flat();
     }
+    async loadForPreview(cell: vscode.NotebookCell): Promise<string>{
+        this.cells = cell.notebook.getCells();
+        return (await this.load(cell)).join("\n");
+    }
     async execute(cells: vscode.NotebookCell[], notebook: vscode.NotebookDocument, controller: vscode.NotebookController){
         Log("EXECUTE");
         Log(cells);
@@ -456,6 +460,14 @@ const exportToMarkdown = async () => {
         vscode.workspace.applyEdit(edit);
     }
 };
+const previewCode = async (cell: vscode.NotebookCell) => {
+    const code = await controller.loadForPreview(cell);
+    const doc = await vscode.workspace.openTextDocument({
+        content: code,
+        language: "magma"
+    });
+    vscode.window.showTextDocument(doc);
+};
 
 const setNotebookProviders = (context: vscode.ExtensionContext) => {
     Log("Notebook activated");
@@ -476,6 +488,12 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
         }catch{}
     }));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.exportToMarkdown", exportToMarkdown));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.openLoadingResult", (...args) => {
+        try{
+            const cell = args[0] as vscode.NotebookCell;
+            previewCode(cell).catch();
+        }catch{}
+    }));
 };
 
 export default setNotebookProviders;

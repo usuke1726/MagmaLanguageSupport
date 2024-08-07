@@ -236,6 +236,12 @@
         "category": "Notebook"
       },
       {
+        "command": "extension.magmaNotebook.openLoadingResult",
+        "title": "%command.magmaNotebook.openLoadingResult%",
+        "icon": "$(debug-alt)",
+        "category": "Notebook"
+      },
+      {
         "command": "extension.magma.executeInBackground",
         "title": "%command.magma.executeInBackground%",
         "category": "Magma"
@@ -251,6 +257,16 @@
         {
           "command": "extension.magmaNotebook.removeCellOutput",
           "when": "false"
+        },
+        {
+          "command": "extension.magmaNotebook.openLoadingResult",
+          "when": "false"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "extension.magmaNotebook.openLoadingResult",
+          "group": "inline/cell@0"
         }
       ],
       "editor/title": [
