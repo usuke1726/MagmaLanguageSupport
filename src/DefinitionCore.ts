@@ -588,44 +588,12 @@ export default class DefinitionSearcher extends DefinitionLoader{
         }
     }
     private static getFunctionNameOfPosition(document: vscode.TextDocument, position: vscode.Position): string | undefined{
-        const def = this.searchDefinitionAtPosition(document, position);
-        if(def){
-            const name = def.name;
-            Log(`found as definition: ${name}`);
-            return name;
-        }
-        const line = document.lineAt(position.line).text.replace("\r", "");
-        const beforeText = line.substring(0, position.character);
-        const afterText = line.substring(position.character);
-        const beforePat = /(|[A-Za-z_][A-Za-z0-9_]*|'([^'\n]|\\')*)$/;
-        const afterPat = (useSingleQuotation: boolean, isEmpty: boolean): RegExp => {
-            if(useSingleQuotation){
-                return /^(([^'\n]|\\')*')\s*\(/;
-            }else if(isEmpty){
-                return /^([A-Za-z_][A-Za-z0-9_]*|'([^'\n]|\\')*')\s*\(/;
-            }else{
-                return /^([A-Za-z0-9_]*)\s*\(/;
-            }
-        };
-        const beforeMatch = beforePat.exec(beforeText);
-        if(!beforeMatch){
-            Log(`before not matched`);
+        const symbolPattern = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+        const range = document.getWordRangeAtPosition(position, symbolPattern);
+        if(range){
+            return this.formatFunctionName(document.getText(range));
+        }else{
             return undefined;
         }
-        const before = beforeMatch[1];
-        const afterMatch = afterPat(before.startsWith("'"), !before).exec(afterText);
-        if(!afterMatch){
-            Log(`after not matched`);
-            return undefined;
-        }
-        const after = afterMatch[1];
-        const name = before + after;
-        const validatePat = /^([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')$/;
-        if(!validatePat.test(name)){
-            Log(`not validate: ${name}`);
-            return undefined;
-        }
-        Log(`name found: ${name}`);
-        return this.formatFunctionName(name);
     }
 };
