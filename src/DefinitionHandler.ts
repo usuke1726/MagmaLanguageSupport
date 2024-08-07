@@ -173,7 +173,7 @@ export default class DefinitionHandler extends DefinitionCore{
         if(depResult) return depResult;
         const selfDef = this.searchDefinitionAtPosition(document, position);
         if(selfDef){
-            if(selfDef.isForward){
+            if(Def.isForward(selfDef)){
                 return {
                     contents: [new vscode.MarkdownString(selfDef.document)]
                 };

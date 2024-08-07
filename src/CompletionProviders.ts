@@ -1,5 +1,6 @@
 
 import * as vscode from 'vscode';
+import * as Def from './Definition';
 import getConfig from './config';
 import INTRINSICS from './Intrinsics';
 import DefinitionHandler from './DefinitionHandler';
@@ -94,7 +95,15 @@ class DefinitionComp implements vscode.CompletionItemProvider{
         const definitions = await DefinitionHandler.searchAllDefinitions(document, position);
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
-            item.kind = def.isForward ? vscode.CompletionItemKind.Interface : vscode.CompletionItemKind.Function;
+            item.kind = (() => {
+                const DefK = Def.DefinitionKind;
+                const Kind = vscode.CompletionItemKind;
+                switch(def.kind){
+                    case DefK.forward: return Kind.Interface;
+                    case DefK.function: return Kind.Function;
+                    default: return Kind.Text;
+                }
+            })();
             item.documentation = new vscode.MarkdownString(def.document);
             return item;
         });

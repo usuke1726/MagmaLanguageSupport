@@ -221,8 +221,10 @@ class DefinitionParser{
                     parser.setFirstLine(firstLine);
                     definitions.push({
                         name: functionName,
+                        kind: m[1].startsWith("forward")
+                            ? Def.DefinitionKind.forward
+                            : Def.DefinitionKind.function,
                         document: parser.pop(),
-                        isForward: m[1].startsWith("forward"),
                         range: nameRange,
                         endsAt: startFunction1.test(line) ? null : undefined
                     });
@@ -423,7 +425,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
         const selfCache = await this.requestCache(document.uri, 2);
         const searchedFiles = new Set<string>();
         const queryBody: ((def: Def.Definition) => boolean) = (options?.onlyForward)
-            ? def => def.isForward && def.name === functionName
+            ? def => Def.isForward(def) && def.name === functionName
             : def => def.name === functionName;
         if(!selfCache) return undefined;
         if(Def.isNotebookCache(selfCache)){

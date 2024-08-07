@@ -1,12 +1,20 @@
 
 import * as vscode from 'vscode';
 
+export const DefinitionKind = {
+    function: 0,
+    forward: 1,
+} as const;
+export type DefinitionKind = typeof DefinitionKind[keyof typeof DefinitionKind];
 export type Definition = {
     name: string;
+    kind: DefinitionKind;
     document: string;
-    isForward: boolean;
     range: vscode.Range;
     endsAt: vscode.Position | null | undefined;
+};
+export const isForward = (def: Definition) => {
+    return def.kind === DefinitionKind.forward;
 };
 export type Dependency = {
     location: vscode.Uri | number;
