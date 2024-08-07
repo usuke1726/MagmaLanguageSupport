@@ -78,6 +78,7 @@ type Config = {
     notebookSavesOutputs: boolean;
     notebookOutputResultMode: "append" | "overwrite";
     notebookDisablesVim: boolean;
+    notebookSeparatesWithHorizontalLines: boolean;
     magmaPath: string;
     redirectsStderr: "yes" | "separately" | "select" | "no";
 };
@@ -94,6 +95,7 @@ const defaultConfig: Config = {
     notebookSavesOutputs: true,
     notebookOutputResultMode: "append",
     notebookDisablesVim: false,
+    notebookSeparatesWithHorizontalLines: true,
     magmaPath: "",
     redirectsStderr: "select",
 };
@@ -111,6 +113,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     notebookSavesOutputs: val => typeof val === "boolean",
     notebookOutputResultMode: val => val === "append" || val === "overwrite",
     notebookDisablesVim: val => typeof val === "boolean",
+    notebookSeparatesWithHorizontalLines: val => typeof val === "boolean",
     magmaPath: val => typeof val === "string",
     redirectsStderr: val => typeof val === "string" && ["yes", "separately", "select", "no"].includes(val),
 };

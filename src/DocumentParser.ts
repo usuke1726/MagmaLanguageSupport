@@ -185,6 +185,11 @@ export default class DocumentParser{
         const brac = "`".repeat(num);
         return `${brac}magma\n${code}\n${brac}`;
     }
+    static wrapWithBlockTextCode(code: string){
+        const num = Math.max(2, ...[...code.matchAll(/`+/g)].map(m => m[0].length)) + 1;
+        const brac = "`".repeat(num);
+        return `${brac}\n${code}\n${brac}`;
+    }
     pop(): string{
         if(this.tag){
             this.finishTag();

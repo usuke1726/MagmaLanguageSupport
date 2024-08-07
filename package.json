@@ -183,6 +183,11 @@
           "default": false,
           "markdownDescription": "%config.notebookDisablesVim%"
         },
+        "MagmaLanguageSupport.notebookSeparatesWithHorizontalLines": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.notebookSeparatesWithHorizontalLines%"
+        },
         "MagmaLanguageSupport.magmaPath": {
           "type": "string",
           "default": "",
@@ -225,6 +230,12 @@
         "category": "Notebook"
       },
       {
+        "command": "extension.magmaNotebook.exportToMarkdown",
+        "title": "%command.magmaNotebook.exportToMarkdown%",
+        "icon": "$(export)",
+        "category": "Notebook"
+      },
+      {
         "command": "extension.magma.executeInBackground",
         "title": "%command.magma.executeInBackground%",
         "category": "Magma"
@@ -246,6 +257,11 @@
         {
           "when": "editorLangId == magma",
           "command": "extension.magmaLoader.run",
+          "group": "navigation@0"
+        },
+        {
+          "when": "notebookType == 'magma-calculator-notebook'",
+          "command": "extension.magmaNotebook.exportToMarkdown",
           "group": "navigation@0"
         }
       ]
