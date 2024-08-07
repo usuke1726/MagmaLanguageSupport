@@ -101,6 +101,7 @@ class DefinitionComp implements vscode.CompletionItemProvider{
                 switch(def.kind){
                     case DefK.forward: return Kind.Interface;
                     case DefK.function: return Kind.Function;
+                    case DefK.variable: return Kind.Variable;
                     default: return Kind.Text;
                 }
             })();

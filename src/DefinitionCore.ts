@@ -51,6 +51,10 @@ class DefinitionParser{
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
+        const comp1 = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/.source;
+        const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
+        const comp3 = `^(\\s*)(${comp2}(\\s*,\\s*${comp2})*)\\s*:=\\s*`;
+        const assignVariable = RegExp(comp3);
         const startFunction1 = /^((?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const startFunction2 = /^()([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
@@ -203,6 +207,48 @@ class DefinitionParser{
                             Log("makeRe: false");
                         }
                     }catch{}
+                    continue;
+                }
+                m = assignVariable.exec(line);
+                if(m){
+                    let start = m[1].length;
+                    let variables = m[2];
+                    const firstLine = line.trim();
+                    parser.setFirstLine(firstLine);
+                    const doc = parser.pop();
+                    const pat1 = RegExp(`^\\s*${comp1}`);
+                    const pat2 = RegExp(`^\\s*<\\s*(${comp1})\\s*>`);
+                    const comma = /^\s*,\s*/;
+                    let count = 0;
+                    while(variables){
+                        count++;
+                        if(count > 20000){
+                            Output(`Maybe an infinite loop: ${line} (index ${idx})`);
+                            break;
+                        }
+                        m = pat1.exec(variables) ?? pat2.exec(variables);
+                        if(m){
+                            const name = m[1];
+                            const range = new vscode.Range(
+                                new vscode.Position(idx, start),
+                                new vscode.Position(idx, start + name.length)
+                            );
+                            definitions.push({
+                                name: this.formatFunctionName(name),
+                                kind: Def.DefinitionKind.variable,
+                                document: doc,
+                                range,
+                                endsAt: undefined
+                            });
+                            start += m[0].length;
+                            variables = variables.substring(m[0].length);
+                            m = comma.exec(variables);
+                            if(m){
+                                start += m[0].length;
+                                variables = variables.substring(m[0].length);
+                            }
+                        }
+                    }
                     continue;
                 }
                 m = startFunction1.exec(line) ??

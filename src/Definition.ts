@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 export const DefinitionKind = {
     function: 0,
     forward: 1,
+    variable: 2,
 } as const;
 export type DefinitionKind = typeof DefinitionKind[keyof typeof DefinitionKind];
 export type Definition = {
