@@ -39,8 +39,9 @@ class DefinitionParser{
         }
         const lines = (fullText?.replaceAll("\r", "").split("\n")) ?? (await FileHandler.readFile(uri));
         Output(`Start loading ${uri.path}`);
-        let scope: "global" | "inComment";
-        scope = "global";
+        const commentScope = "inComment";
+        const globalScope = "global";
+        let scope: string = globalScope;
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
@@ -77,18 +78,18 @@ class DefinitionParser{
             const line = lines[idx];
             let m: RegExpExecArray | null;
             Log(`line ${idx}\n    ${line}\n    scope: ${scope}`);
-            if(scope === "global"){
+            if(scope !== commentScope){
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
-                    scope = "global";
+                    scope = globalScope;
                     parser.reset();
                     parser.send(m[1]?.trim());
                     continue;
                 }
                 m = startComment.exec(line);
                 if(m){
-                    scope = "inComment";
+                    scope = commentScope;
                     parser.reset();
                     parser.send(m[1]?.trimStart());
                     continue;
@@ -234,7 +235,7 @@ class DefinitionParser{
                             ));
                         }
                     }
-                    scope = "global";
+                    scope = globalScope;
                     continue;
                 }
                 m = endFunction.exec(line);
@@ -286,12 +287,12 @@ class DefinitionParser{
                 }
                 if(line.trim()){
                     Log("NOT startFunction", line);
-                    scope = "global";
+                    scope = globalScope;
                 }
-            }else if(scope === "inComment"){
+            }else{
                 m = endComment.exec(line);
                 if(m){
-                    scope = "global";
+                    scope = globalScope;
                     parser.send(m[1]?.trim());
                     continue;
                 }
