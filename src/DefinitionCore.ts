@@ -478,7 +478,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
         }
         return undefined;
     }
-    public static async searchAllDefinitions(document: vscode.TextDocument, position: vscode.Position): Promise<Def.Definition[]>{
+    public static async searchAllDefinitions(document: vscode.TextDocument, position: vscode.Position, onlyLastDefined: boolean = true): Promise<Def.Definition[]>{
         const stack: Def.DocumentCache[] = [];
         const selfCache = await this.requestCache(document.uri);
         const searchedFiles = new Set<string>();
@@ -498,7 +498,15 @@ export default class DefinitionSearcher extends DefinitionLoader{
             if(!cache) continue;
             const uri = cache.uri;
             searchedFiles.add(this.uriToID(uri));
-            ret.push(...cache.definitions);
+            if(onlyLastDefined){
+                cache.definitions.forEach(def => {
+                    if(ret.every(d => d.name !== def.name)){
+                        ret.push(def);
+                    }
+                });
+            }else{
+                ret.push(...cache.definitions);
+            }
             for(const dep of cache.dependencies){
                 if(isSelfCache && position.line < dep.loadsAt.line){
                     continue;
