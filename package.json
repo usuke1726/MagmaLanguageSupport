@@ -112,6 +112,11 @@
           "default": true,
           "markdownDescription": "%config.enableDefinition%"
         },
+        "MagmaLanguageSupport.useLastInlineCommentAsDoc": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.useLastInlineCommentAsDoc%"
+        },
         "MagmaLanguageSupport.onChangeDelay": {
           "type": "integer",
           "default": 1000,

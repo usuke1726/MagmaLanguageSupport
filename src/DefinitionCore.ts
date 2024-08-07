@@ -51,6 +51,7 @@ class DefinitionParser{
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
+        const maybeDocumentInlineComment = /^\s*\/\/\s*([^@\s].*)$/;
         const comp1 = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/.source;
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
         const comp3 = `^(\\s*)(${comp2}(\\s*,\\s*${comp2})*)\\s*:=\\s*`;
@@ -91,6 +92,17 @@ class DefinitionParser{
                     parser.send(m[1]?.trim());
                     continue;
                 }
+                m = maybeDocumentInlineComment.exec(line);
+                if(m){
+                    Log("maybeDocumentInlineComment");
+                    if(getConfig().useLastInlineCommentAsDoc){
+                        if(!parser.isEmpty) parser.reset();
+                        parser.sendMaybeDocument(m[1]?.trim());
+                    }else{
+                        parser.reset();
+                    }
+                    continue;
+                }
                 m = startComment.exec(line);
                 if(m){
                     scope = commentScope;
@@ -101,6 +113,7 @@ class DefinitionParser{
                 if(isNotebook){
                     m = notebookUseStatement.exec(line);
                     if(m){
+                        parser.reset();
                         const index = Number(m[2]);
                         if(Number.isFinite(index)){
                             dependencies.push({
@@ -117,6 +130,7 @@ class DefinitionParser{
                     const requireComment = /^\s*\/\/\s+(@requires?)\s*.*$/;
                     m = loadStatementWithAtMark.exec(line) ?? requireComment.exec(line);
                     if(m){
+                        parser.reset();
                         Log("load statement at untitled file: skip");
                         const range = new vscode.Range(
                             new vscode.Position(idx, 0),
@@ -166,6 +180,7 @@ class DefinitionParser{
                     return undefined;
                 })();
                 if(loadInfo){
+                    parser.reset();
                     if(loadInfo.files.length){
                         loadInfo.files.forEach(reqUri => {
                             dependencies.push({
@@ -174,7 +189,6 @@ class DefinitionParser{
                                 type: loadInfo.type
                             });
                         });
-                        continue;
                     }else{
                         Log("ERROR FOUND");
                         const start = loadInfo.prefix.length;
@@ -189,9 +203,11 @@ class DefinitionParser{
                             vscode.DiagnosticSeverity.Error
                         ));
                     }
+                    continue;
                 }
                 m = exportComment.exec(line);
                 if(m){
+                    parser.reset();
                     if(isNotebook){
                         continue;
                     }
@@ -288,6 +304,7 @@ class DefinitionParser{
                 }
                 m = endFunction.exec(line);
                 if(m){
+                    parser.reset();
                     const target = Array.from(definitions.keys()).reverse().find(i => {
                         return definitions[i].endsAt === null;
                     });
@@ -298,6 +315,7 @@ class DefinitionParser{
                 }
                 m = invalidDefinedComment1.exec(line);
                 if(m){
+                    parser.reset();
                     const functionType = m[2].trim();
                     const isInvalid = (
                         !["function", "procedure", "intrinsic"].includes(functionType) &&
@@ -322,6 +340,7 @@ class DefinitionParser{
                 }
                 m = invalidDefinedComment2.exec(line);
                 if(m){
+                    parser.reset();
                     const start = m[1].length;
                     const range = new vscode.Range(
                         new vscode.Position(idx, start),
@@ -336,6 +355,10 @@ class DefinitionParser{
                 if(line.trim()){
                     Log("NOT startFunction", line);
                     scope = globalScope;
+                    parser.reset();
+                }else if(parser.maybeDocument){
+                    Log("An empty line after maybeDocumentInlineComment");
+                    parser.reset();
                 }
             }else{
                 m = endComment.exec(line);

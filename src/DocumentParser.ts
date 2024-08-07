@@ -12,14 +12,25 @@ export default class DocumentParser{
     private tokenCount: number = 0;
     private firstToken?: string;
     private buffer: string[] = [];
+    private _isEmpty: boolean = true;
+    private _maybeDocument: boolean = false;
     constructor(uri: vscode.Uri){
         this.uri = uri;
         this.lines = [];
     }
+    get maybeDocument(){
+        return this._maybeDocument;
+    }
+    get isEmpty(){
+        return this._isEmpty;
+    }
     reset(){
+        if(this._isEmpty) return;
+        this._isEmpty = true;
         this.positionLine = undefined;
         this.firstLine = undefined;
         this.lines = [];
+        this._maybeDocument = false;
         this.resetTag();
     }
     resetTag(){
@@ -34,8 +45,18 @@ export default class DocumentParser{
     setFirstLine(line: string){
         this.firstLine = line;
     }
+    sendMaybeDocument(line: string = ""){
+        if(!this.lines.length && !line) return;
+        this._maybeDocument = true;
+        this.sendBody(line);
+    }
     send(line: string = ""){
         if(!this.lines.length && !line) return;
+        if(this._maybeDocument) this.reset();
+        this.sendBody(line);
+    }
+    private sendBody(line: string){
+        this._isEmpty = false;
         const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|\s+.*)$/;
         const tagsExpectingArgs = ["param", "arg", "argument"];
         const m = tagPattern.exec(line);
