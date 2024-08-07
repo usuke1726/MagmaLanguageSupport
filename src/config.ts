@@ -63,7 +63,7 @@ type Config = {
     enableAutoCompletion: EnableAutoCompletion;
     enableHover: boolean;
     enableDefinition: boolean;
-    useLastInlineCommentAsDoc: boolean;
+    useLastInlineCommentAsDoc: boolean | "tripleSlash";
     onChangeDelay: number;
     functionCompletionType: "snippet" | "original" | "none";
     warnsWhenRedefiningIntrinsic: boolean;
@@ -78,7 +78,7 @@ const defaultConfig: Config = {
     enableAutoCompletion: true,
     enableHover: true,
     enableDefinition: true,
-    useLastInlineCommentAsDoc: true,
+    useLastInlineCommentAsDoc: "tripleSlash",
     onChangeDelay: 1000,
     functionCompletionType: "snippet",
     warnsWhenRedefiningIntrinsic: true,
@@ -94,7 +94,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     enableAutoCompletion: val => isEnableAutoCompletion(val),
     enableHover: val => typeof val === "boolean",
     enableDefinition: val => typeof val === "boolean",
-    useLastInlineCommentAsDoc: val => typeof val === "boolean",
+    useLastInlineCommentAsDoc: val => val === "tripleSlash" || typeof val === "boolean",
     onChangeDelay: val => typeof val === "number",
     functionCompletionType: val => typeof val === "string" && ["snippet", "original", "none"].includes(val),
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",

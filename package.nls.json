@@ -7,6 +7,7 @@
     "config.enableHover": "Enables hover provider",
     "config.enableDefinition": "Enables definition provider",
     "config.useLastInlineCommentAsDoc": "Treats an inline comment `// ...` on the line immediately preceding a definition as documentation",
+    "config.useLastInlineCommentAsDoc.tripleSlash": "Only `/// ...` is available as documentation",
     "config.onChangeDelay": "A delay \\[ms\\] to load file having unsaved change",
     "config.functionCompletionType": "The completion type of function|procedure",
     "config.functionCompletionType.snippet": "as snippet (with suggestion, with tabstops)",

@@ -49,7 +49,7 @@ class DefinitionParser{
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
-        const maybeDocumentInlineComment = /^\s*\/\/\s*([^@\s].*)$/;
+        const maybeDocumentInlineComment = /^\s*(\/{2,})\s*([^@\s].*)$/;
         const comp1 = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/.source;
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
         const comp3 = `^(\\s*)(${comp2}(\\s*,\\s*${comp2})*)\\s*:=\\s*`;
@@ -93,9 +93,14 @@ class DefinitionParser{
                 m = maybeDocumentInlineComment.exec(line);
                 if(m){
                     Log("maybeDocumentInlineComment");
-                    if(getConfig().useLastInlineCommentAsDoc){
+                    const slashNum = m[1].length;
+                    const config = getConfig().useLastInlineCommentAsDoc;
+                    const available = (config === true) || (
+                        config === "tripleSlash" && slashNum >= 3
+                    );
+                    if(available){
                         if(!parser.isEmpty) parser.reset();
-                        parser.sendMaybeDocument(m[1]?.trim());
+                        parser.sendMaybeDocument(m[2]?.trim());
                     }else{
                         parser.reset();
                     }

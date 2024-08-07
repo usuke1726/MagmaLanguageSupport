@@ -7,6 +7,7 @@
     "config.enableHover": "Hover機能を有効化する",
     "config.enableDefinition": "Definition機能を有効化する",
     "config.useLastInlineCommentAsDoc": "定義の直前の行にインラインコメント `// ...` があった場合，これをドキュメントとして扱う",
+    "config.useLastInlineCommentAsDoc.tripleSlash": "スラッシュ3つ以上 ( `/// ...` ) のみドキュメントとみなす",
     "config.onChangeDelay": "未保存の変更があったときにファイルの再読み込みを開始するまでの遅延時間 \\[ms\\]",
     "config.functionCompletionType": "function, procedureの補完方法",
     "config.functionCompletionType.snippet": "スニペット機能を使用 (サジェストあり, タブのカーソル移動あり)",

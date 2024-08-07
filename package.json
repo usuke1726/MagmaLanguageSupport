@@ -113,8 +113,10 @@
           "markdownDescription": "%config.enableDefinition%"
         },
         "MagmaLanguageSupport.useLastInlineCommentAsDoc": {
-          "type": "boolean",
-          "default": true,
+          "type": ["boolean", "string"],
+          "enum": [true, false, "tripleSlash"],
+          "default": "tripleSlash",
+          "markdownEnumDescriptions": ["", "", "%config.useLastInlineCommentAsDoc.tripleSlash%"],
           "markdownDescription": "%config.useLastInlineCommentAsDoc%"
         },
         "MagmaLanguageSupport.onChangeDelay": {
