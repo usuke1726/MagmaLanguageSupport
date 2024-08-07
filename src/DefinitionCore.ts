@@ -168,9 +168,6 @@ class DefinitionParser{
                                 loadsAt: new vscode.Position(idx, 0),
                                 type: loadInfo.type
                             });
-                            // if(!this.isRegistered(reqUri)){
-                            //     this.reserveLoad(reqUri);
-                            // }
                         });
                         continue;
                     }else{
