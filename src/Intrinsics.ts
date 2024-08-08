@@ -5431,6 +5431,14 @@ const INTRINSICS: readonly string[] = [
 "TernaryFormPotentiallyUnstablePrimes",
 "ValuationEq",
 "WeakValuation",
+"FrobeniusFormAlternating",
+"G2Maximals",
+"Genus4GonalMap",
+"Genus5GonalMap",
+"GroupName",
+"IsEasySnAn",
+"ReeMaximals",
+"SzMaximals",
 ];
 
 export default INTRINSICS;
