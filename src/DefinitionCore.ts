@@ -446,6 +446,12 @@ class DefinitionLoader extends DefinitionParser{
             .map(async (cell): Promise<[vscode.NotebookCell, Def.DocumentCache]> => {
                 const curi = cell.document.uri;
                 const data = await this.createCacheData(curi, cell.document.getText());
+                data.dependencies.forEach(dep => {
+                    const uri = dep.location;
+                    if(typeof uri !== "number" && !this.isRegistered(uri)){
+                        this.reserveLoad(uri);
+                    }
+                });
                 const diagnostics = data.dependencies
                 .map(dep => {
                     const idx = dep.location;
