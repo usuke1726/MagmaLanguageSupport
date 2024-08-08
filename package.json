@@ -266,6 +266,7 @@
       "notebook/cell/title": [
         {
           "command": "extension.magmaNotebook.openLoadingResult",
+          "when": "notebookType == 'magma-calculator-notebook' && notebookCellType == 'code'",
           "group": "inline/cell@0"
         }
       ],
