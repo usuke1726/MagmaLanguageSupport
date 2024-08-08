@@ -1,6 +1,23 @@
 
 # Change Log
 
+## 0.5.0 - 2024-08-08
+
+- Newly supports variable IntelliSense. (hovers and suggestions)
+- Newly supports IntelliSense of local scope.
+- Newly supports documentation of files.
+    - Comments at the beginning of files with `@file` tag are treated as the file documentation. (same as JSDoc)
+- Newly supports almost all intrinsics added since version 2.14. (Perhaps some are still remaining.)
+- Added a new command `extension.magmaNotebook.openLoadingResult`.
+    - Previews execution contents of specified notebook cell.
+- Added a new command `extension.magmaNotebook.exportToMarkdown`.
+    - Exports contents of a notebook file as a markdown.
+- Enabled to configure aliases of intrinsics with `MagmaLanguageSupport.intrinsicCompletionAliases`.
+- Enabled treating an inline comment `// ...` or `/// ...` on the line immediately preceding a definition as documentation.
+    - You can disable this feature with the configuration `MagmaLanguageSupport.useLastInlineCommentAsDoc`.
+- Enabled index shifting when inserting a notebook cell.
+- Enabled syntax highlighting on markdown code blocks.
+
 ## 0.4.0 - 2024-07-27
 
 - Added outlines of definitions.
