@@ -5419,6 +5419,18 @@ const INTRINSICS: readonly string[] = [
 "TwistsOfPlaneQuartic",
 "Variant",
 "ZeroDivisor",
+"BasicAlgebraOfEndomorphismAlgebra",
+"BasicAlgebraOfGroupAlgebra",
+"DiscriminantValuation",
+"ExactPolynomial",
+"HomogeneousWeightsSearch",
+"RamificationPolygon",
+"RamificationResidualPolynomial",
+"SetPrintClassGroupWarnings",
+"StartWorkers",
+"TernaryFormPotentiallyUnstablePrimes",
+"ValuationEq",
+"WeakValuation",
 ];
 
 export default INTRINSICS;
