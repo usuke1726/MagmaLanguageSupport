@@ -69,7 +69,7 @@ class Serializer implements vscode.NotebookSerializer{
         const cellData = isRowNotebookCellArray(data) ? data : [];
         return new vscode.NotebookData(cellData.map(item => {
             const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
-            data.outputs = this.stringToOutput(item.outputs);
+            data.outputs = Serializer.stringToOutput(item.outputs);
             return data;
         }));
     }
@@ -79,12 +79,15 @@ class Serializer implements vscode.NotebookSerializer{
                 kind: cell.kind,
                 language: cell.languageId,
                 value: cell.value,
-                outputs: this.outputsToString(cell.outputs)
+                outputs: Serializer.outputsToString(cell.outputs)
             };
         });
         return (new TextEncoder()).encode(JSON.stringify(contents));
     }
-    private outputsToString(outputs: vscode.NotebookCellOutput[] | undefined): string{
+    static copyOutputs(outputs: vscode.NotebookCellOutput[]): vscode.NotebookCellOutput[]{
+        return this.stringToOutput(this.outputsToString(outputs));
+    }
+    static outputsToString(outputs: vscode.NotebookCellOutput[] | undefined): string{
         if(!outputs) return "";
         if(!getConfig().notebookSavesOutputs) return "";
         const ret = outputs.map(output => {
@@ -95,7 +98,7 @@ class Serializer implements vscode.NotebookSerializer{
         });
         return JSON.stringify(ret);
     }
-    private stringToOutput(text: string | undefined): vscode.NotebookCellOutput[]{
+    static stringToOutput(text: string | undefined): vscode.NotebookCellOutput[]{
         if(!text) return [];
         if(!getConfig().notebookSavesOutputs) return [];
         const isOutputFormat = (obj: any): obj is string[][] => {
@@ -468,13 +471,65 @@ const previewCode = async (cell: vscode.NotebookCell) => {
     });
     vscode.window.showTextDocument(doc);
 };
+const oneCellAdded = (e: vscode.NotebookDocumentChangeEvent): [boolean, number] => {
+    if(e.contentChanges.length !== 1) return [false, -1];
+    const change = e.contentChanges[0];
+    const oneAdded = change.addedCells.length === 1;
+    const noRemoved = change.removedCells.length === 0;
+    if(oneAdded && noRemoved) return [true, change.addedCells[0].index];
+    else return [false, -1];
+};
+const adjustUseIndexes = async (notebook: vscode.NotebookDocument, addedCellIndex: number) => {
+    const edits = notebook.getCells().map(cell => {
+        if(cell.kind === vscode.NotebookCellKind.Markup){
+            return undefined;
+        }
+        const lines = cell.document.getText().replaceAll("\r", "").split("\n");
+        let found = false;
+        const usePattern = /^(\s*\/\/\s+@uses?\s+)([0-9]+)(;?.*?)$/;
+        const newContents = lines.map(line => {
+            return line.replace(usePattern, (match, prefix, index, suffix) => {
+                const idx = Number(index);
+                if(Number.isFinite(idx) && idx >= addedCellIndex){
+                    found = true;
+                    return `${prefix}${Number(idx) + 1}${suffix}`;
+                }else{
+                    return match;
+                }
+            });
+        }).join("\n");
+        if(!found){
+            return undefined;
+        }
+        const newCell = new vscode.NotebookCellData(
+            vscode.NotebookCellKind.Code,
+            newContents,
+            cell.document.languageId
+        );
+        newCell.outputs = Serializer.copyOutputs([...cell.outputs]);
+        return new vscode.NotebookEdit(
+            new vscode.NotebookRange(cell.index, cell.index + 1),
+            [newCell]
+        );
+    }).filter(edit => edit !== undefined);
+    if(edits.length){
+        const edit = new vscode.WorkspaceEdit();
+        edit.set(notebook.uri, edits);
+        await vscode.workspace.applyEdit(edit);
+        vscode.window.showTextDocument(notebook.cellAt(addedCellIndex).document);
+    }
+};
 
 const setNotebookProviders = (context: vscode.ExtensionContext) => {
     Log("Notebook activated");
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
-    vscode.workspace.onDidChangeNotebookDocument(e => {
+    vscode.workspace.onDidChangeNotebookDocument(async e => {
         if(e.notebook.notebookType !== ID) return;
+        const [oneAdded, addedCellIndex] = oneCellAdded(e);
+        if(oneAdded){
+            await adjustUseIndexes(e.notebook, addedCellIndex);
+        }
         DefinitionHandler.onDidChangeNotebook(e.notebook);
     });
     vscode.workspace.onDidOpenNotebookDocument(notebook => {
