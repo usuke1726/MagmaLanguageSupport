@@ -14,6 +14,10 @@ export default class DocumentParser{
     private buffer: string[] = [];
     private _isEmpty: boolean = true;
     private _maybeDocument: boolean = false;
+    private isFirstDoc: boolean = true;
+    private isFileDocument: boolean = false;
+    private _endComment: boolean = false;
+    private _fileDocument: string = "";
     constructor(uri: vscode.Uri){
         this.uri = uri;
         this.lines = [];
@@ -24,13 +28,20 @@ export default class DocumentParser{
     get isEmpty(){
         return this._isEmpty;
     }
-    reset(){
+    get fileDocument(){
+        return this._fileDocument;
+    }
+    reset(disableFirstDoc: boolean = true){
         if(this._isEmpty) return;
         this._isEmpty = true;
         this.positionLine = undefined;
         this.firstLine = undefined;
         this.lines = [];
         this._maybeDocument = false;
+        this.isFileDocument = false;
+        if(disableFirstDoc){
+            this.isFirstDoc = false;
+        }
         this.resetTag();
     }
     resetTag(){
@@ -45,12 +56,20 @@ export default class DocumentParser{
     setFirstLine(line: string){
         this.firstLine = line;
     }
+    private resetIfPreviousOneRemaining(){
+        if(this._endComment){
+            this.reset();
+            this._endComment = false;
+        }
+    }
     sendMaybeDocument(line: string = ""){
+        this.resetIfPreviousOneRemaining();
         if(!this.lines.length && !line) return;
         this._maybeDocument = true;
         this.sendBody(line);
     }
     send(line: string = ""){
+        this.resetIfPreviousOneRemaining();
         if(!this.lines.length && !line) return;
         if(this._maybeDocument) this.reset();
         this.sendBody(line);
@@ -59,6 +78,8 @@ export default class DocumentParser{
         this._isEmpty = false;
         const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|\s+.*)$/;
         const tagsExpectingArgs = ["param", "arg", "argument"];
+        const tagsFileOverview = ["file", "overview", "fileoverview", "fileOverview"];
+        const tagsOnlyOneLine = ["author"];
         const m = tagPattern.exec(line);
         if(m){
             if(this.tag){
@@ -69,8 +90,17 @@ export default class DocumentParser{
                 this.tokenCount = 1;
             }
             const remaining = m[2];
-            if(remaining){
+            if(this.isFirstDoc && tagsFileOverview.includes(this.tag)){
+                this.isFileDocument = true;
+                this.resetTag();
+                if(remaining){
+                    this.lines.push(remaining);
+                }
+            }else if(remaining){
                 this.sendAsInMode(remaining);
+            }
+            if(tagsOnlyOneLine.includes(this.tag)){
+                this.finishTag();
             }
             return;
         }
@@ -142,6 +172,7 @@ export default class DocumentParser{
     }
     private finishTag(){
         Log("finishTag");
+        if(this.tag === undefined) return;
         while(true){
             const lastLine = this.buffer.pop();
             if(lastLine === undefined) break;
@@ -189,6 +220,12 @@ export default class DocumentParser{
         const num = Math.max(2, ...[...code.matchAll(/`+/g)].map(m => m[0].length)) + 1;
         const brac = "`".repeat(num);
         return `${brac}\n${code}\n${brac}`;
+    }
+    endComment(){
+        this._endComment = true;
+        if(this.isFileDocument){
+            this._fileDocument = this.pop();
+        }
     }
     pop(): string{
         if(this.tag){

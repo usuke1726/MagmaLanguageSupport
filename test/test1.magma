@@ -1,9 +1,19 @@
 
+/**
+ *  @file This is `test1.magma` document
+ *  @author usuke1726 <usuke1726@example.com>
+ *  
+ *  - いくつかの関数を定義
+ *  
+ *  @example
+ *  OK(1);
+ */
 
 /**
  *  コメント1
  *  
  *  コメント2
+ *  @author usuke1726 <usuke1726@example.com>
  *  @param x
  *  x座標．
  *  

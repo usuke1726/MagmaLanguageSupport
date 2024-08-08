@@ -34,6 +34,7 @@ export type NotebookCache = {
 };
 export type DocumentCache = {
     uri: vscode.Uri;
+    document: string;
     definitions: Definition[];
     dependencies: Dependency[];
 };

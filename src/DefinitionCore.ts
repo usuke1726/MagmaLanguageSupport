@@ -33,6 +33,7 @@ class DefinitionParser{
             Log("untitled skip");
             return {
                 uri,
+                document: "",
                 definitions: [],
                 dependencies: []
             };
@@ -86,8 +87,8 @@ class DefinitionParser{
                 if(m){
                     Log("inlineComment", line);
                     scope.inComment = false;
-                    parser.reset();
                     parser.send(m[1]?.trim());
+                    parser.endComment();
                     continue;
                 }
                 m = maybeDocumentInlineComment.exec(line);
@@ -101,6 +102,7 @@ class DefinitionParser{
                     if(available){
                         if(!parser.isEmpty) parser.reset();
                         parser.sendMaybeDocument(m[2]?.trim());
+                        parser.endComment();
                     }else{
                         parser.reset();
                     }
@@ -109,14 +111,13 @@ class DefinitionParser{
                 m = startComment.exec(line);
                 if(m){
                     scope.inComment = true;
-                    parser.reset();
                     parser.send(m[1]?.trimStart());
                     continue;
                 }
                 if(isNotebook){
                     m = notebookUseStatement.exec(line);
                     if(m){
-                        parser.reset();
+                        parser.reset(false);
                         const index = Number(m[2]);
                         if(Number.isFinite(index)){
                             dependencies.push({
@@ -133,7 +134,7 @@ class DefinitionParser{
                     const requireComment = /^\s*\/\/\s+(@requires?)\s*.*$/;
                     m = loadStatementWithAtMark.exec(line) ?? requireComment.exec(line);
                     if(m){
-                        parser.reset();
+                        parser.reset(false);
                         Log("load statement at untitled file: skip");
                         const range = new vscode.Range(
                             new vscode.Position(idx, 0),
@@ -183,7 +184,7 @@ class DefinitionParser{
                     return undefined;
                 })();
                 if(loadInfo){
-                    parser.reset();
+                    parser.reset(false);
                     if(loadInfo.files.length){
                         loadInfo.files.forEach(reqUri => {
                             dependencies.push({
@@ -210,7 +211,7 @@ class DefinitionParser{
                 }
                 m = exportComment.exec(line);
                 if(m){
-                    parser.reset();
+                    parser.reset(false);
                     if(isNotebook){
                         continue;
                     }
@@ -378,6 +379,7 @@ class DefinitionParser{
                 if(m){
                     scope.inComment = false;
                     parser.send(m[1]?.trim());
+                    parser.endComment();
                     continue;
                 }
                 m = inComment.exec(line);
@@ -392,7 +394,7 @@ class DefinitionParser{
         dependencies.reverse();
         Log(`Cache(${uri.path})`, definitions, dependencies);
         Output(`Successfully loaded ${uri.path}`);
-        return { uri, definitions, dependencies };
+        return { uri, document: parser.fileDocument, definitions, dependencies };
     }
 };
 
@@ -487,6 +489,7 @@ class DefinitionLoader extends DefinitionParser{
                     fragment: cell.document.uri.fragment,
                     cache: {
                         uri: cell.document.uri,
+                        document: data.document,
                         definitions: data.definitions,
                         dependencies: data.dependencies,
                     },
@@ -680,14 +683,19 @@ export default class DefinitionSearcher extends DefinitionLoader{
                     return uri.fsPath;
                 }
             };
+            const getDoc = async (uri: vscode.Uri) => {
+                const cache = await this.requestCache(uri, 2);
+                return cache && !Def.isNotebookCache(cache) ? cache.document : "";
+            };
             if(isLoad){
                 const dep = docCache.dependencies.find(dep => {
                     return dep.type === "load" && dep.loadsAt.line === position.line;
                 });
                 if(dep && typeof dep.location !== "number"){
+                    const doc = await getDoc(dep.location);
                     return {
                         contents: [
-                            new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})`)
+                            new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})\n\n${doc}`)
                         ]
                     };
                 }
@@ -695,12 +703,13 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 const deps = docCache.dependencies.filter(dep => {
                     return dep.type === "require" && dep.loadsAt.line === position.line;
                 });
-                const files = deps.map(dep => {
+                const files = (await Promise.all(deps.map(async dep => {
                     const loc = dep.location;
                     if(typeof loc === "number") return undefined;
                     if(loc.fsPath === document.uri.fsPath) return undefined;
-                    return `- [${getName(loc)}](${loc})`;
-                }).filter(doc => doc !== undefined);
+                    const doc = await getDoc(loc);
+                    return `- [${getName(loc)}](${loc})\n\n${doc}`;
+                }))).filter(doc => doc !== undefined);
                 return {
                     contents: [new vscode.MarkdownString(`${getLocaleString("matchedFiles")}\n${files.join("\n")}`)]
                 };
