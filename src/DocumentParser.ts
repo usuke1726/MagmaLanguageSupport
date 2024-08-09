@@ -18,6 +18,7 @@ export default class DocumentParser{
     private isFileDocument: boolean = false;
     private _endComment: boolean = false;
     private _fileDocument: string = "";
+    private _disabled: boolean = false;
     constructor(uri: vscode.Uri){
         this.uri = uri;
         this.lines = [];
@@ -31,7 +32,14 @@ export default class DocumentParser{
     get fileDocument(){
         return this._fileDocument;
     }
+    get disabled(){
+        return this._disabled;
+    }
+    disable(){
+        this._disabled = true;
+    }
     reset(disableFirstDoc: boolean = true){
+        this._disabled = false;
         if(this._isEmpty) return;
         this._isEmpty = true;
         this.positionLine = undefined;
@@ -51,9 +59,11 @@ export default class DocumentParser{
         this.buffer = [];
     }
     setPositionLine(line: number){
+        if(this._disabled) return;
         this.positionLine = line;
     }
     setFirstLine(line: string){
+        if(this._disabled) return;
         this.firstLine = line;
     }
     private resetIfPreviousOneRemaining(){
@@ -63,12 +73,14 @@ export default class DocumentParser{
         }
     }
     sendMaybeDocument(line: string = ""){
+        if(this._disabled) return;
         this.resetIfPreviousOneRemaining();
         if(!this.lines.length && !line) return;
         this._maybeDocument = true;
         this.sendBody(line);
     }
     send(line: string = ""){
+        if(this._disabled) return;
         this.resetIfPreviousOneRemaining();
         if(!this.lines.length && !line) return;
         if(this._maybeDocument) this.reset();

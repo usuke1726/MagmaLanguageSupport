@@ -47,6 +47,7 @@ class DefinitionParser{
         const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/\/\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
+        const startNonDocumentComment = /^\s*\/\*(.*)$/;
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
@@ -112,6 +113,12 @@ class DefinitionParser{
                 if(m){
                     scope.inComment = true;
                     parser.send(m[1]?.trimStart());
+                    continue;
+                }
+                m = startNonDocumentComment.exec(line);
+                if(m){
+                    scope.inComment = true;
+                    parser.disable();
                     continue;
                 }
                 if(isNotebook){
@@ -380,6 +387,9 @@ class DefinitionParser{
                     scope.inComment = false;
                     parser.send(m[1]?.trim());
                     parser.endComment();
+                    if(parser.disabled){
+                        parser.reset();
+                    }
                     continue;
                 }
                 m = inComment.exec(line);
