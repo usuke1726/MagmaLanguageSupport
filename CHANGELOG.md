@@ -1,6 +1,13 @@
 
 # Change Log
 
+## 0.5.1 - 2024-08-09
+
+- Fixed a bug where function definitions on non-document block comment (`/* ... */`) were registered.
+    - This bug fix does not work if `/*` is not at the beginning of a line (ignoring indentation).
+- Fixed a bug where hovers and completions did not work on files without save destination.
+- Fixed a bug where a file document contained the immediately preceding function definition if the function had no documentation.
+
 ## 0.5.0 - 2024-08-08
 
 - Newly supports variable IntelliSense. (hovers and suggestions)
