@@ -40,7 +40,6 @@ export default class DocumentParser{
     }
     reset(disableFirstDoc: boolean = true){
         this._disabled = false;
-        if(this._isEmpty) return;
         this._isEmpty = true;
         this.positionLine = undefined;
         this.firstLine = undefined;
