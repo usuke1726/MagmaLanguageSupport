@@ -401,7 +401,6 @@ class DefinitionParser{
 class DefinitionLoader extends DefinitionParser{
     protected static async requestCache(uri: vscode.Uri, timeout: number = 10): Promise<Def.Cache | undefined>{
         const maxCount = timeout * 2;
-        if(!FileHandler.hasSaveLocation(uri)) return undefined;
         const id = this.uriToID(uri);
         for(let i = 0; i < maxCount; i++){
             const cache = this.FileCache[id];
