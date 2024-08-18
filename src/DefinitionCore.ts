@@ -611,7 +611,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 const defs = scope.toDefinitions(cache.definitions);
                 if(defs){
                     const definedDefs = defs.filter(def => {
-                        return def.range.end.line < position.line;
+                        return !isSelfCache || def.range.end.line < position.line;
                     }).reverse();
                     if(onlyLastDefined){
                         definedDefs.forEach(def => {
