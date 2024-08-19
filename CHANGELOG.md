@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.5.2 - 2024-08-19
+
+- Fixed a bug where user-defined functions were not suggested.
+
 ## 0.5.1 - 2024-08-09
 
 - Fixed a bug where function definitions on non-document block comment (`/* ... */`) were registered.
