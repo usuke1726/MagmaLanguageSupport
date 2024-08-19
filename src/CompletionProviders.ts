@@ -115,7 +115,7 @@ class DefinitionComp implements vscode.CompletionItemProvider{
                     default: return Kind.Text;
                 }
             })();
-            item.documentation = new vscode.MarkdownString(def.document);
+            item.documentation = def.document;
             return item;
         });
         return items;

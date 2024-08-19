@@ -33,7 +33,7 @@ class DefinitionParser{
             Log("untitled skip");
             return {
                 uri,
-                document: "",
+                document: new vscode.MarkdownString(""),
                 definitions: [],
                 dependencies: []
             };
@@ -242,7 +242,8 @@ class DefinitionParser{
                     let variables = m[2];
                     const firstLine = line.trim();
                     parser.setFirstLine(firstLine);
-                    const doc = parser.pop();
+                    const doc = new vscode.MarkdownString(parser.pop());
+                    doc.baseUri = uri;
                     const pat1 = RegExp(`^\\s*${comp1}`);
                     const pat2 = RegExp(`^\\s*<\\s*(${comp1})\\s*>`);
                     const comma = /^\s*,\s*/;
@@ -299,12 +300,14 @@ class DefinitionParser{
                     const startScope = startFunction1.test(line);
                     Log("pushed:", definitions, scope, scope.toDefinitions(definitions));
                     scope.next();
+                    const doc = new vscode.MarkdownString(parser.pop());
+                    doc.baseUri = uri;
                     scope.parent().toDefinitions(definitions)?.push({
                         name: functionName,
                         kind: m[1].startsWith("forward")
                             ? Def.DefinitionKind.forward
                             : Def.DefinitionKind.function,
-                        document: parser.pop(),
+                        document: doc,
                         range: nameRange,
                         endsAt: startScope ? null : undefined,
                         definitions: []
@@ -404,7 +407,9 @@ class DefinitionParser{
         dependencies.reverse();
         Log(`Cache(${uri.path})`, definitions, dependencies);
         Output(`Successfully loaded ${uri.path}`);
-        return { uri, document: parser.fileDocument, definitions, dependencies };
+        const fileDoc = new vscode.MarkdownString(parser.fileDocument);
+        fileDoc.baseUri = uri;
+        return { uri, document: fileDoc, definitions, dependencies };
     }
 };
 
@@ -700,7 +705,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
             };
             const getDoc = async (uri: vscode.Uri) => {
                 const cache = await this.requestCache(uri, 2);
-                return cache && !Def.isNotebookCache(cache) ? cache.document : "";
+                return cache && !Def.isNotebookCache(cache) ? cache.document : new vscode.MarkdownString("");
             };
             if(isLoad){
                 const dep = docCache.dependencies.find(dep => {
@@ -710,7 +715,8 @@ export default class DefinitionSearcher extends DefinitionLoader{
                     const doc = await getDoc(dep.location);
                     return {
                         contents: [
-                            new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})\n\n${doc}`)
+                            new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})`),
+                            doc
                         ]
                     };
                 }
@@ -723,10 +729,14 @@ export default class DefinitionSearcher extends DefinitionLoader{
                     if(typeof loc === "number") return undefined;
                     if(loc.fsPath === document.uri.fsPath) return undefined;
                     const doc = await getDoc(loc);
-                    return `- [${getName(loc)}](${loc})\n\n${doc}`;
-                }))).filter(doc => doc !== undefined);
+                    return [
+                        new vscode.MarkdownString(`- [${getName(loc)}](${loc})`),
+                        doc
+                    ];
+                }))).filter(doc => doc !== undefined).flat();
+                const header = new vscode.MarkdownString(`${getLocaleString("matchedFiles")}`);
                 return {
-                    contents: [new vscode.MarkdownString(`${getLocaleString("matchedFiles")}\n${files.join("\n")}`)]
+                    contents: [ header, ...files ]
                 };
             }
         }

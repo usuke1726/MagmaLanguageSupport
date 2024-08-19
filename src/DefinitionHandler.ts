@@ -184,7 +184,7 @@ export default class DefinitionHandler extends DefinitionCore{
         if(selfDef){
             if(Def.isForward(selfDef)){
                 return {
-                    contents: [new vscode.MarkdownString(selfDef.document)]
+                    contents: [selfDef.document]
                 };
             }
             const forward = await this.searchDefinition(document, position, {
@@ -194,25 +194,25 @@ export default class DefinitionHandler extends DefinitionCore{
             if(forward){
                 return {
                     contents: [
-                        new vscode.MarkdownString(forward.definition.document),
+                        forward.definition.document,
                         ...(
                             forward.uri.scheme === "file"
                             ? [new vscode.MarkdownString(`[${getLocaleString("openFile")}](${forward.uri})`)]
                             : []
                         ),
                         new vscode.MarkdownString("---"),
-                        new vscode.MarkdownString(selfDef.document)
+                        selfDef.document
                     ]
                 };
             }else{
                 return {
-                    contents: [new vscode.MarkdownString(selfDef.document)]
+                    contents: [selfDef.document]
                 };
             }
         }else{
             const result = await this.searchDefinition(document, position);
             if(result){
-                const documentBody = new vscode.MarkdownString(result.definition.document);
+                const documentBody = result.definition.document;
                 const contents = [documentBody];
                 return { contents };
             }else{

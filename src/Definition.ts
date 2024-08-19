@@ -10,7 +10,7 @@ export type DefinitionKind = typeof DefinitionKind[keyof typeof DefinitionKind];
 export type Definition = {
     name: string;
     kind: DefinitionKind;
-    document: string;
+    document: Readonly<vscode.MarkdownString>;
     range: vscode.Range;
     endsAt: vscode.Position | null | undefined;
     definitions: Definition[];
@@ -34,7 +34,7 @@ export type NotebookCache = {
 };
 export type DocumentCache = {
     uri: vscode.Uri;
-    document: string;
+    document: Readonly<vscode.MarkdownString>;
     definitions: Definition[];
     dependencies: Dependency[];
 };
