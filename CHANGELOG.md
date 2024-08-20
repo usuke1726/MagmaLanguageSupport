@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.5.3 - 2024-08-20
+
+- Fixed a bug where links to files with relative paths did not work.
+
 ## 0.5.2 - 2024-08-19
 
 - Fixed a bug where user-defined functions were not suggested.
