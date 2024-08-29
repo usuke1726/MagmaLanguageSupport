@@ -1,0 +1,40 @@
+
+// All sample codes were generated with the assistance of ChatGPT.
+
+load "@/sub1.magma";
+load "@/sub2.magma";
+load "@/sub3.magma";
+
+// Define a fixed value for testing
+testValue := 2;
+
+// Define finite fields for testing
+fields := [FiniteField(3), FiniteField(5), FiniteField(7), FiniteField(11)];
+
+/// Main procedure to execute all tests
+procedure MainProcedure()
+    for F in fields do
+        // Ensure the field is a prime field (finite field with prime order)
+        assert IsPrime(#F);
+
+        // Output the characteristic of the field being tested
+        print "Testing with field of characteristic", Characteristic(F);
+
+        // Test theorems with a specific element
+        element := F ! testValue;
+
+        result1 := TestFermat(F, element);
+        result2 := TestQuadraticResidues(F, element);
+
+        // Print the results
+        printf "Fermat's Little Theorem Test Result for element %o: %o\n", element, result1;
+        printf "Quadratic Residue Test Result for element %o: %o\n", element, result2;
+
+        // Perform random tests
+        RandomTests(F, 100);
+
+        "";
+    end for;
+end procedure;
+
+MainProcedure();

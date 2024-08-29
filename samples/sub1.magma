@@ -1,0 +1,23 @@
+
+/** 
+ *  Test Fermat's Little Theorem for a specific element in a given finite field.
+ *
+ *  Fermat's Little Theorem states that for a prime p and an integer a such that
+ *  gcd(a, p) = 1, it holds that a^(p-1) ≡ 1 (mod p).
+ *
+ *  @param F A finite field.
+ *  @param a An element in F.
+ *  @return Boolean indicating if Fermat's Little Theorem holds for the element.
+ */
+function TestFermat(F, a)
+    // Get the characteristic of the field
+    p := Characteristic(F);
+
+    if a eq 0 then
+        // If a is 0, Fermat's Little Theorem is not applicable, so return true
+        return true;
+    end if;
+
+    // Check if a^(p-1) ≡ 1 (mod p)
+    return a^(p-1) eq 1;
+end function;
