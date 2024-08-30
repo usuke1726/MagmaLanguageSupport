@@ -1,7 +1,7 @@
 
 import * as vscode from 'vscode';
 import * as Def from './Definition';
-import getConfig from './config';
+import getConfig, { CompletionKeysType, CompletionValue } from './config';
 import INTRINSICS from './Intrinsics';
 import DefinitionHandler from './DefinitionHandler';
 import FileHandler from './FileHandler';
@@ -38,28 +38,66 @@ const isExclusive = (document: vscode.TextDocument, position: vscode.Position, i
     .some(([key, func]) => func(document.uri.scheme, beforeText));
 };
 
-class FunctionComp implements vscode.CompletionItemProvider{
+abstract class CompletionWithSpaceCommitment implements vscode.CompletionItemProvider{
+    protected abstract readonly kinds: CompletionKeysType[];
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
-        Log(getConfig().functionCompletionType);
-        if(getConfig().functionCompletionType !== "snippet") return [];
         if(isExclusive(document, position)) return [];
-        const item_func = new vscode.CompletionItem("function");
-        const item_proc = new vscode.CompletionItem("procedure");
-        item_func.commitCharacters = [" "];
-        item_proc.commitCharacters = [" "];
-        item_func.kind = vscode.CompletionItemKind.Snippet;
-        item_proc.kind = vscode.CompletionItemKind.Snippet;
-        const make_snip = (name: string) => {
-            return new vscode.SnippetString(`${name} \${1:name}(\${2:args})\n\t\$3\nend ${name};\n`);
-        };
-        item_func.insertText = make_snip("function");
-        item_proc.insertText = make_snip("procedure");
-        return [item_func, item_proc];
+        return this.kinds.map(k => this.makeCompletionItems(k)).flat();
+    }
+    private isEnabledType(type: CompletionValue): boolean{
+        return type === "snippet" || type === "snippet-space";
+    }
+    private makeCompletionItems(kind: CompletionKeysType): vscode.CompletionItem[]{
+        const type = getConfig().completionTypes[kind];
+        if(!this.isEnabledType(type)) return [];
+        const item = new vscode.CompletionItem(kind);
+        item.kind = vscode.CompletionItemKind.Snippet;
+        if(type === "snippet-space"){
+            item.commitCharacters = [" "];
+        }
+        item.insertText = this.snippetString(kind);
+        return [item];
+    }
+    protected abstract snippetString(name: string): vscode.SnippetString;
+};
+class FunctionComp extends CompletionWithSpaceCommitment{
+    protected kinds: CompletionKeysType[] = ["function", "procedure"];
+    protected snippetString(name: string){
+        return new vscode.SnippetString(`${name} \${1:name}(\${2:args})\n\t\$3\nend ${name};\n`);
     }
 };
+class IfLikeComp extends CompletionWithSpaceCommitment{
+    protected kinds: CompletionKeysType[] = ["if", "for", "while", "case"];
+    protected snippetString(name: string){
+        return new vscode.SnippetString(`${name} \$1${this.suffix(name)}\n\t\$2\nend ${name};\n`);
+    }
+    private suffix(name: string){
+        switch(name){
+            case "if": return " then";
+            case "for":
+            case "while": return " do";
+            case "case": return ":";
+            default: return "";
+        }
+    }
+};
+class RepeatComp extends CompletionWithSpaceCommitment{
+    protected kinds: CompletionKeysType[] = ["repeat"];
+    protected snippetString(name: string){
+        return new vscode.SnippetString(`${name}\n\t\$1\nuntil \$2;\n`);
+    }
+};
+class TryComp extends CompletionWithSpaceCommitment{
+    protected kinds: CompletionKeysType[] = ["try"];
+    protected snippetString(name: string){
+        return new vscode.SnippetString(`${name}\n\t\$1\ncatch e\n\t\$2\nend try;\n`);
+    }
+};
+
 class ForwardComp implements vscode.CompletionItemProvider{
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] {
         if(isExclusive(document, position)) return [];
+        if(getConfig().completionTypes["forward"] !== "snippet") return [];
         const item = new vscode.CompletionItem("forward");
         item.insertText = new vscode.SnippetString("forward ${1:name};");
         item.kind = vscode.CompletionItemKind.Snippet;
@@ -85,6 +123,7 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
     }
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]> {
         if(isExclusive(document, position)) return [];
+        if(getConfig().completionTypes["built-in-intrinsic"] !== "snippet") return [];
         const aliases = getConfig().intrinsicCompletionAliases;
         const aliasItems = Object.keys(aliases).map(key => {
             const name = aliases[key];
@@ -102,6 +141,7 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
 class DefinitionComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]>{
         if(isExclusive(document, position)) return [];
+        if(getConfig().completionTypes["definition"] !== "snippet") return [];
         const definitions = await DefinitionHandler.searchAllDefinitions(document, position);
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
@@ -331,6 +371,9 @@ const FullScheme = [
 
 export const registerCompletionProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new FunctionComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IfLikeComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new RepeatComp()));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new TryComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new ForwardComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DefinitionComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IntrinsicComp()));

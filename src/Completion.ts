@@ -1,14 +1,12 @@
 
 import * as vscode from 'vscode';
-import getConfig from './config';
+import getConfig, { CompletionKeysType } from './config';
 import LogObject from './Log';
 const { Log } = LogObject.bind("Completion");
 
-const isEnabledID = (id: string): boolean => {
-    const config = getConfig().enableAutoCompletion;
-    if(typeof config === "boolean") return config;
-    if(!config.hasOwnProperty(id)) return true;
-    return config[id];
+const isEnabledID = (id: CompletionKeysType): boolean => {
+    const type = getConfig().completionTypes[id];
+    return type === "original";
 };
 
 class ProviderBase{
@@ -17,7 +15,7 @@ class ProviderBase{
     private pattern;
     private insertFunc;
     constructor(
-        id: string,
+        id: CompletionKeysType,
         trigger: string | ((char: string) => boolean) | null,
         pattern: string | RegExp | ((beforeText: string, afterText: string, wholeLine: string) => boolean),
         insert: ((line: number, character: number, wholeText: string[]) => void)
@@ -54,7 +52,7 @@ class ProviderBase{
 };
 
 class IfLikeProvider extends ProviderBase{
-    constructor(name: string){
+    constructor(name: CompletionKeysType){
         super(name, " ", (beforeText, afterText, wholeLine) => {
             return RegExp(`^\\s*${name} $`).test(beforeText) && afterText === "";
         }, (line, character, wholeText) => {
@@ -63,12 +61,11 @@ class IfLikeProvider extends ProviderBase{
     }
 };
 class FunctionLikeProvider extends ProviderBase{
-    constructor(name: string){
+    constructor(name: CompletionKeysType){
         super(
             name,
             (c: string) => [" ", "()"].includes(c),
             (beforeText, afterText, wholeLine) => {
-                if(getConfig().functionCompletionType !== "original") return false;
                 return (
                     ( beforeText.endsWith(`${name} `) && afterText === "" ) ||
                     ( beforeText.endsWith(`${name}(`) && afterText === ")" ) ||
@@ -195,9 +192,6 @@ const inString = (beforeText: string) => {
 
 export default class CompletionProvider{
     static async exec(e: vscode.TextDocumentChangeEvent){
-        if(getConfig().enableAutoCompletion === false){
-            return;
-        }
         const lastChange = e.contentChanges[e.contentChanges.length - 1];
         if(!lastChange) return;
         const lastChar = lastChange.text;
