@@ -290,6 +290,11 @@
         "category": "Notebook"
       },
       {
+        "command": "extension.magma.wrapWithStatement",
+        "title": "%command.magma.wrapWithStatement%",
+        "category": "Magma"
+      },
+      {
         "command": "extension.magma.executeInBackground",
         "title": "%command.magma.executeInBackground%",
         "category": "Magma"

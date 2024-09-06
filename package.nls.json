@@ -4,6 +4,7 @@
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
     "command.magmaNotebook.exportToMarkdown": "Exports this notebook contents to markdown",
     "command.magmaNotebook.openLoadingResult": "Preview the execution contents",
+    "command.magma.wrapWithStatement": "Wraps the selected lines with if statements, etc.",
     "command.magma.executeInBackground": "Executes this Magma file in background",
     "config.enableAutoCompletion": "Enables auto completion (e.g. `if ... end if;`)",
     "config.enableAutoCompletion.deprecated": "This setting has been integrated into completionTypes.",
