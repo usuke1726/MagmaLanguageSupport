@@ -435,9 +435,18 @@ class DefinitionLoader extends DefinitionParser{
             this.load(uri, fullText);
         }
     }
+    protected static removeFileCache(uri: vscode.Uri){
+        delete this.FileCache[this.uriToID(uri)];
+        delete this.FileExports[uri.fsPath];
+        this.diagnosticCollection.delete(uri);
+        Output(`Removed cache of ${uri.path}`);
+    }
     protected static async load(uri: vscode.Uri, fullText?: string): Promise<void>{
         const cache = await this.createCacheData(uri, fullText);
         this.FileCache[this.uriToID(uri)] = cache;
+        FileHandler.watch(uri, () => {
+            this.removeFileCache(uri);
+        });
         cache.dependencies.forEach(dep => {
             const uri = dep.location;
             if(typeof uri !== "number" && !this.isRegistered(uri)){
