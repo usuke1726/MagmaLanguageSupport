@@ -94,11 +94,58 @@
       "properties": {
         "MagmaLanguageSupport.enableAutoCompletion": {
           "type": ["boolean", "object"],
+          "deprecationMessage": "%config.enableAutoCompletion.deprecated%",
           "default": true,
           "markdownDescription": "%config.enableAutoCompletion%",
           "patternProperties": {
             "^(if|for|while|case|repeat|try|function|procedure|:=)$": {
               "type": "boolean"
+            }
+          }
+        },
+        "MagmaLanguageSupport.completionTypes": {
+          "type": "object",
+          "markdownDescription": "%config.completionTypes%",
+          "additionalProperties": false,
+          "propertyNames": {
+            "enum": [
+              ":=",
+              "if",
+              "for",
+              "while",
+              "case",
+              "repeat",
+              "try",
+              "function",
+              "procedure",
+              "forward",
+              "definition",
+              "built-in-intrinsic"
+            ]
+          },
+          "patternProperties": {
+            "^(:=)$": {
+              "type": ["string"],
+              "enum": ["original", "disabled"],
+              "markdownEnumDescriptions": ["%config.completionTypes.original%", "%config.completionTypes.disabled%"],
+              "default": "original"
+            },
+            "^(if|for|while|case|repeat|try|function|procedure)$": {
+              "type": ["string"],
+              "enum": ["snippet", "snippet-space", "original", "disabled"],
+              "markdownEnumDescriptions": [
+                "%config.completionTypes.snippet%",
+                "%config.completionTypes.snippet-space%",
+                "%config.completionTypes.original%",
+                "%config.completionTypes.disabled%"
+              ],
+              "default": "snippet"
+            },
+            "^(forward|definition|built-in-intrinsic)$": {
+              "type": ["string"],
+              "enum": ["snippet", "disabled"],
+              "markdownEnumDescriptions": ["%config.completionTypes.snippet%", "%config.completionTypes.disabled%"],
+              "default": "snippet"
             }
           }
         },
@@ -137,6 +184,7 @@
         },
         "MagmaLanguageSupport.functionCompletionType": {
           "type": "string",
+          "deprecationMessage": "%config.functionCompletionType.deprecated%",
           "enum": [
             "snippet",
             "original",
@@ -240,6 +288,11 @@
         "title": "%command.magmaNotebook.openLoadingResult%",
         "icon": "$(debug-alt)",
         "category": "Notebook"
+      },
+      {
+        "command": "extension.magma.wrapWithStatement",
+        "title": "%command.magma.wrapWithStatement%",
+        "category": "Magma"
       },
       {
         "command": "extension.magma.executeInBackground",

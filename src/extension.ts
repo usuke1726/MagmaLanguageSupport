@@ -8,6 +8,7 @@ import LogObject from './Log';
 import setNotebookProviders from './Notebook';
 import setDisableVimProviders from './DisableVim';
 import setExecuteProviders from './Execute';
+import { registerStatmentWrapperCommand } from './StatementWrapper';
 const { Log } = LogObject.bind("extension");
 
 export function activate(context: vscode.ExtensionContext) {
@@ -30,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
         });
         DefinitionHandler.setProviders(context);
         registerCompletionProviders(context);
+        registerStatmentWrapperCommand(context);
         setMagmaLoaderCommand(context);
         setNotebookProviders(context);
         setDisableVimProviders(context);
