@@ -180,9 +180,27 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
     }
 };
 
+class IgnoreCommentComp implements vscode.CompletionItemProvider{
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
+        if(isExclusive(document, position)) return [];
+        const trigger = context.triggerCharacter;
+        if(trigger === "@"){
+            const pattern = /^\s*\/\/\s+@$/;
+            if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
+            const item = new vscode.CompletionItem("ignore");
+            item.kind = vscode.CompletionItemKind.Snippet;
+            item.insertText = new vscode.SnippetString('ignore ${1|this,all,forwards,functions,variables|};');
+            item.documentation = new vscode.MarkdownString(getLocaleString("ignore"));
+            return [item];
+        }else{
+            return [];
+        }
+    }
+};
+
 class DocTagComp implements vscode.CompletionItemProvider{
     private readonly paramTags = ["param", "arg", "argument"];
-    private readonly reservedTags = ["returns", "example", "remarks"];
+    private readonly reservedTags = ["returns", "example", "remarks", "internal"];
     private tagToLocaleStringKey(tag: string){
         return this.paramTags.includes(tag) ? "param" : tag;
     }
@@ -379,6 +397,7 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IntrinsicComp()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new LoadFileComp(), "@", "/"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DefinedCommentComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IgnoreCommentComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DocTagComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(NotebookScheme, new NotebookUseStatementComp(), "@"));
 };
