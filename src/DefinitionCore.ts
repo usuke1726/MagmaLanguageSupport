@@ -43,7 +43,7 @@ class DefinitionParser{
         const scope = new Def.Scope();
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
-        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)(\s+this|\s+none|\s+all|(\s+(forwards?|variables?|functions?))+);?.*?$/;
+        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*);?.*?$/;
         const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))();?.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
@@ -99,11 +99,11 @@ class DefinitionParser{
                     }else if(targets === "all"){
                         globalIgnoreType = ["forwards", "functions", "variables"];
                     }else{
-                        globalIgnoreType = targets.split(/\s+/).map(type => {
+                        globalIgnoreType = Array.from(new Set(targets.split(/\s*,\s*/).map(type => {
                             if(type.startsWith("forward")) return "forwards";
                             if(type.startsWith("function")) return "functions";
                             else return "variables"
-                        });
+                        })));
                     }
                     continue;
                 }
