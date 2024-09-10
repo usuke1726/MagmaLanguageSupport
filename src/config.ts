@@ -60,11 +60,60 @@ const formatCompletionTypes = (types: UserDefinedCompletionTypes): CompletionTyp
     };
 };
 
+export const EnableDefinitionType = ["forwards", "functions", "variables"] as const;
+export type EnableDefinitionType = typeof EnableDefinitionType[number];
+export type EnableDefinitionValue = boolean | "onlyWithDocumentation";
+export type EnableDefinition = {
+    [type in EnableDefinitionType]: EnableDefinitionValue;
+};
+export type UserDefinedEnabledDefinition = EnableDefinitionValue | {
+    [type in EnableDefinitionType]?: EnableDefinitionValue;
+};
+export const isDefinitionCompletelyDisabled = () => {
+    return Object.values(getConfig().enableDefinition).every(val => val === false);
+}
+const isEnableDefinitionValue = (obj: any): obj is EnableDefinitionValue => {
+    switch(typeof obj){
+        case "boolean": return true;
+        case "string": return obj === "onlyWithDocumentation";
+        default: return false;
+    }
+};
+const isUserDefinedEnabledDefinition = (obj: any): obj is UserDefinedEnabledDefinition => {
+    if(isEnableDefinitionValue(obj)) return true;
+    return (
+        typeof obj === "object" &&
+        EnableDefinitionType.every(type => obj.hasOwnProperty(type) && isEnableDefinitionValue(obj[type]))
+    );
+};
+const formatEnabledDefinition = (types: UserDefinedEnabledDefinition): EnableDefinition => {
+    if(typeof types === "string"){
+        return {
+            forwards: "onlyWithDocumentation",
+            functions: "onlyWithDocumentation",
+            variables: "onlyWithDocumentation"
+        };
+    }else if(typeof types === "boolean"){
+        return {
+            forwards: types,
+            functions: types,
+            variables: types
+        };
+    }else{
+        return {
+            forwards: true,
+            functions: true,
+            variables: true,
+            ...types
+        };
+    }
+};
+
 type Config = {
     completionTypes: CompletionTypes;
     intrinsicCompletionAliases: { [alias: string]: string },
     enableHover: boolean;
-    enableDefinition: boolean;
+    enableDefinition: EnableDefinition;
     useLastInlineCommentAsDoc: boolean | "tripleSlash";
     onChangeDelay: number;
     warnsWhenRedefiningIntrinsic: boolean;
@@ -83,7 +132,7 @@ const defaultConfig: Config = {
     },
     intrinsicCompletionAliases: {},
     enableHover: true,
-    enableDefinition: true,
+    enableDefinition: { forwards: true, functions: true, variables: true },
     useLastInlineCommentAsDoc: "tripleSlash",
     onChangeDelay: 1000,
     warnsWhenRedefiningIntrinsic: true,
@@ -100,7 +149,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     completionTypes: val => isUserDefinedCompletionTypes(val),
     intrinsicCompletionAliases: val => isStringValueObject(val),
     enableHover: val => typeof val === "boolean",
-    enableDefinition: val => typeof val === "boolean",
+    enableDefinition: val => isUserDefinedEnabledDefinition(val),
     useLastInlineCommentAsDoc: val => val === "tripleSlash" || typeof val === "boolean",
     onChangeDelay: val => typeof val === "number",
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",
@@ -123,6 +172,7 @@ const format = (obj: Config): Config => {
     const ret = {...obj};
     ret.paths = formatPath(ret.paths);
     ret.completionTypes = formatCompletionTypes(ret.completionTypes);
+    ret.enableDefinition = formatEnabledDefinition(ret.enableDefinition);
     return ret;
 };
 

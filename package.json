@@ -166,8 +166,23 @@
           "markdownDescription": "%config.enableHover%"
         },
         "MagmaLanguageSupport.enableDefinition": {
-          "type": "boolean",
           "default": true,
+          "anyOf": [
+            { "type": "string", "enum": ["onlyWithDocumentation"] },
+            { "type": "boolean" },
+            {
+              "type": "object",
+              "propertyNames": {
+                "enum": ["forwards", "functions", "variables"]
+              },
+              "patternProperties": {
+                ".": {
+                  "type": ["boolean", "string"],
+                  "enum": [true, false, "onlyWithDocumentation"]
+                }
+              }
+            }
+          ],
           "markdownDescription": "%config.enableDefinition%"
         },
         "MagmaLanguageSupport.useLastInlineCommentAsDoc": {
