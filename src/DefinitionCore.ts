@@ -43,6 +43,10 @@ class DefinitionParser{
         const scope = new Def.Scope();
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
+        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)(\s+this|\s+none|\s+all|(\s+(forwards?|variables?|functions?))+);?.*?$/;
+        const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))();?.*?$/;
+        let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
+        let isToBeIgnored: boolean = false;
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
         const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/\/\s+@exports?\s+")([^"]+)";?.*/;
@@ -84,6 +88,25 @@ class DefinitionParser{
             let m: RegExpExecArray | null;
             Log(`line ${idx}\n    ${line}\n    scope: ${scope}`);
             if(!scope.inComment){
+                m = ignoreComment1.exec(line) ?? ignoreComment2.exec(line);
+                if(m){
+                    Log("ignoreComment", line);
+                    const targets = m[2]?.trim();
+                    if(!targets || targets === "this"){
+                        isToBeIgnored = true;
+                    }else if(targets === "none"){
+                        globalIgnoreType = [];
+                    }else if(targets === "all"){
+                        globalIgnoreType = ["forwards", "functions", "variables"];
+                    }else{
+                        globalIgnoreType = targets.split(/\s+/).map(type => {
+                            if(type.startsWith("forward")) return "forwards";
+                            if(type.startsWith("function")) return "functions";
+                            else return "variables"
+                        });
+                    }
+                    continue;
+                }
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
@@ -238,6 +261,16 @@ class DefinitionParser{
                 }
                 m = assignVariable.exec(line);
                 if(m){
+                    const isIgnored = (() => {
+                        if(isToBeIgnored){
+                            isToBeIgnored = false;
+                            return true;
+                        }else if(globalIgnoreType.includes("variables")){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    })();
                     let start = m[1].length;
                     let variables = m[2];
                     const firstLine = line.trim();
@@ -266,6 +299,7 @@ class DefinitionParser{
                                 scope.parent().toDefinitions(definitions)?.push({
                                     name: this.formatFunctionName(name),
                                     kind: Def.DefinitionKind.variable,
+                                    ignored: isIgnored,
                                     document: doc,
                                     range,
                                     endsAt: undefined,
@@ -289,6 +323,17 @@ class DefinitionParser{
                     startFunction4.exec(line);
                 if(m){
                     Log("startFunction", line);
+                    const isIgnored = (() => {
+                        const isForward = m[1].startsWith("forward");
+                        if(isToBeIgnored){
+                            isToBeIgnored = false;
+                            return true;
+                        }else if(globalIgnoreType.includes(isForward ? "forwards" :"functions")){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    })();
                     const functionName = this.formatFunctionName(m[2]);
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
@@ -307,6 +352,7 @@ class DefinitionParser{
                         kind: m[1].startsWith("forward")
                             ? Def.DefinitionKind.forward
                             : Def.DefinitionKind.function,
+                        ignored: isIgnored,
                         document: doc,
                         range: nameRange,
                         endsAt: startScope ? null : undefined,
@@ -397,6 +443,9 @@ class DefinitionParser{
                 }
                 m = inComment.exec(line);
                 if(m){
+                    if(/^@internal(\s|$)/.test(m[1].trim())){
+                        isToBeIgnored = true;
+                    }
                     parser.send(m[1]);
                     continue;
                 }
@@ -557,7 +606,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
             const uri = cache.uri;
             const query = (isSelfCache)
                 ? (dep: Def.Definition) => queryBody(dep) && position.line > dep.range.start.line
-                : queryBody;
+                : (dep: Def.Definition) => !dep.ignored && queryBody(dep);
             searchedFiles.add(this.uriToID(uri));
             while(true){
                 const defs = scope.toDefinitions(cache.definitions);
@@ -625,7 +674,11 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 const defs = scope.toDefinitions(cache.definitions);
                 if(defs){
                     const definedDefs = defs.filter(def => {
-                        return !isSelfCache || def.range.end.line < position.line;
+                        if(isSelfCache){
+                            return def.range.end.line < position.line;
+                        }else{
+                            return !def.ignored;
+                        }
                     }).reverse();
                     if(onlyLastDefined){
                         definedDefs.forEach(def => {

@@ -90,6 +90,7 @@ export default class DocumentParser{
         const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|\s+.*)$/;
         const tagsExpectingArgs = ["param", "arg", "argument"];
         const tagsFileOverview = ["file", "overview", "fileoverview", "fileOverview"];
+        const tagsWithoutArgs = ["internal"];
         const tagsOnlyOneLine = ["author"];
         const m = tagPattern.exec(line);
         if(m){
@@ -107,6 +108,9 @@ export default class DocumentParser{
                 if(remaining){
                     this.lines.push(remaining);
                 }
+            }else if(tagsWithoutArgs.includes(this.tag)){
+                this.finishTag();
+                this.lines.push(remaining);
             }else if(remaining){
                 this.sendAsInMode(remaining);
             }
