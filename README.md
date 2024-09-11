@@ -147,6 +147,31 @@ Also, you can specify aliases of intrinsics:
     }
 ```
 
+### Wrapping with a statement
+
+![](./images/docs/WrapWithStatement.gif)
+
+- The command `extension.magma.wrapWithStatement`.
+- Wraps all the lines contained in the selection with a selected statement.
+
+You can configure keybindings:
+
+```jsonc
+// keybindings.json
+    {
+        "key": "<keyboard shortcut>",
+        "command": "extension.magma.wrapWithStatement",
+        "args": "",
+        "when": "editorTextFocus && editorLangId == 'magma'"
+    },
+    {
+        "key": "<keyboard shortcut>",
+        "command": "extension.magma.wrapWithStatement",
+        "args": "if",
+        "when": "editorTextFocus && editorLangId == 'magma'"
+    }
+```
+
 ### Magma Loader
 
 ![](./images/docs/MagmaLoader.gif)
