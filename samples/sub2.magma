@@ -1,0 +1,37 @@
+
+/**
+ *  MAGMA's built-in function to determine if `a` is a quadratic residue.
+ *  
+ *  see http://magma.maths.usyd.edu.au/magma/handbook/text/212#1844
+ */
+// @defined intrinsic IsSquare(a);
+
+/** 
+ *  Test if the method for checking quadratic residues is correct for a specific finite field.
+ *
+ *  This function verifies if the method used to determine if an element is a quadratic residue
+ *  is correct by comparing it with the built-in MAGMA function IsSquare.
+ *
+ *  @param F A finite field.
+ *  @param a An element in F.
+ *  @return Boolean indicating if the method for checking quadratic residues is correct.
+ */
+function TestQuadraticResidues(F, a)
+    // Get the characteristic of the field
+    p := Characteristic(F);
+    
+    if a eq 0 then
+        return true; // Zero is always considered a quadratic residue
+    end if;
+
+    // Use the Legendre symbol (Euler's Criterion) to determine if `a` is a quadratic residue
+    legendreSymbol := a^((p-1) div 2);
+    isLegendreResidue := (legendreSymbol eq 1);
+
+    isSquare := IsSquare(a);
+
+    // Verify if the results match
+    isCorrect := isSquare eq isLegendreResidue;
+
+    return isCorrect;
+end function;

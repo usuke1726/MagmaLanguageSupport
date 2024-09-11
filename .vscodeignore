@@ -12,4 +12,5 @@ vsc-extension-quickstart.md
 **/*.ts
 .dev/**
 test/**
+samples/**
 docs/**

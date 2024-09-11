@@ -1,0 +1,40 @@
+
+// @require "@/sub*.magma";
+
+/** 
+ *  Perform random tests on a finite field using the provided theorem functions.
+ *
+ *  This procedure performs multiple random tests by calling the theorem functions
+ *  defined in file2.magma and file3.magma.
+ *
+ *  @param F A finite field.
+ *  @param numTests Number of random tests to perform.
+ */
+procedure RandomTests(F, numTests)
+    // Flag to track overall success
+    allTestsPassed := true;
+
+    for i in [1..numTests] do
+        // Generate a random finite field element
+        element := Random(F);
+        
+        // Test Fermat's Little Theorem
+        if not TestFermat(F, element) then
+            printf "Fermat's Little Theorem failed for random test %o with element %o", i, element;
+            allTestsPassed := false;
+        end if;
+        
+        // Test quadratic residues
+        if not TestQuadraticResidues(F, element) then
+            printf "Quadratic Residue test failed for random test %o with element %o", i, element;
+            allTestsPassed := false;
+        end if;
+    end for;
+
+    // Output overall result
+    if allTestsPassed then
+        print "All tests passed successfully.";
+    else
+        print "Some tests failed.";
+    end if;
+end procedure;
