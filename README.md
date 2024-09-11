@@ -111,7 +111,7 @@ Default is `1000`.
 
 This specifies whether to warn when redefining an intrinsic.
 
-<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/redefining-warning.png" alt="redefining-warning" width="800">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/redefining-warning.png" alt="redefining-warning" width="600">
 
 Default is `true`.
 
