@@ -3,17 +3,21 @@
 
 This extension adds language support and IntelliSense for [Magma computational algebra system](http://magma.maths.usyd.edu.au/magma/) to Visual Studio Code.
 
-See also the sample code in its [repository](https://github.com/usuke1726/MagmaLanguageSupport).
+See also the sample code in its [repository](https://github.com/usuke1726/MagmaLanguageSupport/tree/main/samples).
 
 ## Features
 
 ### Syntax highlighting
 
-![](./images/docs/Syntax-highlight.png)
+<p align="center">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/Syntax-highlight.png" alt="Syntax-highlight" width="800">
+</p>
 
 ### Definition
 
-![](./images/docs/Definition_Hover.gif)
+<p align="center">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/Definition_Hover.gif" alt="Definition_Hover" width="800">
+</p>
 
 - Partial JSDoc support:
     - Function references provide hover widgets with documentation of their definitions.
@@ -84,7 +88,7 @@ This specifies whether inline comments are treated as documentation or not.
 
 then below commentation is available as documentation.
 
-![](./images/docs/one-line-comment.png)
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/one-line-comment.png" alt="one-line-comment" width="200">
 
 ```jsonc
     "MagmaLanguageSupport.useLastInlineCommentAsDoc": "tripleSlash"
@@ -92,7 +96,7 @@ then below commentation is available as documentation.
 
 then below commentation is available as documentation.
 
-![](./images/docs/one-line-comment-triple-slash.png)
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/one-line-comment-triple-slash.png" alt="one-line-comment-triple-slash" width="350">
 
 Default is `"tripleSlash"`.
 
@@ -107,13 +111,15 @@ Default is `1000`.
 
 This specifies whether to warn when redefining an intrinsic.
 
-![](./images/docs/redefining-warning.png)
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/redefining-warning.png" alt="redefining-warning" width="800">
 
 Default is `true`.
 
 ### Auto completion
 
-![](./images/docs/Completion.gif)
+<p align="center">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/Completion.gif" alt="Completion" width="800">
+</p>
 
 - Suggestions:
     - Intrinsics (built-in functions)
@@ -149,7 +155,9 @@ Also, you can specify aliases of intrinsics:
 
 ### Wrapping with a statement
 
-![](./images/docs/WrapWithStatement.gif)
+<p align="center">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/WrapWithStatement.gif" alt="WrapWithStatement" width="800">
+</p>
 
 - The command `extension.magma.wrapWithStatement`.
 - Wraps all the lines contained in the selection with a selected statement.
@@ -174,14 +182,18 @@ You can configure keybindings:
 
 ### Magma Loader
 
-![](./images/docs/MagmaLoader.gif)
+<p align="center">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/MagmaLoader.gif" alt="MagmaLoader" width="800">
+</p>
 
 - The command `extension.magmaLoader.run`.
 - Resolves dependencies to generate a single executable file and copies its contents to the clipboard.
 
 ### Magma Calculator Notebooks
 
-![](./images/docs/Notebook.gif)
+<p align="center">
+<img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/Notebook.gif" alt="Notebook" width="800">
+</p>
 
 - The file extensions `.imagma`, `.icmagma`, `.imag` and `.icmag` are available as the notebooks.
 - Executes at Magma Calculator.
