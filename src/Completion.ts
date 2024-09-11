@@ -109,7 +109,7 @@ const patterns: ProviderBase[] = [
         ":=",
         (char) => [" ", "-", "="].includes(char),
         (beforeText, afterText, wholeLine) => {
-            return /(: =|:- )$/.test(beforeText);
+            return /(: =|:- |; =|;= )$/.test(beforeText);
         },
         (line, character, wholeText) => {
             vscode.window.activeTextEditor?.edit(editBuilder => {
