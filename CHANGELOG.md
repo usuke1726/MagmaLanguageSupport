@@ -1,6 +1,15 @@
 
 # Change Log
 
+## 0.6.0 - 2024-09-11
+
+- [**BREAKING CHANGE**] Integrated `enableAutoCompletion` and `functionCompletionType` to `completionTypes`.
+- Updated README.
+- Added a new comment statement `@ignore`, `@internal`. (prevents external references)
+- Added a new command `extension.magma.wrapWithStatement`.
+- Enabled detailed settings of `enableDefinition`.
+- Fixed a bug where diagnostics in deleted files were not removed.
+
 ## 0.5.4 - 2024-09-07
 
 - Updated dependent modules to fix vulnerabilities.
