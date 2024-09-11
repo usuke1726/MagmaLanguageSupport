@@ -1,7 +1,7 @@
 
 import * as vscode from 'vscode';
 import * as Def from './Definition';
-import getConfig from './config';
+import getConfig, { isDefinitionCompletelyDisabled } from './config';
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import DefinitionCore from './DefinitionCore';
@@ -10,11 +10,8 @@ const getLocaleString = getLocaleStringBody.bind(undefined, "message.DefinitionH
 
 class DefProvider implements vscode.DefinitionProvider{
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
-        if(getConfig().enableDefinition){
-            return DefinitionHandler.onDefinitionCall(document, position);
-        }else{
-            return undefined;
-        }
+        if(isDefinitionCompletelyDisabled()) return undefined;
+        return DefinitionHandler.onDefinitionCall(document, position);
     }
 };
 class HoverProvider implements vscode.HoverProvider{
@@ -36,9 +33,16 @@ export default class DefinitionHandler extends DefinitionCore{
     private static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
     private static isEnabled(){
         const config = getConfig();
-        return config.enableDefinition || config.enableHover;
+        return config.enableHover;
     }
     static setProviders(context: vscode.ExtensionContext){
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if(e.affectsConfiguration("MagmaLanguageSupport.enableDefinition")){
+                setTimeout(() => {
+                    this.refresh();
+                }, 500);
+            }
+        });
         context.subscriptions.push(vscode.languages.registerDefinitionProvider([
             {
                 scheme: "file",

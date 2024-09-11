@@ -38,11 +38,16 @@ class DefinitionParser{
                 dependencies: []
             };
         }
+        const config = getConfig();
         const lines = (fullText?.replaceAll("\r", "").split("\n")) ?? (await FileHandler.readFile(uri));
         Output(`Start loading ${uri.path}`);
         const scope = new Def.Scope();
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
+        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*);?.*?$/;
+        const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))();?.*?$/;
+        let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
+        let isToBeIgnored: boolean = false;
         const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
         const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/\/\s+@exports?\s+")([^"]+)";?.*/;
@@ -84,6 +89,25 @@ class DefinitionParser{
             let m: RegExpExecArray | null;
             Log(`line ${idx}\n    ${line}\n    scope: ${scope}`);
             if(!scope.inComment){
+                m = ignoreComment1.exec(line) ?? ignoreComment2.exec(line);
+                if(m){
+                    Log("ignoreComment", line);
+                    const targets = m[2]?.trim();
+                    if(!targets || targets === "this"){
+                        isToBeIgnored = true;
+                    }else if(targets === "none"){
+                        globalIgnoreType = [];
+                    }else if(targets === "all"){
+                        globalIgnoreType = ["forwards", "functions", "variables"];
+                    }else{
+                        globalIgnoreType = Array.from(new Set(targets.split(/\s*,\s*/).map(type => {
+                            if(type.startsWith("forward")) return "forwards";
+                            if(type.startsWith("function")) return "functions";
+                            else return "variables"
+                        })));
+                    }
+                    continue;
+                }
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
@@ -96,9 +120,9 @@ class DefinitionParser{
                 if(m){
                     Log("maybeDocumentInlineComment");
                     const slashNum = m[1].length;
-                    const config = getConfig().useLastInlineCommentAsDoc;
-                    const available = (config === true) || (
-                        config === "tripleSlash" && slashNum >= 3
+                    const { useLastInlineCommentAsDoc } = config;
+                    const available = (useLastInlineCommentAsDoc === true) || (
+                        useLastInlineCommentAsDoc === "tripleSlash" && slashNum >= 3
                     );
                     if(available){
                         if(!parser.isEmpty) parser.reset();
@@ -238,6 +262,21 @@ class DefinitionParser{
                 }
                 m = assignVariable.exec(line);
                 if(m){
+                    const isEnabled = (() => {
+                        if(config.enableDefinition.variables === false) return false;
+                        if(config.enableDefinition.variables === "onlyWithDocumentation" && parser.isEmpty) return false;
+                        return true;
+                    })();
+                    const isIgnored = !isEnabled || (() => {
+                        if(isToBeIgnored){
+                            return true;
+                        }else if(globalIgnoreType.includes("variables")){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    })();
+                    isToBeIgnored = false;
                     let start = m[1].length;
                     let variables = m[2];
                     const firstLine = line.trim();
@@ -266,6 +305,8 @@ class DefinitionParser{
                                 scope.parent().toDefinitions(definitions)?.push({
                                     name: this.formatFunctionName(name),
                                     kind: Def.DefinitionKind.variable,
+                                    enabled: isEnabled,
+                                    ignored: isIgnored,
                                     document: doc,
                                     range,
                                     endsAt: undefined,
@@ -289,6 +330,25 @@ class DefinitionParser{
                     startFunction4.exec(line);
                 if(m){
                     Log("startFunction", line);
+                    const isEnabled = (() => {
+                        const isForward = m[1].startsWith("forward");
+                        const type = isForward ? "forwards" : "functions";
+                        if(config.enableDefinition[type] === false) return false;
+                        if(config.enableDefinition[type] === "onlyWithDocumentation" && parser.isEmpty) return false;
+                        return true;
+                    })();
+                    const isIgnored = !isEnabled || (() => {
+                        const isForward = m[1].startsWith("forward");
+                        const type = isForward ? "forwards" : "functions";
+                        if(isToBeIgnored){
+                            return true;
+                        }else if(globalIgnoreType.includes(type)){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    })();
+                    isToBeIgnored = false;
                     const functionName = this.formatFunctionName(m[2]);
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
@@ -307,6 +367,8 @@ class DefinitionParser{
                         kind: m[1].startsWith("forward")
                             ? Def.DefinitionKind.forward
                             : Def.DefinitionKind.function,
+                        enabled: isEnabled,
+                        ignored: isIgnored,
                         document: doc,
                         range: nameRange,
                         endsAt: startScope ? null : undefined,
@@ -315,7 +377,7 @@ class DefinitionParser{
                     if(startScope){
                         scope.down();
                     }
-                    if(getConfig().warnsWhenRedefiningIntrinsic && !m[1].includes("@define")){
+                    if(config.warnsWhenRedefiningIntrinsic && !m[1].includes("@define")){
                         if(INTRINSICS.includes(functionName)){
                             diagnostics.push(new vscode.Diagnostic(
                                 nameRange,
@@ -397,6 +459,9 @@ class DefinitionParser{
                 }
                 m = inComment.exec(line);
                 if(m){
+                    if(/^@internal(\s|$)/.test(m[1].trim())){
+                        isToBeIgnored = true;
+                    }
                     parser.send(m[1]);
                     continue;
                 }
@@ -428,6 +493,19 @@ class DefinitionLoader extends DefinitionParser{
         const id = this.uriToID(uri);
         return this.FileCache.hasOwnProperty(id) && Def.isCache(this.FileCache[id]);
     }
+    protected static clear(){
+        this.FileCache = {};
+        this.FileExports = {};
+        this.diagnosticCollection.clear();
+    }
+    protected static refresh(){
+        Output("Refreshing caches...");
+        this.clear();
+        const documents = vscode.workspace.textDocuments.filter(document => document.languageId === "magma");
+        documents.forEach(document => {
+            this.reserveLoad(document.uri, document.getText());
+        });
+    }
     protected static reserveLoad(uri: vscode.Uri, fullText?: string): void{
         const id = this.uriToID(uri);
         if(this.FileCache[id] !== "reserved"){
@@ -435,9 +513,18 @@ class DefinitionLoader extends DefinitionParser{
             this.load(uri, fullText);
         }
     }
+    protected static removeFileCache(uri: vscode.Uri){
+        delete this.FileCache[this.uriToID(uri)];
+        delete this.FileExports[uri.fsPath];
+        this.diagnosticCollection.delete(uri);
+        Output(`Removed cache of ${uri.path}`);
+    }
     protected static async load(uri: vscode.Uri, fullText?: string): Promise<void>{
         const cache = await this.createCacheData(uri, fullText);
         this.FileCache[this.uriToID(uri)] = cache;
+        FileHandler.watch(uri, () => {
+            this.removeFileCache(uri);
+        });
         cache.dependencies.forEach(dep => {
             const uri = dep.location;
             if(typeof uri !== "number" && !this.isRegistered(uri)){
@@ -547,8 +634,8 @@ export default class DefinitionSearcher extends DefinitionLoader{
             if(!cache) continue;
             const uri = cache.uri;
             const query = (isSelfCache)
-                ? (dep: Def.Definition) => queryBody(dep) && position.line > dep.range.start.line
-                : queryBody;
+                ? (dep: Def.Definition) => dep.enabled && queryBody(dep) && position.line > dep.range.start.line
+                : (dep: Def.Definition) => !dep.ignored && queryBody(dep);
             searchedFiles.add(this.uriToID(uri));
             while(true){
                 const defs = scope.toDefinitions(cache.definitions);
@@ -616,7 +703,11 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 const defs = scope.toDefinitions(cache.definitions);
                 if(defs){
                     const definedDefs = defs.filter(def => {
-                        return !isSelfCache || def.range.end.line < position.line;
+                        if(isSelfCache){
+                            return def.enabled && def.range.end.line < position.line;
+                        }else{
+                            return !def.ignored;
+                        }
                     }).reverse();
                     if(onlyLastDefined){
                         definedDefs.forEach(def => {
@@ -674,7 +765,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
             return ret;
         };
         if(docCache){
-            return flat(docCache.definitions).find(def => def.range.contains(position));
+            return flat(docCache.definitions).find(def => def.enabled && def.range.contains(position));
         }else{
             return undefined;
         }

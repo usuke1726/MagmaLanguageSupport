@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.5.4 - 2024-09-07
+
+- Updated dependent modules to fix vulnerabilities.
+
 ## 0.5.3 - 2024-08-20
 
 - Fixed a bug where links to files with relative paths did not work.

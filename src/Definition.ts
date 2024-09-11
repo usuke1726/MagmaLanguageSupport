@@ -10,6 +10,8 @@ export type DefinitionKind = typeof DefinitionKind[keyof typeof DefinitionKind];
 export type Definition = {
     name: string;
     kind: DefinitionKind;
+    enabled: boolean;
+    ignored: boolean;
     document: Readonly<vscode.MarkdownString>;
     range: vscode.Range;
     endsAt: vscode.Position | null | undefined;

@@ -106,6 +106,23 @@ export default class FileHandler{
             return false;
         }
     }
+    static watch(uri: vscode.Uri, onDeleted: () => void){
+        (async () => {
+            if(!await this.exists(uri)) return;
+            try{
+                const watcher = fs.watch(uri.fsPath);
+                for await(const event of watcher){
+                    if(event.eventType === "rename"){
+                        Output(`Detected file deletion: ${uri.fsPath}`);
+                        onDeleted();
+                    }
+                }
+            }catch{
+                Output(`Failed to prepare a file watcher: ${uri.fsPath}`);
+                onDeleted();
+            }
+        })();
+    }
     static base(uri: vscode.Uri): vscode.Uri{
         return vscode.Uri.joinPath(uri, "..");
     }
