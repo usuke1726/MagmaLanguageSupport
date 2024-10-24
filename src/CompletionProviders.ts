@@ -171,7 +171,7 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
             if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("defined");
             item.kind = vscode.CompletionItemKind.Snippet;
-            item.insertText = new vscode.SnippetString('defined ${1|intrinsic,function,procedure|} ${2:functionName}();');
+            item.insertText = new vscode.SnippetString('defined ${1|intrinsic,function,procedure,variable|} ${2:name()};');
             item.documentation = new vscode.MarkdownString(getLocaleString("defined"));
             return [item];
         }else{

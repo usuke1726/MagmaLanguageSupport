@@ -65,9 +65,11 @@ class DefinitionParser{
         const startFunction2 = /^(\s*)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(\s*forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
         const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$/;
+        const definedVariable = /^(\s*\/\/\s+@define[sd]?\s+variable\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;?\s*$/;
         const endFunction = /^(\s*end\s+(?:function|procedure)\s*;)/;
         const invalidDefinedComment1 = /^(\s*\/\/\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
         const invalidDefinedComment2 = /^(\s*\/\/\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
+        const invalidDefinedComment3 = /^(\s*\/\/\s+@define[sd]?\s+variable\s+(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*)(\(.*\));?\s*?$/;
         const notebookUseStatement = /^(\s*\/\/\s+@uses?\s+)([0-9]+);?.*?$/;
         const isNotebook = !FileHandler.isMagmaFile(uri);
         const definitions: Def.Definition[] = [];
@@ -324,6 +326,37 @@ class DefinitionParser{
                     }
                     continue;
                 }
+                m = definedVariable.exec(line);
+                if(m){
+                    Log("definedVariable");
+                    const isIgnored = (() => {
+                        if(isToBeIgnored){
+                            return true;
+                        }
+                        return globalIgnoreType.includes("variables");
+                    })();
+                    const name = this.formatFunctionName(m[2]);
+                    const start = m[1].length;
+                    const nameRange = new vscode.Range(
+                        new vscode.Position(idx, start),
+                        new vscode.Position(idx, start + name.length)
+                    );
+                    const firstLine = line.trim();
+                    parser.setFirstLine(firstLine);
+                    const doc = new vscode.MarkdownString(parser.pop());
+                    doc.baseUri = uri;
+                    scope.next();
+                    scope.parent().toDefinitions(definitions)?.push({
+                        name,
+                        kind: Def.DefinitionKind.variable,
+                        enabled: true,
+                        ignored: isIgnored,
+                        document: doc,
+                        range: nameRange,
+                        endsAt: undefined,
+                        definitions: []
+                    });
+                }
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??
                     startFunction3.exec(line) ??
@@ -404,8 +437,8 @@ class DefinitionParser{
                     parser.reset();
                     const functionType = m[2].trim();
                     const isInvalid = (
-                        !["function", "procedure", "intrinsic"].includes(functionType) &&
-                        !["function ", "procedure ", "intrinsic "].some(t => functionType.startsWith(t))
+                        !["function", "procedure", "intrinsic", "variable"].includes(functionType) &&
+                        !["function ", "procedure ", "intrinsic ", "variable"].some(t => functionType.startsWith(t))
                     );
                     if(isInvalid){
                         const start = m[1].length;
@@ -435,6 +468,20 @@ class DefinitionParser{
                     diagnostics.push(new vscode.Diagnostic(
                         range,
                         getLocaleString("missingArguments"),
+                        vscode.DiagnosticSeverity.Warning
+                    ));
+                }
+                m = invalidDefinedComment3.exec(line);
+                if(m){
+                    parser.reset();
+                    const start = m[1].length;
+                    const range = new vscode.Range(
+                        new vscode.Position(idx, start),
+                        new vscode.Position(idx, start + m[2].length)
+                    );
+                    diagnostics.push(new vscode.Diagnostic(
+                        range,
+                        getLocaleString("unneededArguments"),
                         vscode.DiagnosticSeverity.Warning
                     ));
                 }

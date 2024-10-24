@@ -43,6 +43,7 @@
     "message.DefinitionHandler.invalidFunctionType": "{0} は無効な識別子です．\nfunction, procedure, intrinsic のいずれかを指定してください．",
     "message.DefinitionHandler.functionTypeUndefined": "function, procedure, intrinsic のいずれかを指定する必要があります．",
     "message.DefinitionHandler.missingArguments": "括弧と引数も含めて定義してください．",
+    "message.DefinitionHandler.unneededArguments": "括弧や引数は不要です．",
     "message.DefinitionHandler.matchedFiles": "マッチしたファイル：",
     "message.DefinitionHandler.cellNotFound": "インデックス {0} のセルが見つかりません．",
     "message.DefinitionHandler.cellSelfReference": "自分自身は参照できません．",
