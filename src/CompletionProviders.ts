@@ -145,6 +145,9 @@ class DefinitionComp implements vscode.CompletionItemProvider{
         const definitions = await DefinitionHandler.searchAllDefinitions(document, position);
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
+            if(def.kind === Def.DefinitionKind.forward){
+                this.setForwardInsertText(document, position, item, def);
+            }
             item.kind = (() => {
                 const DefK = Def.DefinitionKind;
                 const Kind = vscode.CompletionItemKind;
@@ -159,6 +162,18 @@ class DefinitionComp implements vscode.CompletionItemProvider{
             return item;
         });
         return items;
+    }
+    private setForwardInsertText(document: vscode.TextDocument, position: vscode.Position, item: vscode.CompletionItem, def: Def.Definition): void{
+        const line = document.lineAt(position.line).text;
+        const beforeText = line.substring(0, position.character);
+        const m = /^\s*(function|procedure)\s+/.exec(beforeText);
+        if(def.definitions.length && m){
+            item.range = new vscode.Range(
+                new vscode.Position(position.line, m[0].length),
+                new vscode.Position(position.line, line.includes(")") ? line.indexOf(")") + 1 : line.length)
+            );
+            item.insertText = `${def.name}(${def.definitions.map(d => d.name).join(", ")})`;
+        }
     }
 };
 
