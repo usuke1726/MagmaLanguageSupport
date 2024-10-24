@@ -48,7 +48,7 @@ class DefinitionParser{
         const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))();?.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
-        const loadStatementWithAtMark = /^(\s*load\s+")(@.+?)";\s*(\/\/.*)?$/;
+        const loadStatementWithAtMark = /^(\s*load\s+")(@[^"]+)";\s*.*$/;
         const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/\/\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
