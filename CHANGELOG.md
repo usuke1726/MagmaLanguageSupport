@@ -1,6 +1,13 @@
 
 # Change Log
 
+## 0.6.1 - 2024-10-24
+
+- Fixed a bug where the intrinsic `ParallelSort` was not suggested.
+- Fixed a bug where the statement `@internal` in an inline comment was not suggested.
+- Fixed a bug where a statement after `load` was included in an inline comment when using MamgaLoader.
+- Fixed a bug where the statement `load "A"; "B";` was treated as the wrong filename `A"; "B`;
+
 ## 0.6.0 - 2024-09-11
 
 - [**BREAKING CHANGE**] Integrated `enableAutoCompletion` and `functionCompletionType` to `completionTypes`.
