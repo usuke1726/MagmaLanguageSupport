@@ -260,70 +260,6 @@ class DefinitionParser{
                     }catch{}
                     continue;
                 }
-                m = assignVariable.exec(line);
-                if(m){
-                    const isEnabled = (() => {
-                        if(config.enableDefinition.variables === false) return false;
-                        if(config.enableDefinition.variables === "onlyWithDocumentation" && parser.isEmpty) return false;
-                        return true;
-                    })();
-                    const isIgnored = !isEnabled || (() => {
-                        if(isToBeIgnored){
-                            return true;
-                        }else if(globalIgnoreType.includes("variables")){
-                            return true;
-                        }else{
-                            return false;
-                        }
-                    })();
-                    isToBeIgnored = false;
-                    let start = m[1].length;
-                    let variables = m[2];
-                    const firstLine = line.trim();
-                    parser.setFirstLine(firstLine);
-                    const doc = new vscode.MarkdownString(parser.pop());
-                    doc.baseUri = uri;
-                    const pat1 = RegExp(`^\\s*${comp1}`);
-                    const pat2 = RegExp(`^\\s*<\\s*(${comp1})\\s*>`);
-                    const comma = /^\s*,\s*/;
-                    let count = 0;
-                    while(variables){
-                        count++;
-                        if(count > 20000){
-                            Output(`Maybe an infinite loop: ${line} (index ${idx})`);
-                            break;
-                        }
-                        m = pat1.exec(variables) ?? pat2.exec(variables);
-                        if(m){
-                            const name = m[1];
-                            if(name !== "_"){
-                                const range = new vscode.Range(
-                                    new vscode.Position(idx, start),
-                                    new vscode.Position(idx, start + name.length)
-                                );
-                                scope.next();
-                                scope.parent().toDefinitions(definitions)?.push({
-                                    name: this.formatFunctionName(name),
-                                    kind: Def.DefinitionKind.variable,
-                                    enabled: isEnabled,
-                                    ignored: isIgnored,
-                                    document: doc,
-                                    range,
-                                    endsAt: undefined,
-                                    definitions: [],
-                                });
-                            }
-                            start += m[0].length;
-                            variables = variables.substring(m[0].length);
-                            m = comma.exec(variables);
-                            if(m){
-                                start += m[0].length;
-                                variables = variables.substring(m[0].length);
-                            }
-                        }
-                    }
-                    continue;
-                }
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??
                     startFunction3.exec(line) ??
@@ -405,6 +341,70 @@ class DefinitionParser{
                         }
                     }
                     scope.inComment = false;
+                    continue;
+                }
+                m = assignVariable.exec(line);
+                if(m){
+                    const isEnabled = (() => {
+                        if(config.enableDefinition.variables === false) return false;
+                        if(config.enableDefinition.variables === "onlyWithDocumentation" && parser.isEmpty) return false;
+                        return true;
+                    })();
+                    const isIgnored = !isEnabled || (() => {
+                        if(isToBeIgnored){
+                            return true;
+                        }else if(globalIgnoreType.includes("variables")){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    })();
+                    isToBeIgnored = false;
+                    let start = m[1].length;
+                    let variables = m[2];
+                    const firstLine = line.trim();
+                    parser.setFirstLine(firstLine);
+                    const doc = new vscode.MarkdownString(parser.pop());
+                    doc.baseUri = uri;
+                    const pat1 = RegExp(`^\\s*${comp1}`);
+                    const pat2 = RegExp(`^\\s*<\\s*(${comp1})\\s*>`);
+                    const comma = /^\s*,\s*/;
+                    let count = 0;
+                    while(variables){
+                        count++;
+                        if(count > 20000){
+                            Output(`Maybe an infinite loop: ${line} (index ${idx})`);
+                            break;
+                        }
+                        m = pat1.exec(variables) ?? pat2.exec(variables);
+                        if(m){
+                            const name = m[1];
+                            if(name !== "_"){
+                                const range = new vscode.Range(
+                                    new vscode.Position(idx, start),
+                                    new vscode.Position(idx, start + name.length)
+                                );
+                                scope.next();
+                                scope.parent().toDefinitions(definitions)?.push({
+                                    name: this.formatFunctionName(name),
+                                    kind: Def.DefinitionKind.variable,
+                                    enabled: isEnabled,
+                                    ignored: isIgnored,
+                                    document: doc,
+                                    range,
+                                    endsAt: undefined,
+                                    definitions: [],
+                                });
+                            }
+                            start += m[0].length;
+                            variables = variables.substring(m[0].length);
+                            m = comma.exec(variables);
+                            if(m){
+                                start += m[0].length;
+                                variables = variables.substring(m[0].length);
+                            }
+                        }
+                    }
                     continue;
                 }
                 m = endFunction.exec(line);
