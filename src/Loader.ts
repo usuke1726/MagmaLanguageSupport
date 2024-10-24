@@ -89,7 +89,7 @@ export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Pro
             throwError(base, query, loadFiles);
         }
         const fileUri = loadFiles[0];
-        ret += await loadRecursively(baseUri, fileUri);
+        ret += await loadRecursively(baseUri, fileUri) + "\n";
         body = body.substring(m.index + m[0].length);
     }
     Output(`Successfully loaded ${uri.path}`);
