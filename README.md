@@ -37,7 +37,7 @@ The following configurations are available:
 
 `enableDefinition`
 
-This specifies whether features with definitions are enabled or disabled, or whether they are enabled only if they have documentation.
+This specifies whether features with definitions are enabled or disabled, or enabled only if the definitions have documentation.
 
 ```jsonc
     "MagmaLanguageSupport.enableDefinition": {
