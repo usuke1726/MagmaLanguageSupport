@@ -3720,6 +3720,7 @@ const INTRINSICS: readonly string[] = [
 "PapiOrder",
 "ParallelClass",
 "ParallelClasses",
+"ParallelSort",
 "Parameters",
 "Parametrization",
 "ParametrizationMatrix",
