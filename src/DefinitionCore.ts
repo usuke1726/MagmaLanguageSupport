@@ -310,7 +310,7 @@ class DefinitionParser{
                                     document: doc,
                                     range,
                                     endsAt: undefined,
-                                    definitions: []
+                                    definitions: [],
                                 });
                             }
                             start += m[0].length;
@@ -360,6 +360,7 @@ class DefinitionParser{
                     const startScope = startFunction1.test(line);
                     Log("pushed:", definitions, scope, scope.toDefinitions(definitions));
                     scope.next();
+                    const params = parser.params;
                     const doc = new vscode.MarkdownString(parser.pop());
                     doc.baseUri = uri;
                     scope.parent().toDefinitions(definitions)?.push({
@@ -372,10 +373,27 @@ class DefinitionParser{
                         document: doc,
                         range: nameRange,
                         endsAt: startScope ? null : undefined,
-                        definitions: []
+                        definitions: [],
                     });
-                    if(startScope){
-                        scope.down();
+                    scope.down();
+                    const argsRange = new vscode.Range(
+                        nameRange.end,
+                        new vscode.Position(nameRange.end.line, line.length)
+                    );
+                    params.forEach(param => {
+                        scope.parent().toDefinitions(definitions)?.push({
+                            name: param.name,
+                            kind: Def.DefinitionKind.variable,
+                            enabled: isEnabled,
+                            ignored: isIgnored,
+                            document: new vscode.MarkdownString(param.document),
+                            range: argsRange,
+                            endsAt: undefined,
+                            definitions: []
+                        });
+                    });
+                    if(!startScope){
+                        scope.up();
                     }
                     if(config.warnsWhenRedefiningIntrinsic && !m[1].includes("@define")){
                         if(INTRINSICS.includes(functionName)){
@@ -751,6 +769,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
         return ret;
     }
     protected static searchDefinitionAtPosition(document: vscode.TextDocument, position: vscode.Position): Def.Definition | undefined{
+        const definitionName = this.getFunctionNameOfPosition(document, position);
         const id = this.uriToID(document.uri);
         const cache = this.FileCache[id];
         if(!Def.isCache(cache)) return undefined;
@@ -765,7 +784,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
             return ret;
         };
         if(docCache){
-            return flat(docCache.definitions).find(def => def.enabled && def.range.contains(position));
+            return flat(docCache.definitions).find(def => def.enabled && def.name === definitionName && def.range.contains(position));
         }else{
             return undefined;
         }

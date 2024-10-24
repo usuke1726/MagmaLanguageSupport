@@ -19,6 +19,7 @@ export default class DocumentParser{
     private _endComment: boolean = false;
     private _fileDocument: string = "";
     private _disabled: boolean = false;
+    private _params: { name: string, document: string }[] = [];
     constructor(uri: vscode.Uri){
         this.uri = uri;
         this.lines = [];
@@ -35,6 +36,9 @@ export default class DocumentParser{
     get disabled(){
         return this._disabled;
     }
+    get params(){
+        return [...this._params];
+    }
     disable(){
         this._disabled = true;
     }
@@ -46,6 +50,7 @@ export default class DocumentParser{
         this.lines = [];
         this._maybeDocument = false;
         this.isFileDocument = false;
+        this._params.splice(0);
         if(disableFirstDoc){
             this.isFirstDoc = false;
         }
@@ -198,6 +203,9 @@ export default class DocumentParser{
         }
         Log(`   buffer:`, this.buffer);
         let out = `*@${this.tag}*`;
+        if(["param", "arg", "argument"].includes(this.tag) && this.firstToken){
+            this._params.push({ name: this.firstToken, document: this.buffer.join("\n") });
+        }
         if(this.firstToken){
             out += ` ${DocumentParser.wrapWithInlineCode(this.firstToken)}`;
         }
@@ -238,6 +246,9 @@ export default class DocumentParser{
     }
     endComment(){
         this._endComment = true;
+        if(this.tag){
+            this.finishTag();
+        }
         if(this.isFileDocument){
             this._fileDocument = this.pop();
         }
