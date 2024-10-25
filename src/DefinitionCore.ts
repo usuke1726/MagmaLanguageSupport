@@ -61,6 +61,7 @@ class DefinitionParser{
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
         const comp3 = `^(\\s*)(${comp2}(\\s*,\\s*${comp2})*)\\s*:=\\s*`;
         const assignVariable = RegExp(comp3);
+        const startFunctionWithArgs = /^(\s*(?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(\s*(([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*,\s*([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)'))*)/;
         const startFunction1 = /^(\s*(?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const startFunction2 = /^(\s*)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(\s*forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
@@ -260,6 +261,17 @@ class DefinitionParser{
                     }catch{}
                     continue;
                 }
+                const functionParams = [];
+                m = startFunctionWithArgs.exec(line);
+                if(m){
+                    let params = m[3];
+                    const pattern = /(\s*,\s*)?([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
+                    let m2;
+                    while(m2 = pattern.exec(params)){
+                        functionParams.push(m2[2]);
+                        params = params.substring(m2[0].length);
+                    }
+                }
                 m = startFunction1.exec(line) ??
                     startFunction2.exec(line) ??
                     startFunction3.exec(line) ??
@@ -316,7 +328,18 @@ class DefinitionParser{
                         nameRange.end,
                         new vscode.Position(nameRange.end.line, line.length)
                     );
-                    params.forEach(param => {
+                    const paramNames = params.map(p => p.name);
+                    [
+                        ...params,
+                        ...functionParams
+                        .filter(param => !paramNames.includes(param))
+                        .map(param => {
+                            return {
+                                name: param,
+                                document: ""
+                            };
+                        })
+                    ].forEach(param => {
                         scope.parent().toDefinitions(definitions)?.push({
                             name: param.name,
                             kind: Def.DefinitionKind.variable,
