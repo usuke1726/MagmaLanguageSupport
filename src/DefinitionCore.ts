@@ -789,6 +789,45 @@ export default class DefinitionSearcher extends DefinitionLoader{
             return undefined;
         }
     }
+    public static async searchAllForwardParams(document: vscode.TextDocument, position: vscode.Position, onlyNotDefinedAtFunction: boolean = false): Promise<Def.Definition[]>{
+        const cache = this.FileCache[this.uriToID(document.uri)];
+        if(!Def.isCache(cache)) return [];
+        const docCache = (Def.isNotebookCache(cache))
+            ? (cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache)
+            : cache;
+        if(!docCache) return [];
+        const scope = Def.Scope.positionToScope(position, docCache.definitions);
+        if(scope.isGlobal()) return [];
+        const func = scope.toDefinition(docCache.definitions);
+        if(!func) return [];
+        const forwardFunc = await this.searchDefinition(document, position, {
+            onlyForward: true,
+            functionName: func.name
+        });
+        if(forwardFunc){
+            return forwardFunc.definition.definitions
+            .filter(def => def.kind === Def.DefinitionKind.variable)
+            .filter(def => {
+                if(!onlyNotDefinedAtFunction) return true;
+                return !func.definitions.some(d => d.name === def.name && d.range.start.line === func.range.start.line);
+            }).map((def): Def.Definition => {
+                return {
+                    ...def,
+                    range: func.range
+                }
+            });
+        }else{
+            return [];
+        }
+    }
+    protected static async searchForwardParams(document: vscode.TextDocument, position: vscode.Position): Promise<Def.SearchResult | undefined>{
+        const definitionName = this.getFunctionNameOfPosition(document, position);
+        const res = (await this.searchAllForwardParams(document, position)).filter(def => def.name === definitionName);
+        return res.length ? {
+            uri: document.uri,
+            definition: res[0]
+        } : undefined;
+    }
     protected static async searchDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const line = document.lineAt(position.line).text;
         const ch = position.character;

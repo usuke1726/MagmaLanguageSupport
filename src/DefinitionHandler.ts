@@ -178,6 +178,13 @@ export default class DefinitionHandler extends DefinitionCore{
                 range: result.definition.range
             };
         }else{
+            const forwardParam = await this.searchForwardParams(document, position);
+            if(forwardParam){
+                return {
+                    uri: forwardParam.uri,
+                    range: forwardParam.definition.range
+                };
+            }
             return undefined;
         }
     }
@@ -220,6 +227,12 @@ export default class DefinitionHandler extends DefinitionCore{
                 const contents = [documentBody];
                 return { contents };
             }else{
+                const forwardParam = await this.searchForwardParams(document, position);
+                if(forwardParam){
+                    return {
+                        contents: [forwardParam.definition.document]
+                    };
+                }
                 return undefined;
             }
         }

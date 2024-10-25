@@ -142,7 +142,10 @@ class DefinitionComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.CompletionItem[]>{
         if(isExclusive(document, position)) return [];
         if(getConfig().completionTypes["definition"] !== "snippet") return [];
-        const definitions = await DefinitionHandler.searchAllDefinitions(document, position);
+        const definitions = [
+            ...await DefinitionHandler.searchAllDefinitions(document, position),
+            ...await DefinitionHandler.searchAllForwardParams(document, position, true)
+        ];
         const items = definitions.map(def => {
             const item = new vscode.CompletionItem(def.name);
             if(def.kind === Def.DefinitionKind.forward){
