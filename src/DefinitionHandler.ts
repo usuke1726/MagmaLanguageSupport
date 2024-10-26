@@ -224,11 +224,11 @@ export default class DefinitionHandler extends DefinitionCore{
         });
         const def = [forres, res].find(def => def !== undefined);
         if(!def) return emptydata;
-        const documentation = new vscode.MarkdownString();
-        [forres, res]
+        const docValue = [forres, res]
         .filter(def => def !== undefined)
-        .map(def => def.definition.document)
-        .forEach(def => documentation.appendMarkdown(def.value))
+        .map(def => def.definition.document.value)
+        .join("\n\n");
+        const documentation = new vscode.MarkdownString(docValue);
         const label = def.definition.name;
         const signatures: vscode.SignatureInformation[] = [
             {
