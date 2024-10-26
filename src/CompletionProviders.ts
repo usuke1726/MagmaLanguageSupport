@@ -202,6 +202,7 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
             }
             return [item];
         }else{
+            if(!isExclusive(document, position)) return [];
             const labels = ["intrinsic", "function", "procedure", "variable"];
             const isFunction = (t: string) => t !== "variable";
             return labels.map(label => {
