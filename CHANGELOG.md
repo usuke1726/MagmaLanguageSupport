@@ -1,6 +1,12 @@
 
 # Change Log
 
+## 0.7.0 - 2024-10-26
+
+- New support for variable definitions in `@defined`.
+- New support for definitions of function params (arguments).
+- New support for signature help of functions.
+
 ## 0.6.1 - 2024-10-24
 
 - Fixed a bug where the intrinsic `ParallelSort` was not suggested.
