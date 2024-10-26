@@ -29,7 +29,10 @@ const exculusiveConditions: Readonly<{
             scheme === "vscode-notebook-cell" &&
             pattern.test(beforeText)
         );
-    }
+    },
+    DefinedCommentComp: (scheme, beforeText) => {
+        return /^\s*\/\/\s+@defined\s+$/.test(beforeText);
+    },
 };
 const isExclusive = (document: vscode.TextDocument, position: vscode.Position, ignore: string[] = []): boolean => {
     const beforeText = document.lineAt(position.line).text.substring(0, position.character);
@@ -184,18 +187,29 @@ class DefinitionComp implements vscode.CompletionItemProvider{
 
 class DefinedCommentComp implements vscode.CompletionItemProvider{
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
-        if(isExclusive(document, position)) return [];
+        if(isExclusive(document, position, ["DefinedCommentComp"])) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
             const pattern = /^\s*\/\/\s+@$/;
             if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("defined");
             item.kind = vscode.CompletionItemKind.Snippet;
-            item.insertText = new vscode.SnippetString('defined ${1|intrinsic,function,procedure|} ${2:functionName}();');
+            item.insertText = "defined ";
             item.documentation = new vscode.MarkdownString(getLocaleString("defined"));
+            item.command = {
+                command: "editor.action.triggerSuggest",
+                title: "re-trigger"
+            }
             return [item];
         }else{
-            return [];
+            const labels = ["intrinsic", "function", "procedure", "variable"];
+            const isFunction = (t: string) => t !== "variable";
+            return labels.map(label => {
+                const item = new vscode.CompletionItem(label);
+                item.kind = vscode.CompletionItemKind.Snippet;
+                item.insertText = new vscode.SnippetString(`${label} \${1:name}${isFunction(label) ? "()" : ""};`);
+                return item;
+            });
         }
     }
 };
