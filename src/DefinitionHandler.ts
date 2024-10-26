@@ -28,6 +28,11 @@ class SymbolProvider implements vscode.DocumentSymbolProvider{
         return DefinitionHandler.onSymbolCall(document);
     }
 }
+class SignatureHelpProvider implements vscode.SignatureHelpProvider{
+    provideSignatureHelp(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.SignatureHelpContext): vscode.ProviderResult<vscode.SignatureHelp> {
+        return DefinitionHandler.onSignatureHelpCall(document, position);
+    }
+}
 
 export default class DefinitionHandler extends DefinitionCore{
     private static dirtyChangeTimeout: NodeJS.Timeout | undefined = undefined;
@@ -83,6 +88,16 @@ export default class DefinitionHandler extends DefinitionCore{
                 language: "magma"
             }
         ], new SymbolProvider());
+        vscode.languages.registerSignatureHelpProvider([
+            {
+                scheme: "file",
+                language: "magma"
+            },
+            {
+                scheme: "untitled",
+                language: "magma"
+            }
+        ], new SignatureHelpProvider(), "(");
     }
     static onDidChange(e: vscode.TextDocumentChangeEvent){
         this.dirtyChangeTimeout = undefined;
@@ -169,6 +184,64 @@ export default class DefinitionHandler extends DefinitionCore{
         return [
             ...definitions
         ];
+    }
+    static async onSignatureHelpCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.SignatureHelp>{
+        const emptydata = {
+            activeParameter: 0,
+            activeSignature: 0,
+            signatures: []
+        }
+        const charAt = (pos: vscode.Position) => {
+            return document.getText(new vscode.Range(pos, pos.with(pos.line, pos.character+1)));
+        }
+        const pos = new vscode.Position(position.line, position.character-1);
+        const lastChar = charAt(pos);
+        if(lastChar === ")") return emptydata;
+        const functionPos = (() => {
+            let idx = pos.character;
+            let char = charAt(pos.with(pos.line, idx));
+            while(true){
+                if(char === "(") break;
+                idx--;
+                if(idx < 0) return undefined;
+                char = charAt(pos.with(pos.line, idx));
+            }
+            return pos.with(pos.line, idx-1);
+        })();
+        if(!functionPos) return emptydata;
+        if(charAt(functionPos) === " ") return emptydata;
+        const res = await (async () => {
+            const res = await this.searchDefinition(document, functionPos);
+            if(!res) return res;
+            if(res.definition.kind === Def.DefinitionKind.forward){
+                return undefined;
+            }else{
+                return res;
+            }
+        })();
+        const forres = await this.searchDefinition(document, functionPos, {
+            onlyForward: true
+        });
+        const def = [forres, res].find(def => def !== undefined);
+        if(!def) return emptydata;
+        const documentation = new vscode.MarkdownString();
+        [forres, res]
+        .filter(def => def !== undefined)
+        .map(def => def.definition.document)
+        .forEach(def => documentation.appendMarkdown(def.value))
+        const label = def.definition.name;
+        const signatures: vscode.SignatureInformation[] = [
+            {
+                documentation,
+                label,
+                parameters: []
+            }
+        ];
+        return {
+            activeParameter: 0,
+            activeSignature: 0,
+            signatures
+        }
     }
     static async onDefinitionCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Definition | undefined>{
         const result = await this.searchDefinition(document, position);
