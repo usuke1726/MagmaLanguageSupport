@@ -16,6 +16,7 @@ export type Definition = {
     range: vscode.Range;
     endsAt: vscode.Position | null | undefined;
     definitions: Definition[];
+    isArg?: boolean;
 };
 export const isForward = (def: Definition) => {
     return def.kind === DefinitionKind.forward;

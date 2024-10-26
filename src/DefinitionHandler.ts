@@ -191,8 +191,9 @@ export default class DefinitionHandler extends DefinitionCore{
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const depResult = await this.searchDependency(document, position);
         if(depResult) return depResult;
+        const isArgWithoutDoc = (def: Def.Definition) => !!def.isArg && !def.document.value.trim();
         const selfDef = this.searchDefinitionAtPosition(document, position);
-        if(selfDef){
+        if(selfDef && !isArgWithoutDoc(selfDef)){
             if(Def.isForward(selfDef)){
                 return {
                     contents: [selfDef.document]
@@ -221,17 +222,17 @@ export default class DefinitionHandler extends DefinitionCore{
                 };
             }
         }else{
+            const makeContents = (res: Def.SearchResult) => { return { contents: [res.definition.document] }; };
             const result = await this.searchDefinition(document, position);
-            if(result){
-                const documentBody = result.definition.document;
-                const contents = [documentBody];
-                return { contents };
+            if(result && !isArgWithoutDoc(result.definition)){
+                return makeContents(result);
             }else{
                 const forwardParam = await this.searchForwardParams(document, position);
                 if(forwardParam){
-                    return {
-                        contents: [forwardParam.definition.document]
-                    };
+                    return makeContents(forwardParam);
+                }
+                if(result){
+                    return makeContents(result);
                 }
                 return undefined;
             }

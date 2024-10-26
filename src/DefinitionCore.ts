@@ -381,7 +381,8 @@ class DefinitionParser{
                             document: new vscode.MarkdownString(param.document),
                             range: argsRange,
                             endsAt: undefined,
-                            definitions: []
+                            definitions: [],
+                            isArg: true,
                         });
                     });
                     if(!startScope){
@@ -857,6 +858,36 @@ export default class DefinitionSearcher extends DefinitionLoader{
             return flat(docCache.definitions).find(def => def.enabled && def.name === definitionName && def.range.contains(position));
         }else{
             return undefined;
+        }
+    }
+    public static async searchAllParams(document: vscode.TextDocument, position: vscode.Position): Promise<Def.Definition[]>{
+        const cache = this.FileCache[this.uriToID(document.uri)];
+        if(!Def.isCache(cache)) return [];
+        const docCache = (Def.isNotebookCache(cache))
+            ? (cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache)
+            : cache;
+        if(!docCache) return [];
+        const scope = Def.Scope.positionToScope(position, docCache.definitions);
+        if(scope.isGlobal()) return [];
+        const func = scope.toDefinition(docCache.definitions);
+        if(!func) return [];
+        const forwardFunc = await this.searchDefinition(document, position, {
+            onlyForward: true,
+            functionName: func.name
+        });
+        const params = func.definitions.filter(def => def.kind === Def.DefinitionKind.variable && def.range.start.line === func.range.start.line);
+        const hasDoc = (def: Def.Definition) => !!def.document.value.trim();
+        if(forwardFunc){
+            const forwardParams = forwardFunc.definition.definitions
+                .filter(def => def.kind === Def.DefinitionKind.variable);
+            return [
+                ...forwardParams
+                    .filter(def => hasDoc(def) && !params.some(d => d.name === def.name && hasDoc(d))),
+                ...params
+                    .filter(def => hasDoc(def) || !forwardParams.some(d => d.name === def.name && hasDoc(d))),
+            ];
+        }else{
+            return params;
         }
     }
     public static async searchAllForwardParams(document: vscode.TextDocument, position: vscode.Position, onlyNotDefinedAtFunction: boolean = false): Promise<Def.Definition[]>{
