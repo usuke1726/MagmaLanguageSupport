@@ -36,6 +36,7 @@
     "config.redirectsStderr.separately": "標準出力とは別のファイルに出力する",
     "config.redirectsStderr.select": "出力方法を毎回尋ねる",
     "config.redirectsStderr.no": "出力を破棄する",
+    "message.DefinitionHandler.AlternativeHoverDocumentationOfArguments": "引数",
     "message.DefinitionHandler.openFile": "ファイルを開く",
     "message.DefinitionHandler.notFound": "ファイルが見つかりません．パターン: {0}",
     "message.DefinitionHandler.loadingAtUntitledFile": "{0}構文を使う前にファイルを保存してください．",

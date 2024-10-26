@@ -232,7 +232,13 @@ export default class DefinitionHandler extends DefinitionCore{
                     return makeContents(forwardParam);
                 }
                 if(result){
-                    return makeContents(result);
+                    return makeContents({
+                        uri: result.uri,
+                        definition: {
+                            ...result.definition,
+                            document: new vscode.MarkdownString(getLocaleString("AlternativeHoverDocumentationOfArguments"))
+                        }
+                    });
                 }
                 return undefined;
             }

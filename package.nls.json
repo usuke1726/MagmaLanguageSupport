@@ -36,6 +36,7 @@
     "config.redirectsStderr.separately": "Outputs stderr to a file different from that of stdout.",
     "config.redirectsStderr.select": "Asks every time",
     "config.redirectsStderr.no": "Discards stderr output.",
+    "message.DefinitionHandler.AlternativeHoverDocumentationOfArguments": "a param",
     "message.DefinitionHandler.openFile": "Open file",
     "message.DefinitionHandler.notFound": "Files not found. pattern: {0}",
     "message.DefinitionHandler.loadingAtUntitledFile": "Save this file in order to use {0} statements",
