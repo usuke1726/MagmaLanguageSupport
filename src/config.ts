@@ -109,6 +109,9 @@ const formatEnabledDefinition = (types: UserDefinedEnabledDefinition): EnableDef
     }
 };
 
+const MathRenderingTypes = ["fetch:math-api", "fetch:TeX-SVG-Worker", "embedding"] as const;
+type MathRenderingTypes = typeof MathRenderingTypes[number];
+
 type Config = {
     completionTypes: CompletionTypes;
     intrinsicCompletionAliases: { [alias: string]: string },
@@ -125,7 +128,7 @@ type Config = {
     magmaPath: string;
     redirectsStderr: "yes" | "separately" | "select" | "no";
     useMath: boolean;
-    mathRenderingType: "server" | "embedding";
+    mathRenderingType: MathRenderingTypes;
 };
 const defaultConfig: Config = {
     completionTypes: {
@@ -165,7 +168,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     magmaPath: val => typeof val === "string",
     redirectsStderr: val => typeof val === "string" && ["yes", "separately", "select", "no"].includes(val),
     useMath: val => typeof val === "boolean",
-    mathRenderingType: val => typeof val === "string" && ["server", "embedding"].includes(val),
+    mathRenderingType: val => typeof val === "string" && ([...MathRenderingTypes] as string[]).includes(val),
 };
 const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];
 const isConfig = (obj: any): obj is Config => {

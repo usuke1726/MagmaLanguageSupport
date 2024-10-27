@@ -275,11 +275,12 @@
         },
         "MagmaLanguageSupport.mathRenderingType": {
           "type": "string",
-          "enum": ["server", "embedding"],
+          "enum": ["fetch:math-api", "fetch:TeX-SVG-Worker", "embedding"],
           "default": "embedding",
           "markdownDescription": "%config.mathRenderingType%",
-          "enumDescriptions": [
-            "%config.mathRenderingType.server%",
+          "markdownEnumDescriptions": [
+            "%config.mathRenderingType.fetch.mathAPI%",
+            "%config.mathRenderingType.fetch.TeXSVGWorker%",
             "%config.mathRenderingType.embedding%"
           ]
         }
