@@ -267,6 +267,21 @@
             "%config.redirectsStderr.no%"
           ],
           "markdownDescription": "%config.redirectsStderr%"
+        },
+        "MagmaLanguageSupport.useMath": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%config.useMath%"
+        },
+        "MagmaLanguageSupport.mathRenderingType": {
+          "type": "string",
+          "enum": ["server", "embedding"],
+          "default": "embedding",
+          "markdownDescription": "%config.mathRenderingType%",
+          "enumDescriptions": [
+            "%config.mathRenderingType.server%",
+            "%config.mathRenderingType.embedding%"
+          ]
         }
       }
     },
@@ -417,6 +432,7 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.8.10",
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "mathjax-full": "^3.2.2"
   }
 }

@@ -124,6 +124,8 @@ type Config = {
     notebookSeparatesWithHorizontalLines: boolean;
     magmaPath: string;
     redirectsStderr: "yes" | "separately" | "select" | "no";
+    useMath: boolean;
+    mathRenderingType: "server" | "embedding";
 };
 const defaultConfig: Config = {
     completionTypes: {
@@ -143,6 +145,8 @@ const defaultConfig: Config = {
     notebookSeparatesWithHorizontalLines: true,
     magmaPath: "",
     redirectsStderr: "select",
+    useMath: false,
+    mathRenderingType: "embedding",
 };
 type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
@@ -160,6 +164,8 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     notebookSeparatesWithHorizontalLines: val => typeof val === "boolean",
     magmaPath: val => typeof val === "string",
     redirectsStderr: val => typeof val === "string" && ["yes", "separately", "select", "no"].includes(val),
+    useMath: val => typeof val === "boolean",
+    mathRenderingType: val => typeof val === "string" && ["server", "embedding"].includes(val),
 };
 const keys: ConfigKey[] = Object.keys(conditions) as ConfigKey[];
 const isConfig = (obj: any): obj is Config => {
@@ -175,6 +181,11 @@ const format = (obj: Config): Config => {
     ret.enableDefinition = formatEnabledDefinition(ret.enableDefinition);
     return ret;
 };
+
+const _onChanged: ((newConig: Config) => void)[] = [];
+export const onChanged = (callback: (newConfig: Config) => void) => {
+    _onChanged.push(callback);
+}
 
 let configCache: Config | undefined = undefined;
 let initted = false;
@@ -193,7 +204,8 @@ const loadConfig = (): Config => {
     if(!initted){
         initted = true;
         vscode.workspace.onDidChangeConfiguration(e => {
-            loadConfig();
+            const newConfig = loadConfig();
+            _onChanged.forEach(callback => callback(newConfig));
         });
     }
     return configCache;

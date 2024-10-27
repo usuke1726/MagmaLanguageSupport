@@ -9,6 +9,7 @@ import setNotebookProviders from './Notebook';
 import setDisableVimProviders from './DisableVim';
 import setExecuteProviders from './Execute';
 import { registerStatmentWrapperCommand } from './StatementWrapper';
+import { setMathConverter } from './MathConverter';
 const { Log } = LogObject.bind("extension");
 
 export function activate(context: vscode.ExtensionContext) {
@@ -36,6 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
         setNotebookProviders(context);
         setDisableVimProviders(context);
         setExecuteProviders(context);
+        setMathConverter();
     }catch(e){
         const mes = `MagmaLanguageSupport couldn't start ${String(e)}`;
         Log(mes);

@@ -1,6 +1,7 @@
 
 import * as vscode from 'vscode';
 import LogObject from './Log';
+import { allConvert } from './MathParser';
 const { Log } = LogObject.bind("DocumentParser");
 
 export default class DocumentParser{
@@ -239,10 +240,10 @@ export default class DocumentParser{
         const brac = "`".repeat(num);
         return `${brac}magma\n${code}\n${brac}`;
     }
-    static wrapWithBlockTextCode(code: string){
+    static wrapWithBlockTextCode(code: string, lang: string = ""){
         const num = Math.max(2, ...[...code.matchAll(/`+/g)].map(m => m[0].length)) + 1;
         const brac = "`".repeat(num);
-        return `${brac}\n${code}\n${brac}`;
+        return `${brac}${lang}\n${code}\n${brac}`;
     }
     endComment(){
         this._endComment = true;
@@ -257,7 +258,7 @@ export default class DocumentParser{
         if(this.tag){
             this.finishTag();
         }
-        const body = this.lines.join("\n");
+        const body = allConvert(this.lines.join("\n"));
         if(this.firstLine){
             const code = this.firstLine ? DocumentParser.wrapWithBlockMagmaCode(this.firstLine) : "";
             this.reset();
