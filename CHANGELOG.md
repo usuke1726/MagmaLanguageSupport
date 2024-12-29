@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.7.1 - 2024-12-29
+
+- Updated dependent modules to fix vulnerabilities.
+
 ## 0.7.0 - 2024-10-26
 
 - New support for variable definitions in `@defined`.
