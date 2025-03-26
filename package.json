@@ -17,7 +17,8 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onNotebook:magma-calculator-notebook"
+    "onNotebook:magma-calculator-notebook",
+    "onNotebook:magma-calculator-notebook-html"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -47,11 +48,9 @@
           "dark": "./images/icon-imagma-dark.png",
           "light": "./images/icon-imagma-light.png"
         },
-        "extensions": [
-          ".imagma",
-          ".icmagma",
-          ".imag",
-          ".icmag"
+        "filenamePatterns": [
+          "*.{imagma,icmagma,imag,icmag}",
+          "*.{imagma,icmagma,imag,icmag}.{html,htm}"
         ]
       },
       {
@@ -334,7 +333,7 @@
       "notebook/cell/title": [
         {
           "command": "extension.magmaNotebook.openLoadingResult",
-          "when": "notebookType == 'magma-calculator-notebook' && notebookCellType == 'code'",
+          "when": "(notebookType == 'magma-calculator-notebook' || notebookType == 'magma-calculator-notebook-html') && notebookCellType == 'code'",
           "group": "inline/cell@0"
         }
       ],
@@ -345,7 +344,7 @@
           "group": "navigation@0"
         },
         {
-          "when": "notebookType == 'magma-calculator-notebook'",
+          "when": "notebookType == 'magma-calculator-notebook' || notebookType == 'magma-calculator-notebook-html'",
           "command": "extension.magmaNotebook.exportToMarkdown",
           "group": "navigation@0"
         }
@@ -379,16 +378,16 @@
         "displayName": "Magma Calculator Notebook",
         "selector": [
           {
-            "filenamePattern": "*.imagma"
-          },
+            "filenamePattern": "*.{imagma,icmagma,imag,icmag}"
+          }
+        ]
+      },
+      {
+        "type": "magma-calculator-notebook-html",
+        "displayName": "Magma Calculator Notebook",
+        "selector": [
           {
-            "filenamePattern": "*.icmagma"
-          },
-          {
-            "filenamePattern": "*.imag"
-          },
-          {
-            "filenamePattern": "*.icmag"
+            "filenamePattern": "*.{imagma,icmagma,imag,icmag}.{html,htm}"
           }
         ]
       }

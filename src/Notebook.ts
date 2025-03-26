@@ -13,6 +13,7 @@ const { Log, Output } = LogObject.bind("Notebook");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.Notebook");
 
 const ID = "magma-calculator-notebook";
+const HTML_ID = "magma-calculator-notebook-html";
 
 const isNoteBookCellKind = (obj: any): obj is vscode.NotebookCellKind => {
     return obj === 1 || obj === 2;
@@ -124,6 +125,109 @@ class Serializer implements vscode.NotebookSerializer{
     }
 };
 
+class HTMLSerializer extends Serializer{
+    private static readonly prefix: string = `<!DOCTYPE html><html><head><meta charset="utf-8"><script>`;
+    private static readonly suffix: string = `</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
+<script defer src='https://cdn.jsdelivr.net/gh/rsms/markdown-wasm@v1.2.0/dist/markdown.js'></script>
+<script>
+const esc = s => {
+    return s.replace(/[&'\`"<>]/g, m => {
+        return {
+            '&': '&amp;',
+            "'": '&#x27;',
+            '\`': '&#x60;',
+            '"': '&quot;',
+            '<': '&lt;',
+            '>': '&gt;',
+        }[m]
+    });
+};
+document.addEventListener("DOMContentLoaded", async () => {
+    await markdown.ready;
+    document.body.innerHTML = DATA.map(data => {
+        if(data.kind === 1){
+            return \`<div class="markdown">\${markdown.parse(data.value)}</div>\`;
+        }else{
+            const outputs = (() => {
+                if(data.hasOwnProperty("outputs")){
+                    const outputs = JSON.parse(data.outputs);
+                    if(outputs.length > 0){
+                        return \`<p class="outputs">Outputs:</p>\` + outputs.map(items => items.map(item => \`<pre class="output"><code>\${esc(item)}</code></pre>\`).join("")).join("");
+                    }else{
+                        return "";
+                    }
+                }else{
+                    return "";
+                }
+            })();
+            return \`<pre class="code"><code>\${esc(data.value)}</code></pre>\${outputs}\`;
+        }
+    }).map(cell => \`<div class="cell">\${cell}</div>\`).join("");
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "\$\$", right: "\$\$", display: true},
+            {left: "\$", right: "\$", display: false}
+        ],
+        throwOnError: false
+    });
+});
+</script>
+<style>
+    pre.code{
+        text-wrap: initial;
+        background-color: #fafafa !important;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    pre.output{
+        text-wrap: initial;
+    }
+    p.outputs{
+        margin-bottom: 0;
+    }
+</style>
+</head>
+<body class="vscode-body vscode-light"></body>
+</html>`.split("\n").map(s => s.trimStart()).join("");
+    async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
+        const data = (() => {
+            try{
+                const text = (new TextDecoder()).decode(content);
+                const lines = text.replaceAll("\r\n", "\n").split("\n");
+                if(lines.length > 1 && lines[1].startsWith("DATA=")){
+                    return JSON.parse(lines[1].slice(5));
+                }else{
+                    return JSON.parse(text);
+                }
+            }catch{
+                return undefined;
+            }
+        })();
+        const cellData = isRowNotebookCellArray(data) ? data : [];
+        return new vscode.NotebookData(cellData.map(item => {
+            const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
+            data.outputs = Serializer.stringToOutput(item.outputs);
+            return data;
+        }));
+    }
+    async serializeNotebook(data: vscode.NotebookData): Promise<Uint8Array> {
+        const contents = data.cells.map((cell): RowNotebookCell => {
+            return {
+                kind: cell.kind,
+                language: cell.languageId,
+                value: cell.value,
+                outputs: Serializer.outputsToString(cell.outputs)
+            };
+        });
+        return (new TextEncoder()).encode(`${HTMLSerializer.prefix}\nDATA=${JSON.stringify(contents)}\n${HTMLSerializer.suffix}`);
+    }
+};
+
 class Status implements vscode.NotebookCellStatusBarItemProvider{
     provideCellStatusBarItems(cell: vscode.NotebookCell): vscode.NotebookCellStatusBarItem[] {
         const removeButton = cell.outputs.length ? [{
@@ -150,8 +254,8 @@ type ExecuttionResult= {
     success: boolean;
 };
 class Controller{
-    private readonly id = "magma-notebook-controller";
-    private readonly type = ID;
+    private readonly id: string;
+    private readonly type: string;
     private readonly label = "Magma Calculator Notebook";
     private readonly controller: vscode.NotebookController;
     private readonly targetUrl = "http://magma.maths.usyd.edu.au/xml/calculator.xml";
@@ -166,7 +270,9 @@ class Controller{
     private lastTimeBlocked: Date | undefined = undefined;
     private overwrites: boolean = false;
     private readonly delayMinutesAfterBlocked = 10;
-    constructor(){
+    constructor(type: string){
+        this.type = type;
+        this.id = `${type}-controller`;
         this.controller = vscode.notebooks.createNotebookController(this.id, this.type, this.label);
         vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
         this.controller.supportedLanguages = ["magma"];
@@ -386,13 +492,26 @@ class Controller{
         exe.end(true);
     }
 };
-const controller: Controller = new Controller();
+const controller: Controller = new Controller(ID);
+const HTMLcontroller: Controller = new Controller(HTML_ID);
+
+const controllerFromCell = (cell: vscode.NotebookCell) => {
+    const type = cell.notebook.notebookType;
+    if(type === ID) return controller;
+    else if(type === HTML_ID) return HTMLcontroller;
+    else{
+        vscode.window.showErrorMessage(`${type} は無効です．`);
+        return undefined;
+    };
+}
 
 const removeCellOutput = async (cell: vscode.NotebookCell) => {
+    const ctl = controllerFromCell(cell);
+    if(!ctl) return;
     const length = cell.outputs.length;
     if(!length) return;
     if(length === 1){
-        controller.removeOutputs(cell, [0]);
+        ctl.removeOutputs(cell, [0]);
         return;
     }
     const indices = [...Array(length).keys()];
@@ -420,13 +539,13 @@ const removeCellOutput = async (cell: vscode.NotebookCell) => {
     });
     if(res && res.length){
         const removed = res.map(s => Number(s.label));
-        controller.removeOutputs(cell, removed);
+        ctl.removeOutputs(cell, removed);
     }
 };
 
 const exportToMarkdown = async () => {
     const notebook = vscode.window.activeNotebookEditor?.notebook;
-    if(!notebook || notebook.notebookType !== ID){
+    if(!notebook || ![ID, HTML_ID].includes(notebook.notebookType)){
         vscode.window.showErrorMessage(getLocaleString("calledOnNonMagmaNotebookFile"));
         return;
     }
@@ -464,7 +583,9 @@ const exportToMarkdown = async () => {
     }
 };
 const previewCode = async (cell: vscode.NotebookCell) => {
-    const code = await controller.loadForPreview(cell);
+    const ctl = controllerFromCell(cell);
+    if(!ctl) return;
+    const code = await ctl.loadForPreview(cell);
     const doc = await vscode.workspace.openTextDocument({
         content: code,
         language: "magma"
@@ -523,9 +644,10 @@ const adjustUseIndexes = async (notebook: vscode.NotebookDocument, addedCellInde
 const setNotebookProviders = (context: vscode.ExtensionContext) => {
     Log("Notebook activated");
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
+    context.subscriptions.push(vscode.workspace.registerNotebookSerializer(HTML_ID, new HTMLSerializer()));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
     vscode.workspace.onDidChangeNotebookDocument(async e => {
-        if(e.notebook.notebookType !== ID) return;
+        if(![ID, HTML_ID].includes(e.notebook.notebookType)) return;
         const [oneAdded, addedCellIndex] = oneCellAdded(e);
         if(oneAdded){
             await adjustUseIndexes(e.notebook, addedCellIndex);
@@ -533,7 +655,7 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
         DefinitionHandler.onDidChangeNotebook(e.notebook);
     });
     vscode.workspace.onDidOpenNotebookDocument(notebook => {
-        if(notebook.notebookType !== ID) return;
+        if(![ID, HTML_ID].includes(notebook.notebookType)) return;
         DefinitionHandler.onDidOpenNotebook(notebook);
     });
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.removeCellOutput", (...args) => {
