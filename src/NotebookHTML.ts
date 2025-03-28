@@ -107,5 +107,6 @@ export const extractHtmlData = (htmlContents: string) => {
 };
 
 export const toHtmlContents = (data: string) => {
+    data = data.replaceAll("</script>", "<\\/script>");
     return `${prefix}<script>\nDATA=${data}\n</script>${suffix}`;
 };
