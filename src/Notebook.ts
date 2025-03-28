@@ -9,6 +9,7 @@ import FileHandler from './FileHandler';
 import { clearSearchedFiles, loadRecursively, removeComments, throwError } from './Loader';
 import DefinitionHandler from './DefinitionHandler';
 import DocumentParser from './DocumentParser';
+import { extractHtmlData, toHtmlContents } from './NotebookHTML';
 const { Log, Output } = LogObject.bind("Notebook");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.Notebook");
 
@@ -126,84 +127,11 @@ class Serializer implements vscode.NotebookSerializer{
 };
 
 class HTMLSerializer extends Serializer{
-    private static readonly prefix: string = `<!DOCTYPE html><html><head><meta charset="utf-8"><script>`;
-    private static readonly suffix: string = `</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
-<script defer src='https://cdn.jsdelivr.net/gh/rsms/markdown-wasm@v1.2.0/dist/markdown.js'></script>
-<script>
-const esc = s => {
-    return s.replace(/[&'\`"<>]/g, m => {
-        return {
-            '&': '&amp;',
-            "'": '&#x27;',
-            '\`': '&#x60;',
-            '"': '&quot;',
-            '<': '&lt;',
-            '>': '&gt;',
-        }[m]
-    });
-};
-document.addEventListener("DOMContentLoaded", async () => {
-    await markdown.ready;
-    document.body.innerHTML = DATA.map(data => {
-        if(data.kind === 1){
-            return \`<div class="markdown">\${markdown.parse(data.value)}</div>\`;
-        }else{
-            const outputs = (() => {
-                if(data.hasOwnProperty("outputs")){
-                    const outputs = JSON.parse(data.outputs);
-                    if(outputs.length > 0){
-                        return \`<p class="outputs">Outputs:</p>\` + outputs.map(items => items.map(item => \`<pre class="output"><code>\${esc(item)}</code></pre>\`).join("")).join("");
-                    }else{
-                        return "";
-                    }
-                }else{
-                    return "";
-                }
-            })();
-            return \`<pre class="code"><code>\${esc(data.value)}</code></pre>\${outputs}\`;
-        }
-    }).map(cell => \`<div class="cell">\${cell}</div>\`).join("");
-    renderMathInElement(document.body, {
-        delimiters: [
-            {left: "\$\$", right: "\$\$", display: true},
-            {left: "\$", right: "\$", display: false}
-        ],
-        throwOnError: false
-    });
-});
-</script>
-<style>
-    pre.code{
-        text-wrap: initial;
-        background-color: #fafafa !important;
-        border: 1px solid #eee;
-        border-radius: 5px;
-        padding: 10px;
-    }
-    pre.output{
-        text-wrap: initial;
-    }
-    p.outputs{
-        margin-bottom: 0;
-    }
-</style>
-</head>
-<body class="vscode-body vscode-light"></body>
-</html>`.split("\n").map(s => s.trimStart()).join("");
     async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
         const data = (() => {
             try{
                 const text = (new TextDecoder()).decode(content);
-                const lines = text.replaceAll("\r\n", "\n").split("\n");
-                if(lines.length > 1 && lines[1].startsWith("DATA=")){
-                    return JSON.parse(lines[1].slice(5));
-                }else{
-                    return JSON.parse(text);
-                }
+                return extractHtmlData(text);
             }catch{
                 return undefined;
             }
@@ -224,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 outputs: Serializer.outputsToString(cell.outputs)
             };
         });
-        return (new TextEncoder()).encode(`${HTMLSerializer.prefix}\nDATA=${JSON.stringify(contents)}\n${HTMLSerializer.suffix}`);
+        return (new TextEncoder()).encode(toHtmlContents(JSON.stringify(contents)));
     }
 };
 
