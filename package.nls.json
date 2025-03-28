@@ -2,7 +2,7 @@
     "command.magmaLoader.run": "execute MagmaLoader",
     "command.magmaLoader.openLoadingResult": "execute MagmaLoader and open the result",
     "command.magmaNotebook.createNewNotebook": "New Magma Notebook",
-    "command.magmaNotebook.exportToMarkdown": "Exports this notebook contents to markdown",
+    "command.magmaNotebook.export": "Exports this notebook contents",
     "command.magmaNotebook.openLoadingResult": "Preview the execution contents",
     "command.magma.wrapWithStatement": "Wraps the selected lines with if statements, etc.",
     "command.magma.executeInBackground": "Executes this Magma file in background",

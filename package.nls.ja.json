@@ -2,7 +2,7 @@
     "command.magmaLoader.run": "MagmaLoaderを実行",
     "command.magmaLoader.openLoadingResult": "MagmaLoaderを実行して結果を開く",
     "command.magmaNotebook.createNewNotebook": "Magmaノートブックを新規作成",
-    "command.magmaNotebook.exportToMarkdown": "ノートブックの内容をマークダウンに書き出す",
+    "command.magmaNotebook.export": "ノートブックの内容をエクスポート",
     "command.magmaNotebook.openLoadingResult": "実行内容をプレビュー",
     "command.magma.wrapWithStatement": "選択した行をif文などでくくる",
     "command.magma.executeInBackground": "Magmaファイルをバックグラウンドで実行する",

@@ -292,8 +292,8 @@
         "category": "Notebook"
       },
       {
-        "command": "extension.magmaNotebook.exportToMarkdown",
-        "title": "%command.magmaNotebook.exportToMarkdown%",
+        "command": "extension.magmaNotebook.export",
+        "title": "%command.magmaNotebook.export%",
         "icon": "$(export)",
         "category": "Notebook"
       },
@@ -345,7 +345,7 @@
         },
         {
           "when": "notebookType == 'magma-calculator-notebook' || notebookType == 'magma-calculator-notebook-html'",
-          "command": "extension.magmaNotebook.exportToMarkdown",
+          "command": "extension.magmaNotebook.export",
           "group": "navigation@0"
         }
       ]

@@ -89,7 +89,7 @@ class Serializer implements vscode.NotebookSerializer{
     static copyOutputs(outputs: vscode.NotebookCellOutput[]): vscode.NotebookCellOutput[]{
         return this.stringToOutput(this.outputsToString(outputs));
     }
-    static outputsToString(outputs: vscode.NotebookCellOutput[] | undefined): string{
+    static outputsToString(outputs: readonly vscode.NotebookCellOutput[] | undefined): string{
         if(!outputs) return "";
         if(!getConfig().notebookSavesOutputs) return "";
         const ret = outputs.map(output => {
@@ -471,13 +471,8 @@ const removeCellOutput = async (cell: vscode.NotebookCell) => {
     }
 };
 
-const exportToMarkdown = async () => {
-    const notebook = vscode.window.activeNotebookEditor?.notebook;
-    if(!notebook || ![ID, HTML_ID].includes(notebook.notebookType)){
-        vscode.window.showErrorMessage(getLocaleString("calledOnNonMagmaNotebookFile"));
-        return;
-    }
-    const contents = "\n" + notebook.getCells().map(cell => {
+const cellsToMarkdownContents = (cells: readonly vscode.NotebookCell[]) => {
+    return "\n" + cells.map(cell => {
         if(cell.kind === vscode.NotebookCellKind.Markup){
             return cell.document.getText();
         }else{
@@ -492,24 +487,51 @@ const exportToMarkdown = async () => {
             return `${code}${outputCode}`;
         }
     }).join(getConfig().notebookSeparatesWithHorizontalLines ? "\n\n---\n\n" : "\n\n");
-    const file = await vscode.window.showSaveDialog({
-        defaultUri: vscode.Uri.file(notebook.uri.fsPath.replace(/\.(imagma|icmagma|imag|icmag)$/, ".md")),
-        saveLabel: "保存",
-        filters: {
-            "Markdown": ["md"]
-        },
-        title: "保存先を選択"
-    });
-    if(file){
-        Output(`export to ${file}`);
-        const edit = new vscode.WorkspaceEdit();
-        edit.createFile(file, {
-            overwrite: true,
-            contents: (new TextEncoder()).encode(contents)
-        });
-        vscode.workspace.applyEdit(edit);
-    }
 };
+const cellsToHtmlContents = (cells: readonly vscode.NotebookCell[]) => {
+    return toHtmlContents(JSON.stringify(cells.map<RowNotebookCell>(cell => {
+        return {
+            kind: cell.kind,
+            language: cell.document.languageId,
+            value: cell.document.getText(),
+            outputs: Serializer.outputsToString(cell.outputs)
+        };
+    })));
+};
+const exportNotebook = async () => {
+    const notebook = vscode.window.activeNotebookEditor?.notebook;
+    if(!notebook || ![ID, HTML_ID].includes(notebook.notebookType)){
+        vscode.window.showErrorMessage(getLocaleString("calledOnNonMagmaNotebookFile"));
+        return;
+    }
+    const file = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(notebook.uri.fsPath.replace(/\.(imagma|icmagma|imag|icmag)(\.html?)?$/, ".html")),
+        filters: {
+            "HTML": ["html"],
+            "Markdown": ["md"],
+        },
+    });
+    if(!file) return;
+    Output(`export to ${file}`);
+
+    const contents = (() => {
+        if(file.fsPath.endsWith(".html")){
+            return cellsToHtmlContents(notebook.getCells());
+        }else if(file.fsPath.endsWith(".md")){
+            return cellsToMarkdownContents(notebook.getCells());
+        }else{
+            return undefined;
+        }
+    })();
+    if(contents === undefined) return;
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.createFile(file, {
+        overwrite: true,
+        contents: (new TextEncoder()).encode(contents)
+    });
+    vscode.workspace.applyEdit(edit);
+}
 const previewCode = async (cell: vscode.NotebookCell) => {
     const ctl = controllerFromCell(cell);
     if(!ctl) return;
@@ -592,7 +614,7 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
             removeCellOutput(cell).catch();
         }catch{}
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.exportToMarkdown", exportToMarkdown));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.export", exportNotebook));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.openLoadingResult", (...args) => {
         try{
             const cell = args[0] as vscode.NotebookCell;
