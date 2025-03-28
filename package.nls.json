@@ -30,6 +30,7 @@
     "config.notebookOutputResultMode": "Saving mode (`append` or `overwrite`) of execution results of Magma Calculator Notebook\n(You can specify the mode by `@append`, `@overwrite`)",
     "config.notebookDisablesVim": "Disables Vim keybinds on Magma Calculator Notebook\n\n(only works when [Vim Extension](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim) is enabled)",
     "config.notebookSeparatesWithHorizontalLines": "Separate cells with horizontal lines when exporting notebooks to markdown",
+    "config.useHttps": "Sends an https request on Magma Calculator Notebook\n\n(use this configuration when an https request fails due to an expired SSL certificate or something)",
     "config.magmaPath": "An execution path of Magma.",
     "config.redirectsStderr": "Whether to include standard error outputs in Magma execution results.",
     "config.redirectsStderr.yes": "Outputs stderr to the same file as that of stdout.",

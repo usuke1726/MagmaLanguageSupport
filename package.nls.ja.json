@@ -30,6 +30,7 @@
     "config.notebookOutputResultMode": "Magma Calculator Notebookの実行結果の保存モード(追記/上書き)のデフォルト値\n(コード中にて `@append`, `@overwrite` で明示的に指定可能)",
     "config.notebookDisablesVim": "Magma Calculator Notebookでは Vim キーバインドを無効にする\n\n※[Vim 拡張機能](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim)を有効にしている場合のみ機能する",
     "config.notebookSeparatesWithHorizontalLines": "ノートブックをマークダウンに書き出す際にセルを水平線で区切る",
+    "config.useHttps": "Magma Calculator Notebookでコードを実行する際にhttps通信を用いる\n\n(一時的にhttps通信が利用できなくなった場合(SSL証明書の有効期限切れなど)に設定を変更するとよい)",
     "config.magmaPath": "Magmaの実行パス",
     "config.redirectsStderr": "Magmaの実行結果に標準エラー出力も含める",
     "config.redirectsStderr.yes": "標準出力と同じファイルに出力する",

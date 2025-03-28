@@ -251,6 +251,11 @@
           "default": true,
           "markdownDescription": "%config.notebookSeparatesWithHorizontalLines%"
         },
+        "MagmaLanguageSupport.useHttps": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.useHttps%"
+        },
         "MagmaLanguageSupport.magmaPath": {
           "type": "string",
           "default": "",

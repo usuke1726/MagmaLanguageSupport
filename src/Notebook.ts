@@ -2,6 +2,7 @@
 import * as vscode from 'vscode';
 import * as xmldom from '@xmldom/xmldom';
 import * as http from "http";
+import * as https from "https";
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import getConfig from './config';
@@ -154,7 +155,6 @@ class Controller{
     private readonly type = ID;
     private readonly label = "Magma Calculator Notebook";
     private readonly controller: vscode.NotebookController;
-    private readonly targetUrl = "http://magma.maths.usyd.edu.au/xml/calculator.xml";
     private readonly requestOption: http.RequestOptions = {
         method: "POST",
         headers: {
@@ -162,6 +162,11 @@ class Controller{
         },
         timeout: 120 * 1000,
     };
+    private sendHttpRequest(callback: (res: http.IncomingMessage) => void): http.ClientRequest{
+        const { useHttps } = getConfig();
+        const url = `http${useHttps ? "s" : ""}://magma.maths.usyd.edu.au/xml/calculator.xml`;
+        return (useHttps ? https : http).request(url, this.requestOption, callback);
+    }
     private cells: vscode.NotebookCell[] = [];
     private lastTimeBlocked: Date | undefined = undefined;
     private overwrites: boolean = false;
@@ -290,7 +295,7 @@ class Controller{
         return new Promise<ExecuttionResult>((resolve) => {
             const data = `input=${encodeURIComponent(code)}`;
             try{
-                const request = http.request(this.targetUrl, this.requestOption, response => {
+                const request = this.sendHttpRequest(response => {
                     this.onReceived(response, resolve);
                 });
                 token.onCancellationRequested(() => {
