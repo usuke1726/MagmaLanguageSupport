@@ -289,24 +289,32 @@ class Controller{
     private async requests(code: string, token: vscode.CancellationToken): Promise<ExecuttionResult>{
         return new Promise<ExecuttionResult>((resolve) => {
             const data = `input=${encodeURIComponent(code)}`;
-            const request = http.request(this.targetUrl, this.requestOption, response => {
-                this.onReceived(response, resolve);
-            });
-            token.onCancellationRequested(() => {
-                Log("CANCELED");
+            try{
+                const request = http.request(this.targetUrl, this.requestOption, response => {
+                    this.onReceived(response, resolve);
+                });
+                token.onCancellationRequested(() => {
+                    Log("CANCELED");
+                    resolve({
+                        output: "canceled",
+                        success: false
+                    });
+                });
+                request.on("timeout", () => {
+                    Log("timeout");
+                    resolve({
+                        output: getLocaleString("timeout"),
+                        success: false
+                    });
+                });
+                request.end(data);
+            }catch(e){
+                Output("RequestError", e);
                 resolve({
-                    output: "canceled",
+                    output: getLocaleString("requestError"),
                     success: false
                 });
-            });
-            request.on("timeout", () => {
-                Log("timeout");
-                resolve({
-                    output: getLocaleString("timeout"),
-                    success: false
-                });
-            });
-            request.end(data);
+            }
         });
     }
     private onReceived(response: http.IncomingMessage, resolve: (value: ExecuttionResult) => void){

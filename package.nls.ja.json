@@ -59,6 +59,7 @@
     "message.Loader.running": "MagmaLoaderを実行中...",
     "message.Loader.failed": "MagmaLoaderの実行に失敗しました",
     "message.Notebook.calledImmediately": "頻繁にアクセスしてからまだ十分な時間が経っていません．\nブロック後{0}分を目安に再実行してください．",
+    "message.Notebook.requestError": "エラー：リクエスト送信時にエラーが発生しました．",
     "message.Notebook.timeout": "エラー：タイムアウトが発生しました．",
     "message.Notebook.failedParsing": "エラー：結果のパースに失敗しました",
     "message.Notebook.blocked": "エラー：短時間に実行しすぎたようです．\n少し時間を置いてから再実行してください．(目安: {0}分)",

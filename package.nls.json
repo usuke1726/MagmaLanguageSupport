@@ -59,6 +59,7 @@
     "message.Loader.running": "running MagmaLoader...",
     "message.Loader.failed": "Failed to execute MagmaLoader.",
     "message.Notebook.calledImmediately": "It has not been long enough since you executed codes frequently.\nPlease re-run this code after {0} minutes.",
+    "message.Notebook.requestError": "Error: An error occurred while sending the request.",
     "message.Notebook.timeout": "Error: This execution has been timed out.",
     "message.Notebook.failedParsing": "Error: An error occurred during parsing",
     "message.Notebook.blocked": "Error: You executed codes too frequently.\nPlease wait for about {0} minutes",
