@@ -380,13 +380,15 @@ class DefinitionParser{
                             };
                         })
                     ].forEach(param => {
+                        const doc = new vscode.MarkdownString(param.document);
+                        doc.baseUri = uri;
                         scope.next();
                         scope.parent().toDefinitions(definitions)?.push({
                             name: param.name,
                             kind: Def.DefinitionKind.variable,
                             enabled: isEnabled,
                             ignored: isIgnored,
-                            document: new vscode.MarkdownString(param.document),
+                            document: doc,
                             range: argsRange,
                             endsAt: undefined,
                             definitions: [],
