@@ -56,6 +56,7 @@ class DefinitionParser{
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
+        const inlineNonDocumentComment = /^\s*\/\*(.+?)\*\/\s*$/;
         const maybeDocumentInlineComment = /^\s*(\/{2,})\s*([^@\s].*)$/;
         const comp1 = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/.source;
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
@@ -117,6 +118,12 @@ class DefinitionParser{
                     scope.inComment = false;
                     parser.send(m[1]?.trim());
                     parser.endComment();
+                    continue;
+                }
+                m = inlineNonDocumentComment.exec(line);
+                if(m){
+                    Log("inlineNonDocumentComment", line);
+                    scope.inComment = false;
                     continue;
                 }
                 m = maybeDocumentInlineComment.exec(line);
