@@ -380,6 +380,7 @@ class DefinitionParser{
                             };
                         })
                     ].forEach(param => {
+                        scope.next();
                         scope.parent().toDefinitions(definitions)?.push({
                             name: param.name,
                             kind: Def.DefinitionKind.variable,
