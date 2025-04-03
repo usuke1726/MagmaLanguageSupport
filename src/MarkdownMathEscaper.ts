@@ -21,17 +21,17 @@ export default function(md: MarkdownIt){
     };
     md.inline.ruler.before("escape", "math_inline_block", inlineMathBlock);
     md.renderer.rules.math_inline_block = (tokens, idx) => {
-        return `$$${escape(tokens[idx].content)}$$\n`;
+        return `$$\n${escape(tokens[idx].content).trim()}\n$$\n`;
     };
     md.inline.ruler.before("escape", "math_inline_bare_block", inlineBareBlock);
     md.renderer.rules.math_inline_bare_block = (tokens, idx) => {
-        return `$$${escape(tokens[idx].content)}$$\n`;
+        return `$$\n${escape(tokens[idx].content).trim()}\n$$\n`;
     };
     md.block.ruler.after("blockquote", "math_block", (state, start, end, silent) => 
         blockBareMath(state, start, end, silent) || blockMath(state, start, end, silent)
     );
     md.renderer.rules.math_block = (tokens, idx) => {
-        return `$$\n${escape(tokens[idx].content)}\n$$\n`;
+        return `$$\n${escape(tokens[idx].content).trim()}\n$$\n`;
     };
 };
 
