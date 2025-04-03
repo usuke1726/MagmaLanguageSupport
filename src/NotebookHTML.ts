@@ -1,4 +1,45 @@
 
+import * as vscode from "vscode";
+import MarkdownIt from "markdown-it";
+import sanitizeHtml from "sanitize-html";
+
+type RowNotebookCell = {
+    language: string;
+    value: string;
+    kind: vscode.NotebookCellKind;
+    outputs: string | undefined;
+};
+
+const md = MarkdownIt({
+    html: true,
+    linkify: true,
+});
+
+const sanitizeOptions: sanitizeHtml.IOptions = {
+    ...sanitizeHtml.defaults,
+    allowedTags: [
+        ...sanitizeHtml.defaults.allowedTags,
+        "details", "summary",
+        "img",
+    ],
+    allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        span: ["class", "style"],
+        div: ["class", "style"],
+        td: ["style"],
+        th: ["style"],
+        details: ["open"],
+        img: [ 'src', 'srcset', 'alt', 'title', 'width', 'height', 'loading' ],
+    },
+    allowedStyles: {
+        "*": {
+            "color": [/^[a-z]+$/, /^#(0x)?[0-9a-f]+$/i, /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/],
+            "text-align": [/^(start|end|left|center|right|justify|match-parent)$/],
+        },
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+};
+
 const toOneLine = (t: string) => t.split("\n").map(s => s.trimStart()).join("");
 
 const prefix: string = toOneLine(`
@@ -8,55 +49,12 @@ const prefix: string = toOneLine(`
     <meta charset="utf-8">
 `);
 
-const htmlKaTeXLinks = `
+const htmlKaTeXScripts = `
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
-`.trim();
-
-const htmlMarkdownStyleLink = `
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
-`.trim();
-
-const htmlMarkdownWasmLink = `
-<script defer src='https://cdn.jsdelivr.net/gh/rsms/markdown-wasm@v1.2.0/dist/markdown.js'></script>
-`.trim();
-
-const htmlParseDataScript = `
 <script>
-const esc = s => {
-    return s.replace(/[&'\`"<>]/g, m => {
-        return {
-            '&': '&amp;',
-            "'": '&#x27;',
-            '\`': '&#x60;',
-            '"': '&quot;',
-            '<': '&lt;',
-            '>': '&gt;',
-        }[m]
-    });
-};
-document.addEventListener("DOMContentLoaded", async () => {
-    await markdown.ready;
-    document.body.innerHTML = DATA.map(data => {
-        if(data.kind === 1){
-            return \`<div class="markdown">\${markdown.parse(data.value)}</div>\`;
-        }else{
-            const outputs = (() => {
-                if(data.hasOwnProperty("outputs")){
-                    const outputs = JSON.parse(data.outputs);
-                    if(outputs.length > 0){
-                        return \`<p class="outputs">Outputs:</p>\` + outputs.map(items => items.map(item => \`<pre class="output"><code>\${esc(item)}</code></pre>\`).join("")).join("");
-                    }else{
-                        return "";
-                    }
-                }else{
-                    return "";
-                }
-            })();
-            return \`<pre class="code"><code>\${esc(data.value)}</code></pre>\${outputs}\`;
-        }
-    }).map(cell => \`<div class="cell">\${cell}</div>\`).join("");
+document.addEventListener("DOMContentLoaded", () => {
     renderMathInElement(document.body, {
         delimiters: [
             {left: "\$\$", right: "\$\$", display: true},
@@ -66,6 +64,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 });
 </script>
+`.trim();
+
+const htmlMarkdownStyleLink = `
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
 `.trim();
 
 const htmlOriginalStyle = `
@@ -86,27 +88,66 @@ const htmlOriginalStyle = `
 </style>
 `;
 
-const suffix: string = toOneLine(`
-${htmlKaTeXLinks}
+const headerSuffix: string = toOneLine(`
+${htmlKaTeXScripts}
 ${htmlMarkdownStyleLink}
-${htmlMarkdownWasmLink}
-${htmlParseDataScript}
 ${htmlOriginalStyle}
 </head>
-<body class="vscode-body vscode-light"></body>
-</html>
 `);
+
+const render = (text: string) => sanitizeHtml(md.render(text), sanitizeOptions);
+const parseOutputs = (outputs: string | undefined) => {
+    if(!outputs) return [];
+    const isOutputs = (obj: any): obj is string[][] => 
+        Array.isArray(obj) && obj.every(items =>
+            Array.isArray(items) && items.every(item => typeof item === "string")
+        );
+    try{
+        const parsed = JSON.parse(outputs);
+        return isOutputs(parsed) ? parsed : [];
+    }catch{
+        return [];
+    }
+};
+const escape = (s: string) => {
+    return s.replace(/[&'\`"<>]/g, m => {
+        return {
+            '&': '&amp;',
+            "'": '&#x27;',
+            '\`': '&#x60;',
+            '"': '&quot;',
+            '<': '&lt;',
+            '>': '&gt;',
+        }[m] as string;
+    });
+};
+const parseData = (cells: readonly RowNotebookCell[]) => {
+    return cells.map(cell => {
+        if(cell.kind === vscode.NotebookCellKind.Markup){
+            return `<div class="markup">${render(cell.value)}</div>`;
+        }else{
+            const outputs = parseOutputs(cell.outputs);
+            const outputHtml = outputs.length ? (
+                `<p class="outputs">Outputs:</p>` + outputs.flat().map(item => 
+                    `<pre class="output"><code>${escape(item)}</code></pre>`
+                ).join("")
+            ) : "";
+            return `<pre class="code"><code>${escape(cell.value)}</code></pre>${outputHtml}`;
+        }
+    }).map(cell => `<div class="cell">${cell}</div>`).join("");
+};
 
 export const extractHtmlData = (htmlContents: string) => {
     const lines = htmlContents.replaceAll("\r\n", "\n").split("\n");
-    if(lines.length > 1 && lines[1].startsWith("DATA=")){
-        return JSON.parse(lines[1].slice(5));
+    if(lines.length > 1){
+        return JSON.parse(lines[1].replaceAll("<\\!--", "<!--").replaceAll("--\\>", "-->"));
     }else{
         return JSON.parse(htmlContents);
     }
 };
 
-export const toHtmlContents = (data: string) => {
-    data = data.replaceAll("</script>", "<\\/script>");
-    return `${prefix}<script>\nDATA=${data}\n</script>${suffix}`;
+export const toHtmlContents = (data: string, rowData: readonly RowNotebookCell[], includesData: boolean = true) => {
+    const dataContents = includesData ? `<!--\n${data.replaceAll("<!--", "<\\!--").replaceAll("-->", "--\\>")}\n-->` : "";
+    const body = `<body class="vscode-body vscode-light">${parseData(rowData)}</body>`;
+    return `${prefix}${dataContents}${headerSuffix}${body}</html>`;
 };

@@ -152,7 +152,7 @@ class HTMLSerializer extends Serializer{
                 outputs: Serializer.outputsToString(cell.outputs)
             };
         });
-        return (new TextEncoder()).encode(toHtmlContents(JSON.stringify(contents)));
+        return (new TextEncoder()).encode(toHtmlContents(JSON.stringify(contents), contents));
     }
 };
 
@@ -489,14 +489,15 @@ const cellsToMarkdownContents = (cells: readonly vscode.NotebookCell[]) => {
     }).join(getConfig().notebookSeparatesWithHorizontalLines ? "\n\n---\n\n" : "\n\n");
 };
 const cellsToHtmlContents = (cells: readonly vscode.NotebookCell[]) => {
-    return toHtmlContents(JSON.stringify(cells.map<RowNotebookCell>(cell => {
+    const data = cells.map<RowNotebookCell>(cell => {
         return {
             kind: cell.kind,
             language: cell.document.languageId,
             value: cell.document.getText(),
             outputs: Serializer.outputsToString(cell.outputs)
         };
-    })));
+    });
+    return toHtmlContents(JSON.stringify(data), data, false);
 };
 const exportNotebook = async () => {
     const notebook = vscode.window.activeNotebookEditor?.notebook;
