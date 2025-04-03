@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import MarkdownIt from "markdown-it";
 import sanitizeHtml from "sanitize-html";
+import mathEscaper from "./MarkdownMathEscaper";
 
 type RowNotebookCell = {
     language: string;
@@ -14,6 +15,7 @@ const md = MarkdownIt({
     html: true,
     linkify: true,
 });
+md.use(mathEscaper);
 
 const sanitizeOptions: sanitizeHtml.IOptions = {
     ...sanitizeHtml.defaults,
