@@ -31,6 +31,7 @@ const isRowNotebookCell = (obj: any): obj is RowNotebookCell => {
     return (
         typeof obj === "object" &&
         obj.hasOwnProperty("language") && typeof obj.language === "string" &&
+        ["magma", "markdown"].includes(obj.language) &&
         obj.hasOwnProperty("value") && typeof obj.value === "string" &&
         ["string", "undefined"].includes(typeof obj.outputs) &&
         obj.hasOwnProperty("kind") && isNoteBookCellKind(obj.kind)
@@ -61,19 +62,20 @@ const open = async () => {
 
 class Serializer implements vscode.NotebookSerializer{
     async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
-        const data = (() => {
-            try{
-                return JSON.parse((new TextDecoder()).decode(content));
-            }catch{
-                return undefined;
-            }
-        })();
-        const cellData = isRowNotebookCellArray(data) ? data : [];
-        return new vscode.NotebookData(cellData.map(item => {
-            const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
-            data.outputs = Serializer.stringToOutput(item.outputs);
-            return data;
-        }));
+        try{
+            const text = (new TextDecoder()).decode(content);
+            if(!text.trim()) return new vscode.NotebookData([]);
+            const data = JSON.parse(text);
+            if(!isRowNotebookCellArray(data)) throw "invalid data";
+            return new vscode.NotebookData(data.map(item => {
+                const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
+                data.outputs = Serializer.stringToOutput(item.outputs);
+                return data;
+            }));
+        }catch(e){
+            Output("Imagma deserialization error:", e);
+            throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
+        }
     }
     async serializeNotebook(data: vscode.NotebookData): Promise<Uint8Array> {
         const contents = data.cells.map((cell): RowNotebookCell => {
@@ -128,20 +130,20 @@ class Serializer implements vscode.NotebookSerializer{
 
 class HTMLSerializer extends Serializer{
     async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
-        const data = (() => {
-            try{
-                const text = (new TextDecoder()).decode(content);
-                return extractHtmlData(text);
-            }catch{
-                return undefined;
-            }
-        })();
-        const cellData = isRowNotebookCellArray(data) ? data : [];
-        return new vscode.NotebookData(cellData.map(item => {
-            const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
-            data.outputs = Serializer.stringToOutput(item.outputs);
-            return data;
-        }));
+        try{
+            const text = (new TextDecoder()).decode(content);
+            if(!text.trim()) return new vscode.NotebookData([]);
+            const data = extractHtmlData(text);
+            if(!isRowNotebookCellArray(data)) throw "invalid data";
+            return new vscode.NotebookData(data.map(item => {
+                const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
+                data.outputs = Serializer.stringToOutput(item.outputs);
+                return data;
+            }));
+        }catch(e){
+            Output("Html-imagma deserialization error:", e);
+            throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
+        }
     }
     async serializeNotebook(data: vscode.NotebookData): Promise<Uint8Array> {
         const contents = data.cells.map((cell): RowNotebookCell => {

@@ -58,6 +58,7 @@
     "message.Loader.nonMagmaFile": "The opened file is not a Magma file.",
     "message.Loader.running": "running MagmaLoader...",
     "message.Loader.failed": "Failed to execute MagmaLoader.",
+    "message.Notebook.deserializationError": "Invalid file format",
     "message.Notebook.calledImmediately": "It has not been long enough since you executed codes frequently.\nPlease re-run this code after {0} minutes.",
     "message.Notebook.timeout": "Error: This execution has been timed out.",
     "message.Notebook.failedParsing": "Error: An error occurred during parsing",
