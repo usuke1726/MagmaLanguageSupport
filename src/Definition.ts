@@ -17,6 +17,7 @@ export type Definition = {
     endsAt: vscode.Position | null | undefined;
     definitions: Definition[];
     isArg?: boolean;
+    hasPriority?: boolean;
 };
 export const isForward = (def: Definition) => {
     return def.kind === DefinitionKind.forward;

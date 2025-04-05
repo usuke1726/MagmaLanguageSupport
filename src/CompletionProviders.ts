@@ -6,7 +6,7 @@ import INTRINSICS from './Intrinsics';
 import DefinitionHandler from './DefinitionHandler';
 import FileHandler from './FileHandler';
 import DocumentParser from './DocumentParser';
-import sortText from './Priority';
+import sortText, { sortTextWithPriority } from './Priority';
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 const { Log } = LogObject.bind("CompletionProvider");
@@ -177,7 +177,7 @@ class DefinitionComp implements vscode.CompletionItemProvider{
             if(def.document.value.trim()){
                 item.documentation = def.document;
             }
-            item.sortText = sortText(def.name, (() => {
+            item.sortText = def.hasPriority ? sortTextWithPriority(def.name) : sortText(def.name, (() => {
                 switch(def.kind){
                     case Def.DefinitionKind.function: return "function";
                     case Def.DefinitionKind.variable: return "variable";
@@ -268,9 +268,27 @@ class InternalCommentComp implements vscode.CompletionItemProvider{
     }
 }
 
+class PriorityCommentComp implements vscode.CompletionItemProvider{
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.CompletionItem[] {
+        if(isExclusive(document, position)) return [];
+        const trigger = context.triggerCharacter;
+        if(trigger === "@"){
+            const pattern = /^\s*\/\/\s+@$/;
+            if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
+            const item = new vscode.CompletionItem("priority");
+            item.kind = vscode.CompletionItemKind.Snippet;
+            item.insertText = new vscode.SnippetString('priority');
+            item.documentation = new vscode.MarkdownString(getLocaleString("priority"));
+            return [item];
+        }else{
+            return [];
+        }
+    }
+}
+
 class DocTagComp implements vscode.CompletionItemProvider{
     private readonly paramTags = ["param", "arg", "argument"];
-    private readonly reservedTags = ["returns", "example", "remarks", "internal"];
+    private readonly reservedTags = ["returns", "example", "remarks", "internal", "priority"];
     private tagToLocaleStringKey(tag: string){
         return this.paramTags.includes(tag) ? "param" : tag;
     }
@@ -469,6 +487,7 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DefinedCommentComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new IgnoreCommentComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new InternalCommentComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new PriorityCommentComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DocTagComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(NotebookScheme, new NotebookUseStatementComp(), "@"));
 };

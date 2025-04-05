@@ -87,6 +87,7 @@
     "message.Completion.example": "Specifies usage of this function.",
     "message.Completion.remarks": "Specifies remarks.",
     "message.Completion.internal": "Disables external references to this definition. This definition should only be used within this file.",
+    "message.Completion.priority": "This definition will be suggested as a priority.",
     "message.Execute.notConfiguredMagmaPath": "The configuration magmaPath is not set.",
     "message.Execute.notFoundMagmaPath": "The Magma executable file was not found.",
     "message.Execute.MagmaPathIsNotFile": "The magmaPath is not file.",

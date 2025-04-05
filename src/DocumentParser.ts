@@ -20,6 +20,7 @@ export default class DocumentParser{
     private _fileDocument: string = "";
     private _disabled: boolean = false;
     private _params: { name: string, document: string }[] = [];
+    private _hasPriority: boolean = false;
     constructor(uri: vscode.Uri){
         this.uri = uri;
         this.lines = [];
@@ -39,6 +40,9 @@ export default class DocumentParser{
     get params(){
         return [...this._params];
     }
+    get hasPriority(){
+        return this._hasPriority;
+    }
     disable(){
         this._disabled = true;
     }
@@ -51,6 +55,7 @@ export default class DocumentParser{
         this._maybeDocument = false;
         this.isFileDocument = false;
         this._params.splice(0);
+        this._hasPriority = false;
         if(disableFirstDoc){
             this.isFirstDoc = false;
         }
@@ -69,6 +74,9 @@ export default class DocumentParser{
     setFirstLine(line: string){
         if(this._disabled) return;
         this.firstLine = line;
+    }
+    grantPriority(){
+        this._hasPriority = true;
     }
     private resetIfPreviousOneRemaining(){
         if(this._endComment){
@@ -95,7 +103,7 @@ export default class DocumentParser{
         const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|\s+.*)$/;
         const tagsExpectingArgs = ["param", "arg", "argument"];
         const tagsFileOverview = ["file", "overview", "fileoverview", "fileOverview"];
-        const tagsWithoutArgs = ["internal"];
+        const tagsWithoutArgs = ["internal", "priority", "priorityInCompletion"];
         const tagsOnlyOneLine = ["author"];
         const m = tagPattern.exec(line);
         if(m){
@@ -114,7 +122,7 @@ export default class DocumentParser{
                     this.lines.push(remaining);
                 }
             }else if(tagsWithoutArgs.includes(this.tag)){
-                this.finishTag();
+                this.sendAsInTagWithoutArgs();
                 this.lines.push(remaining);
             }else if(remaining){
                 this.sendAsInMode(remaining);
@@ -172,6 +180,18 @@ export default class DocumentParser{
             this.firstToken = undefined;
             this.tokenCount = 0;
             this.buffer.push(line);
+        }
+    }
+    private sendAsInTagWithoutArgs(){
+        switch(this.tag){
+            case "priority":
+            case "priorityInCompletion":
+                this._hasPriority = true;
+                this.resetTag();
+                break;
+            default:
+                this.finishTag();
+                break;
         }
     }
     private sendAsInTagExpectingOneArg(line: string){

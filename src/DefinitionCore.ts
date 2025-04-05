@@ -46,6 +46,7 @@ class DefinitionParser{
         const diagnostics: vscode.Diagnostic[] = [];
         const ignoreComment1 = /^(\s*\/\/\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*);?.*?$/;
         const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))();?.*?$/;
+        const priorityComment = /^(\s*\/\/\s+@(priority|priorityInCompletion));?.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
         const loadStatementWithAtMark = /^(\s*load\s+")(@[^"]+)";\s*.*$/;
@@ -110,6 +111,11 @@ class DefinitionParser{
                             else return "variables"
                         })));
                     }
+                    continue;
+                }
+                m = priorityComment.exec(line);
+                if(m){
+                    parser.grantPriority();
                     continue;
                 }
                 m = inlineComment.exec(line);
@@ -298,6 +304,7 @@ class DefinitionParser{
                     );
                     const firstLine = line.trim();
                     parser.setFirstLine(firstLine);
+                    const { hasPriority } = parser;
                     const doc = new vscode.MarkdownString(parser.pop());
                     doc.baseUri = uri;
                     scope.next();
@@ -309,7 +316,8 @@ class DefinitionParser{
                         document: doc,
                         range: nameRange,
                         endsAt: undefined,
-                        definitions: []
+                        definitions: [],
+                        hasPriority,
                     });
                 }
                 m = startFunction1.exec(line) ??
@@ -348,7 +356,7 @@ class DefinitionParser{
                     const startScope = startFunction1.test(line);
                     Log("pushed:", definitions, scope, scope.toDefinitions(definitions));
                     scope.next();
-                    const params = parser.params;
+                    const { params, hasPriority } = parser;
                     const doc = new vscode.MarkdownString(parser.pop());
                     doc.baseUri = uri;
                     scope.parent().toDefinitions(definitions)?.push({
@@ -362,6 +370,7 @@ class DefinitionParser{
                         range: nameRange,
                         endsAt: startScope ? null : undefined,
                         definitions: [],
+                        hasPriority,
                     });
                     scope.down();
                     const argsRange = new vscode.Range(
@@ -431,6 +440,7 @@ class DefinitionParser{
                     let variables = m[2];
                     const firstLine = line.trim();
                     parser.setFirstLine(firstLine);
+                    const { hasPriority } = parser;
                     const doc = new vscode.MarkdownString(parser.pop());
                     doc.baseUri = uri;
                     const pat1 = RegExp(`^\\s*${comp1}`);
@@ -461,6 +471,7 @@ class DefinitionParser{
                                     range,
                                     endsAt: undefined,
                                     definitions: [],
+                                    hasPriority,
                                 });
                             }
                             start += m[0].length;
