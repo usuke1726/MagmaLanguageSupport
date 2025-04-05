@@ -218,10 +218,10 @@ class Controller{
     }
     private async readLine(baseUri: vscode.Uri, line: string, currentIdx: number): Promise<string[]>{
         let m: RegExpExecArray | null;
-        const usePattern = /^\s*\/\/\s+@uses?\s+([0-9]+);?.*?$/;
+        const usePattern = /^\s*\/{2,}\s+@uses?\s+([0-9]+);?.*?$/;
         const loadPattern = /^\s*load\s+"(.+)";\s*$/;
-        const appendPattern = /^\s*\/\/\s+@append(Results?)?\s*;?.*?$/;
-        const overwritePattern = /^\s*\/\/\s+@overwrite(Results?)?\s*;?.*?$/;
+        const appendPattern = /^\s*\/{2,}\s+@append(Results?)?\s*;?.*?$/;
+        const overwritePattern = /^\s*\/{2,}\s+@overwrite(Results?)?\s*;?.*?$/;
         if(appendPattern.test(line)){
             this.overwrites = false;
             return [];
@@ -573,7 +573,7 @@ const adjustUseIndexes = async (notebook: vscode.NotebookDocument, addedCellInde
         }
         const lines = cell.document.getText().replaceAll("\r", "").split("\n");
         let found = false;
-        const usePattern = /^(\s*\/\/\s+@uses?\s+)([0-9]+)(;?.*?)$/;
+        const usePattern = /^(\s*\/{2,}\s+@uses?\s+)([0-9]+)(;?.*?)$/;
         const newContents = lines.map(line => {
             return line.replace(usePattern, (match, prefix, index, suffix) => {
                 const idx = Number(index);

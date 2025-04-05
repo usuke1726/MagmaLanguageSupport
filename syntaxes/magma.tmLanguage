@@ -144,7 +144,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^\s*(//\s+)(@define[sd]?)\s+(function|procedure|intrinsic)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\((.*)\);?\s*$</string>
+			<string>^\s*(/{2,}\s+)(@define[sd]?)\s+(function|procedure|intrinsic)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\((.*)\);?\s*$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -187,7 +187,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^\s*(//\s+)(@define[sd]?)\s+(variable)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;?\s*$</string>
+			<string>^\s*(/{2,}\s+)(@define[sd]?)\s+(variable)\s+([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;?\s*$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -218,7 +218,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*//\s+)(@uses?)(?:\s+([0-9]*)(;?))?(.*?)$</string>
+			<string>^(\s*/{2,}\s+)(@uses?)(?:\s+([0-9]*)(;?))?(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -254,7 +254,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*//\s+)(@ignores?)\s+(this|none|all)(;?)(.*?)$</string>
+			<string>^(\s*/{2,}\s+)(@ignores?)\s+(this|none|all)(;?)(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -295,7 +295,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*//\s+)(@ignores?)\s+(forwards?|variables?|functions?)</string>
+			<string>^(\s*/{2,}\s+)(@ignores?)\s+(forwards?|variables?|functions?)</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -362,7 +362,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*//\s+)(@(?:(?:append|overwrite)(?:Results?)?|internal|priority|priorityInCompletion|ignores?))\s*(?:(;)|\b)(.*?)$</string>
+			<string>^(\s*/{2,}\s+)(@(?:(?:append|overwrite)(?:Results?)?|internal|priority|priorityInCompletion|ignores?))\s*(?:(;)|\b)(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -393,7 +393,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*//\s+)(@requires?|@exports?)(?:\s+("[^"]*")(;?))?(.*?)$</string>
+			<string>^(\s*/{2,}\s+)(@requires?|@exports?)(?:\s+("[^"]*")(;?))?(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>

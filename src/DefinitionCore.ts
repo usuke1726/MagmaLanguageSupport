@@ -44,21 +44,21 @@ class DefinitionParser{
         const scope = new Def.Scope();
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
-        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*)\b.*?$/;
-        const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))()\b.*?$/;
-        const priorityComment = /^(\s*\/\/\s+@(priority|priorityInCompletion))\b.*?$/;
+        const ignoreComment1 = /^(\s*\/{2,}\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*)\b.*?$/;
+        const ignoreComment2 = /^(\s*\/{2,}\s+@(?:internal|ignores?))()\b.*?$/;
+        const priorityComment = /^(\s*\/{2,}\s+@(priority|priorityInCompletion))\b.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
         const loadStatementWithAtMark = /^(\s*load\s+")(@[^"]+)";\s*.*$/;
-        const requireComment = /^(\s*\/\/\s+@requires?\s+")([^"]+)";?.*$/;
-        const exportComment = /^(\s*\/\/\s+@exports?\s+")([^"]+)";?.*/;
+        const requireComment = /^(\s*\/{2,}\s+@requires?\s+")([^"]+)";?.*$/;
+        const exportComment = /^(\s*\/{2,}\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
         const startNonDocumentComment = /^\s*\/\*(.*)$/;
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
         const inlineNonDocumentComment = /^\s*\/\*(.+?)\*\/\s*$/;
-        const maybeDocumentInlineComment = /^\s*(\/{2,})\s*([^@\s].*)$/;
+        const maybeDocumentInlineComment = /^\s*(\/{2,})((?:\s+[^@\s]|[^@\/\s]).*)$/;
         const comp1 = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/.source;
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
         const comp3 = `^(\\s*)(${comp2}(\\s*,\\s*${comp2})*)\\s*:=\\s*`;
@@ -67,13 +67,13 @@ class DefinitionParser{
         const startFunction1 = /^(\s*(?:function|procedure)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const startFunction2 = /^(\s*)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*:=\s*(?:func|proc)\s*</;
         const startFunction3 = /^(\s*forward\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;\s*$/;
-        const startFunction4 = /^(\s*\/\/\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$/;
-        const definedVariable = /^(\s*\/\/\s+@define[sd]?\s+variable\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;?\s*$/;
+        const startFunction4 = /^(\s*\/{2,}\s+@define[sd]?\s+(?:function|procedure|intrinsic)\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*\(.*\);?\s*$/;
+        const definedVariable = /^(\s*\/{2,}\s+@define[sd]?\s+variable\s+)([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*;?\s*$/;
         const endFunction = /^(\s*end\s+(?:function|procedure)\s*;)/;
-        const invalidDefinedComment1 = /^(\s*\/\/\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
-        const invalidDefinedComment2 = /^(\s*\/\/\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
-        const invalidDefinedComment3 = /^(\s*\/\/\s+@define[sd]?\s+variable\s+(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*)(\(.*\));?\s*?$/;
-        const notebookUseStatement = /^(\s*\/\/\s+@uses?\s+)([0-9]+);?.*?$/;
+        const invalidDefinedComment1 = /^(\s*\/{2,}\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
+        const invalidDefinedComment2 = /^(\s*\/{2,}\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
+        const invalidDefinedComment3 = /^(\s*\/{2,}\s+@define[sd]?\s+variable\s+(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*)(\(.*\));?\s*?$/;
+        const notebookUseStatement = /^(\s*\/{2,}\s+@uses?\s+)([0-9]+);?.*?$/;
         const isNotebook = !FileHandler.isMagmaFile(uri);
         const definitions: Def.Definition[] = [];
         const dependencies: Def.Dependency[] = [];
@@ -178,7 +178,7 @@ class DefinitionParser{
                 }
                 if(!FileHandler.hasSaveLocation(uri)){
                     const loadStatementWithAtMark = /^\s*(load)\s+".*$/;
-                    const requireComment = /^\s*\/\/\s+(@requires?)\s*.*$/;
+                    const requireComment = /^\s*\/{2,}\s+(@requires?)\s*.*$/;
                     m = loadStatementWithAtMark.exec(line) ?? requireComment.exec(line);
                     if(m){
                         parser.reset(false);
@@ -953,7 +953,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
     protected static async searchDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const line = document.lineAt(position.line).text;
         const ch = position.character;
-        const pattern = /^(\s*)(load|\/\/\s+@requires?)\s+"[^"]+";?/;
+        const pattern = /^(\s*)(load|\/{2,}\s+@requires?)\s+"[^"]+";?/;
         const m = pattern.exec(line);
         if(!m) return undefined;
         const start = m[1].length;

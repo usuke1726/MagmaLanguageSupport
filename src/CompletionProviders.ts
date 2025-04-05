@@ -17,7 +17,7 @@ const exculusiveConditions: Readonly<{
 }> = {
     LoadFileComp: (scheme, beforeText) => {
         const patterns = [
-            /^\s*\/\/\s+(@requires?|@exports?)\s+"([^"]*)/,
+            /^\s*\/{2,}\s+(@requires?|@exports?)\s+"([^"]*)/,
             /^\s*load\s+"([^"]*)/
         ];
         return (
@@ -25,14 +25,14 @@ const exculusiveConditions: Readonly<{
         );
     },
     NotebookUseStatementComp: (scheme, beforeText) => {
-        const pattern = /^\s*\/\/\s+@uses?\s+\d*$/;
+        const pattern = /^\s*\/{2,}\s+@uses?\s+\d*$/;
         return (
             scheme === "vscode-notebook-cell" &&
             pattern.test(beforeText)
         );
     },
     DefinedCommentComp: (scheme, beforeText) => {
-        return /^\s*\/\/\s+@defined\s+$/.test(beforeText);
+        return /^\s*\/{2,}\s+@defined\s+$/.test(beforeText);
     },
 };
 const isExclusive = (document: vscode.TextDocument, position: vscode.Position, ignore: string[] = []): boolean => {
@@ -207,7 +207,7 @@ class DefinedCommentComp implements vscode.CompletionItemProvider{
         if(isExclusive(document, position, ["DefinedCommentComp"])) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
-            const pattern = /^\s*\/\/\s+@$/;
+            const pattern = /^\s*\/{2,}\s+@$/;
             if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("defined");
             item.kind = vscode.CompletionItemKind.Snippet;
@@ -237,7 +237,7 @@ class IgnoreCommentComp implements vscode.CompletionItemProvider{
         if(isExclusive(document, position)) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
-            const pattern = /^\s*\/\/\s+@$/;
+            const pattern = /^\s*\/{2,}\s+@$/;
             if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("ignore");
             item.kind = vscode.CompletionItemKind.Snippet;
@@ -255,7 +255,7 @@ class InternalCommentComp implements vscode.CompletionItemProvider{
         if(isExclusive(document, position)) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
-            const pattern = /^\s*\/\/\s+@$/;
+            const pattern = /^\s*\/{2,}\s+@$/;
             if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("internal");
             item.kind = vscode.CompletionItemKind.Snippet;
@@ -273,7 +273,7 @@ class PriorityCommentComp implements vscode.CompletionItemProvider{
         if(isExclusive(document, position)) return [];
         const trigger = context.triggerCharacter;
         if(trigger === "@"){
-            const pattern = /^\s*\/\/\s+@$/;
+            const pattern = /^\s*\/{2,}\s+@$/;
             if(!pattern.test(document.lineAt(position.line).text.substring(0, position.character))) return [];
             const item = new vscode.CompletionItem("priority");
             item.kind = vscode.CompletionItemKind.Snippet;
@@ -340,9 +340,9 @@ class LoadFileComp implements vscode.CompletionItemProvider{
             return this.requireCompletion(document, position);
         }else{
             Log("trigger non @");
-            const pattern1 = /^\s*\/\/\s+@requires?\s+"([^"]*\/)/;
+            const pattern1 = /^\s*\/{2,}\s+@requires?\s+"([^"]*\/)/;
             const pattern2 = /^\s*load\s+"([^"]*\/)/;
-            const pattern3 = /^\s*\/\/\s+@exports?\s+"([^"]*\/)/;
+            const pattern3 = /^\s*\/{2,}\s+@exports?\s+"([^"]*\/)/;
             const prefix = document.lineAt(position.line).text.substring(0, position.character);
             const m = pattern1.exec(prefix) ?? pattern2.exec(prefix) ?? pattern3.exec(prefix);
             if(m){
@@ -355,7 +355,7 @@ class LoadFileComp implements vscode.CompletionItemProvider{
         }
     }
     private requireCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
-        const pattern = /^\s*\/\/\s+@/;
+        const pattern = /^\s*\/{2,}\s+@/;
         if(!pattern.test(document.lineAt(position.line).text)) return [];
         const requireItem = new vscode.CompletionItem("require");
         const exportItem = new vscode.CompletionItem("export");
@@ -413,7 +413,7 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
         }
     }
     private tagCompletion(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
-        const pattern = /^\s*\/\/\s+@/;
+        const pattern = /^\s*\/{2,}\s+@/;
         if(pattern.test(document.lineAt(position.line).text)){
             const use = new vscode.CompletionItem("use");
             use.kind = vscode.CompletionItemKind.Snippet;
@@ -437,7 +437,7 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
         }
     }
     private numberCompletion(document: vscode.TextDocument, position: vscode.Position, notebook: vscode.NotebookDocument): vscode.CompletionItem[]{
-        const pattern = /^\s*\/\/\s+@uses?\s+\d*$/;
+        const pattern = /^\s*\/{2,}\s+@uses?\s+\d*$/;
         const beforeText = document.lineAt(position.line).text.substring(0, position.character);
         const cells = notebook.getCells();
         const selfIndex = cells.find(cell => cell.document.uri.fragment === document.uri.fragment)?.index ?? Infinity;
