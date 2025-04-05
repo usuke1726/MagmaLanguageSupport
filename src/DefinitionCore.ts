@@ -44,9 +44,9 @@ class DefinitionParser{
         const scope = new Def.Scope();
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
-        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*);?.*?$/;
-        const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))();?.*?$/;
-        const priorityComment = /^(\s*\/\/\s+@(priority|priorityInCompletion));?.*?$/;
+        const ignoreComment1 = /^(\s*\/\/\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*)\b.*?$/;
+        const ignoreComment2 = /^(\s*\/\/\s+@(?:internal|ignores?))()\b.*?$/;
+        const priorityComment = /^(\s*\/\/\s+@(priority|priorityInCompletion))\b.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
         const loadStatementWithAtMark = /^(\s*load\s+")(@[^"]+)";\s*.*$/;
