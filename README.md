@@ -31,6 +31,12 @@ See also the sample code in its [repository](https://github.com/usuke1726/MagmaL
     - The comment `// @require "@/{path}";` configures a dependency. (It does not actually load the file).
         - You can use glob patterns in `@require` statements.
 
+#### TeX support now available
+
+You can include TeX in your documentation.
+
+To enable this feature, please first configure `MagmaLanguageSupport.useMath` to `true`.
+
 #### Settings
 
 The following configurations are available:
@@ -114,6 +120,22 @@ This specifies whether to warn when redefining an intrinsic.
 <img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/redefining-warning.png" alt="redefining-warning" width="600">
 
 Default is `true`.
+
+`useMath`
+
+This specifies whether to enable the TeX rendering feature.
+
+Default is `false`.
+
+`mathRenderingType`
+
+You can choose to use internal rendering (`embedding`) or external APIs.
+
+The available APIs is here:
+- [Math API](https://github.com/uetchy/math-api) (configure `fetch:math-api`)
+- [TeX SVG Worker](https://github.com/JacobLinCool/TeX-SVG-Worker) (configure `fetch:TeX-SVG-Worker`)
+
+Default is `embedding`.
 
 ### Auto completion
 

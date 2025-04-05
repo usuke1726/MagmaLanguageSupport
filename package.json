@@ -298,6 +298,22 @@
             "%config.redirectsStderr.no%"
           ],
           "markdownDescription": "%config.redirectsStderr%"
+        },
+        "MagmaLanguageSupport.useMath": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%config.useMath%"
+        },
+        "MagmaLanguageSupport.mathRenderingType": {
+          "type": "string",
+          "enum": ["fetch:math-api", "fetch:TeX-SVG-Worker", "embedding"],
+          "default": "embedding",
+          "markdownDescription": "%config.mathRenderingType%",
+          "markdownEnumDescriptions": [
+            "%config.mathRenderingType.fetch.mathAPI%",
+            "%config.mathRenderingType.fetch.TeXSVGWorker%",
+            "%config.mathRenderingType.embedding%"
+          ]
         }
       }
     },
@@ -452,6 +468,7 @@
     "@xmldom/xmldom": "^0.8.10",
     "glob": "^11.0.0",
     "markdown-it": "^14.1.0",
-    "sanitize-html": "^2.15.0"
+    "sanitize-html": "^2.15.0",
+    "mathjax-full": "^3.2.2"
   }
 }
