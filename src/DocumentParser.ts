@@ -55,6 +55,7 @@ export default class DocumentParser{
         this.lines = [];
         this._maybeDocument = false;
         this.isFileDocument = false;
+        this._endComment = false;
         this._params.splice(0);
         this._hasPriority = false;
         if(disableFirstDoc){
