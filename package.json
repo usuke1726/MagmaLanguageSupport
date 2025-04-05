@@ -160,6 +160,33 @@
             }
           }
         },
+        "MagmaLanguageSupport.priorityCompletionItems": {
+          "type": ["array"],
+          "default": [],
+          "markdownDescription": "%config.priorityCompletionItems%",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "allOf": [
+              {
+                "if": {
+                  "pattern": "^@functions$"
+                },
+                "then": {
+                  "markdownDescription": "%config.priorityCompletionItems.functions%"
+                }
+              },
+              {
+                "if": {
+                  "pattern": "^@variables$"
+                },
+                "then": {
+                  "markdownDescription": "%config.priorityCompletionItems.variables%"
+                }
+              }
+            ]
+          } 
+        },
         "MagmaLanguageSupport.enableHover": {
           "type": "boolean",
           "default": true,

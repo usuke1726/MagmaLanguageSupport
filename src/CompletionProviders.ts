@@ -6,6 +6,7 @@ import INTRINSICS from './Intrinsics';
 import DefinitionHandler from './DefinitionHandler';
 import FileHandler from './FileHandler';
 import DocumentParser from './DocumentParser';
+import sortText from './Priority';
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 const { Log } = LogObject.bind("CompletionProvider");
@@ -119,7 +120,15 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
         this.items = INTRINSICS.map(name => {
             const item = new vscode.CompletionItem(name);
             item.kind = vscode.CompletionItemKind.Function;
+            item.sortText = sortText(name, "intrinsic");
             return item;
+        });
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if(!e.affectsConfiguration("MagmaLanguageSupport.completionItemPriority")) return;
+            setTimeout(() => {
+                this.initted = false;
+                this.init();
+            }, 200);
         });
         this.initted = true;
         Log("INIT END");
@@ -134,7 +143,7 @@ class IntrinsicComp implements vscode.CompletionItemProvider{
             item.kind = vscode.CompletionItemKind.Function;
             item.insertText = name;
             item.detail = name;
-            item.sortText = `.alias.${key}`;
+            item.sortText = sortText(`.alias.${key}`, "intrinsic");
             return item;
         });
         return this.initted ? [...aliasItems, ...this.items] : [];
@@ -168,6 +177,13 @@ class DefinitionComp implements vscode.CompletionItemProvider{
             if(def.document.value.trim()){
                 item.documentation = def.document;
             }
+            item.sortText = sortText(def.name, (() => {
+                switch(def.kind){
+                    case Def.DefinitionKind.function: return "function";
+                    case Def.DefinitionKind.variable: return "variable";
+                    case Def.DefinitionKind.forward: return "other";
+                }
+            })());
             return item;
         });
         return items;

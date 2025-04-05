@@ -112,6 +112,7 @@ const formatEnabledDefinition = (types: UserDefinedEnabledDefinition): EnableDef
 type Config = {
     completionTypes: CompletionTypes;
     intrinsicCompletionAliases: { [alias: string]: string },
+    priorityCompletionItems: string[],
     enableHover: boolean;
     enableDefinition: EnableDefinition;
     useLastInlineCommentAsDoc: boolean | "tripleSlash";
@@ -132,6 +133,7 @@ const defaultConfig: Config = {
         ...{ ":=": "original" }
     },
     intrinsicCompletionAliases: {},
+    priorityCompletionItems: [],
     enableHover: true,
     enableDefinition: { forwards: true, functions: true, variables: true },
     useLastInlineCommentAsDoc: "tripleSlash",
@@ -150,6 +152,7 @@ type ConfigKey = keyof Config;
 const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     completionTypes: val => isUserDefinedCompletionTypes(val),
     intrinsicCompletionAliases: val => isStringValueObject(val),
+    priorityCompletionItems: val => Array.isArray(val) && val.every(v => typeof v === "string"),
     enableHover: val => typeof val === "boolean",
     enableDefinition: val => isUserDefinedEnabledDefinition(val),
     useLastInlineCommentAsDoc: val => val === "tripleSlash" || typeof val === "boolean",
