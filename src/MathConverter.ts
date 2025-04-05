@@ -46,10 +46,15 @@ const toSVG = (text: string, isBlock: boolean): string => {
     return full;
 }
 
+const toMarkdownLink = (uri: string, isBlock: boolean): string => {
+    const link = `![](${uri})`;
+    return isBlock ? `\n\n${link}\n\n` : link;
+}
+
 const toURI_MathAPI = (text: string, isBlock: boolean): string => {
     const uri = `https://math.vercel.app/?color=%23d4d4d4&bgcolor=transparent&${isBlock ? "from" : "inline"}=${encodeURIComponent(text.trim())}.svg`
     Log("URI:", uri);
-    return `![](${uri})`;
+    return toMarkdownLink(uri, isBlock);
 }
 const toURI_TeXSVGWorker = (text: string, isBlock: boolean): string => {
     const css = encodeURIComponent("svg{color:#d4d4d4;background:transparent}");
@@ -57,14 +62,14 @@ const toURI_TeXSVGWorker = (text: string, isBlock: boolean): string => {
     const inline = isBlock ? "" : "&inline=true"
     const uri = `https://tex.jacob.workers.dev/?tex=${tex}${inline}&css=${css}`;
     Log("URI:", uri);
-    return `![](${uri})`;
+    return toMarkdownLink(uri, isBlock);
 }
 
 const toEmbeddedURI = (text: string, isBlock: boolean): string => {
     const svg = toSVG(text, isBlock)
     const uri = `data:image/svg+xml,${encodeURIComponent(svg)}`;
     Log("URI:", uri);
-    return `![](${uri})`;
+    return toMarkdownLink(uri, isBlock);
 }
 
 const convertMath = (text: string, isBlock: boolean): string => {
