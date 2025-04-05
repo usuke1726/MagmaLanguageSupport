@@ -185,11 +185,6 @@ const format = (obj: Config): Config => {
     return ret;
 };
 
-const _onChanged: ((newConig: Config) => void)[] = [];
-export const onChanged = (callback: (newConfig: Config) => void) => {
-    _onChanged.push(callback);
-}
-
 let configCache: Config | undefined = undefined;
 let initted = false;
 const loadConfig = (): Config => {
@@ -207,8 +202,7 @@ const loadConfig = (): Config => {
     if(!initted){
         initted = true;
         vscode.workspace.onDidChangeConfiguration(e => {
-            const newConfig = loadConfig();
-            _onChanged.forEach(callback => callback(newConfig));
+            loadConfig();
         });
     }
     return configCache;
