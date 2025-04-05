@@ -10,10 +10,12 @@ import FileHandler from './FileHandler';
 import { clearSearchedFiles, loadRecursively, removeComments, throwError } from './Loader';
 import DefinitionHandler from './DefinitionHandler';
 import DocumentParser from './DocumentParser';
+import { extractHtmlData, toHtmlContents } from './NotebookHTML';
 const { Log, Output } = LogObject.bind("Notebook");
 const getLocaleString = getLocaleStringBody.bind(undefined, "message.Notebook");
 
 const ID = "magma-calculator-notebook";
+const HTML_ID = "magma-calculator-notebook-html";
 
 const isNoteBookCellKind = (obj: any): obj is vscode.NotebookCellKind => {
     return obj === 1 || obj === 2;
@@ -30,6 +32,7 @@ const isRowNotebookCell = (obj: any): obj is RowNotebookCell => {
     return (
         typeof obj === "object" &&
         obj.hasOwnProperty("language") && typeof obj.language === "string" &&
+        ["magma", "markdown"].includes(obj.language) &&
         obj.hasOwnProperty("value") && typeof obj.value === "string" &&
         ["string", "undefined"].includes(typeof obj.outputs) &&
         obj.hasOwnProperty("kind") && isNoteBookCellKind(obj.kind)
@@ -60,19 +63,20 @@ const open = async () => {
 
 class Serializer implements vscode.NotebookSerializer{
     async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
-        const data = (() => {
-            try{
-                return JSON.parse((new TextDecoder()).decode(content));
-            }catch{
-                return undefined;
-            }
-        })();
-        const cellData = isRowNotebookCellArray(data) ? data : [];
-        return new vscode.NotebookData(cellData.map(item => {
-            const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
-            data.outputs = Serializer.stringToOutput(item.outputs);
-            return data;
-        }));
+        try{
+            const text = (new TextDecoder()).decode(content);
+            if(!text.trim()) return new vscode.NotebookData([]);
+            const data = JSON.parse(text);
+            if(!isRowNotebookCellArray(data)) throw "invalid data";
+            return new vscode.NotebookData(data.map(item => {
+                const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
+                data.outputs = Serializer.stringToOutput(item.outputs);
+                return data;
+            }));
+        }catch(e){
+            Output("Imagma deserialization error:", e);
+            throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
+        }
     }
     async serializeNotebook(data: vscode.NotebookData): Promise<Uint8Array> {
         const contents = data.cells.map((cell): RowNotebookCell => {
@@ -88,7 +92,7 @@ class Serializer implements vscode.NotebookSerializer{
     static copyOutputs(outputs: vscode.NotebookCellOutput[]): vscode.NotebookCellOutput[]{
         return this.stringToOutput(this.outputsToString(outputs));
     }
-    static outputsToString(outputs: vscode.NotebookCellOutput[] | undefined): string{
+    static outputsToString(outputs: readonly vscode.NotebookCellOutput[] | undefined): string{
         if(!outputs) return "";
         if(!getConfig().notebookSavesOutputs) return "";
         const ret = outputs.map(output => {
@@ -125,6 +129,36 @@ class Serializer implements vscode.NotebookSerializer{
     }
 };
 
+class HTMLSerializer extends Serializer{
+    async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
+        try{
+            const text = (new TextDecoder()).decode(content);
+            if(!text.trim()) return new vscode.NotebookData([]);
+            const data = extractHtmlData(text);
+            if(!isRowNotebookCellArray(data)) throw "invalid data";
+            return new vscode.NotebookData(data.map(item => {
+                const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
+                data.outputs = Serializer.stringToOutput(item.outputs);
+                return data;
+            }));
+        }catch(e){
+            Output("Html-imagma deserialization error:", e);
+            throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
+        }
+    }
+    async serializeNotebook(data: vscode.NotebookData): Promise<Uint8Array> {
+        const contents = data.cells.map((cell): RowNotebookCell => {
+            return {
+                kind: cell.kind,
+                language: cell.languageId,
+                value: cell.value,
+                outputs: Serializer.outputsToString(cell.outputs)
+            };
+        });
+        return (new TextEncoder()).encode(toHtmlContents(JSON.stringify(contents), contents));
+    }
+};
+
 class Status implements vscode.NotebookCellStatusBarItemProvider{
     provideCellStatusBarItems(cell: vscode.NotebookCell): vscode.NotebookCellStatusBarItem[] {
         const removeButton = cell.outputs.length ? [{
@@ -151,8 +185,8 @@ type ExecuttionResult= {
     success: boolean;
 };
 class Controller{
-    private readonly id = "magma-notebook-controller";
-    private readonly type = ID;
+    private readonly id: string;
+    private readonly type: string;
     private readonly label = "Magma Calculator Notebook";
     private readonly controller: vscode.NotebookController;
     private readonly requestOption: http.RequestOptions = {
@@ -171,7 +205,9 @@ class Controller{
     private lastTimeBlocked: Date | undefined = undefined;
     private overwrites: boolean = false;
     private readonly delayMinutesAfterBlocked = 10;
-    constructor(){
+    constructor(type: string){
+        this.type = type;
+        this.id = `${type}-controller`;
         this.controller = vscode.notebooks.createNotebookController(this.id, this.type, this.label);
         vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
         this.controller.supportedLanguages = ["magma"];
@@ -399,13 +435,26 @@ class Controller{
         exe.end(true);
     }
 };
-const controller: Controller = new Controller();
+const controller: Controller = new Controller(ID);
+const HTMLcontroller: Controller = new Controller(HTML_ID);
+
+const controllerFromCell = (cell: vscode.NotebookCell) => {
+    const type = cell.notebook.notebookType;
+    if(type === ID) return controller;
+    else if(type === HTML_ID) return HTMLcontroller;
+    else{
+        vscode.window.showErrorMessage(`${type} は無効です．`);
+        return undefined;
+    };
+}
 
 const removeCellOutput = async (cell: vscode.NotebookCell) => {
+    const ctl = controllerFromCell(cell);
+    if(!ctl) return;
     const length = cell.outputs.length;
     if(!length) return;
     if(length === 1){
-        controller.removeOutputs(cell, [0]);
+        ctl.removeOutputs(cell, [0]);
         return;
     }
     const indices = [...Array(length).keys()];
@@ -433,17 +482,12 @@ const removeCellOutput = async (cell: vscode.NotebookCell) => {
     });
     if(res && res.length){
         const removed = res.map(s => Number(s.label));
-        controller.removeOutputs(cell, removed);
+        ctl.removeOutputs(cell, removed);
     }
 };
 
-const exportToMarkdown = async () => {
-    const notebook = vscode.window.activeNotebookEditor?.notebook;
-    if(!notebook || notebook.notebookType !== ID){
-        vscode.window.showErrorMessage(getLocaleString("calledOnNonMagmaNotebookFile"));
-        return;
-    }
-    const contents = "\n" + notebook.getCells().map(cell => {
+const cellsToMarkdownContents = (cells: readonly vscode.NotebookCell[]) => {
+    return "\n" + cells.map(cell => {
         if(cell.kind === vscode.NotebookCellKind.Markup){
             return cell.document.getText();
         }else{
@@ -458,26 +502,56 @@ const exportToMarkdown = async () => {
             return `${code}${outputCode}`;
         }
     }).join(getConfig().notebookSeparatesWithHorizontalLines ? "\n\n---\n\n" : "\n\n");
-    const file = await vscode.window.showSaveDialog({
-        defaultUri: vscode.Uri.file(notebook.uri.fsPath.replace(/\.(imagma|icmagma|imag|icmag)$/, ".md")),
-        saveLabel: "保存",
-        filters: {
-            "Markdown": ["md"]
-        },
-        title: "保存先を選択"
-    });
-    if(file){
-        Output(`export to ${file}`);
-        const edit = new vscode.WorkspaceEdit();
-        edit.createFile(file, {
-            overwrite: true,
-            contents: (new TextEncoder()).encode(contents)
-        });
-        vscode.workspace.applyEdit(edit);
-    }
 };
+const cellsToHtmlContents = (cells: readonly vscode.NotebookCell[]) => {
+    const data = cells.map<RowNotebookCell>(cell => {
+        return {
+            kind: cell.kind,
+            language: cell.document.languageId,
+            value: cell.document.getText(),
+            outputs: Serializer.outputsToString(cell.outputs)
+        };
+    });
+    return toHtmlContents(JSON.stringify(data), data, false);
+};
+const exportNotebook = async () => {
+    const notebook = vscode.window.activeNotebookEditor?.notebook;
+    if(!notebook || ![ID, HTML_ID].includes(notebook.notebookType)){
+        vscode.window.showErrorMessage(getLocaleString("calledOnNonMagmaNotebookFile"));
+        return;
+    }
+    const file = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(notebook.uri.fsPath.replace(/\.(imagma|icmagma|imag|icmag)(\.html?)?$/, ".html")),
+        filters: {
+            "HTML": ["html"],
+            "Markdown": ["md"],
+        },
+    });
+    if(!file) return;
+    Output(`export to ${file}`);
+
+    const contents = (() => {
+        if(file.fsPath.endsWith(".html")){
+            return cellsToHtmlContents(notebook.getCells());
+        }else if(file.fsPath.endsWith(".md")){
+            return cellsToMarkdownContents(notebook.getCells());
+        }else{
+            return undefined;
+        }
+    })();
+    if(contents === undefined) return;
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.createFile(file, {
+        overwrite: true,
+        contents: (new TextEncoder()).encode(contents)
+    });
+    vscode.workspace.applyEdit(edit);
+}
 const previewCode = async (cell: vscode.NotebookCell) => {
-    const code = await controller.loadForPreview(cell);
+    const ctl = controllerFromCell(cell);
+    if(!ctl) return;
+    const code = await ctl.loadForPreview(cell);
     const doc = await vscode.workspace.openTextDocument({
         content: code,
         language: "magma"
@@ -536,9 +610,10 @@ const adjustUseIndexes = async (notebook: vscode.NotebookDocument, addedCellInde
 const setNotebookProviders = (context: vscode.ExtensionContext) => {
     Log("Notebook activated");
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
+    context.subscriptions.push(vscode.workspace.registerNotebookSerializer(HTML_ID, new HTMLSerializer()));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
     vscode.workspace.onDidChangeNotebookDocument(async e => {
-        if(e.notebook.notebookType !== ID) return;
+        if(![ID, HTML_ID].includes(e.notebook.notebookType)) return;
         const [oneAdded, addedCellIndex] = oneCellAdded(e);
         if(oneAdded){
             await adjustUseIndexes(e.notebook, addedCellIndex);
@@ -546,7 +621,7 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
         DefinitionHandler.onDidChangeNotebook(e.notebook);
     });
     vscode.workspace.onDidOpenNotebookDocument(notebook => {
-        if(notebook.notebookType !== ID) return;
+        if(![ID, HTML_ID].includes(notebook.notebookType)) return;
         DefinitionHandler.onDidOpenNotebook(notebook);
     });
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.removeCellOutput", (...args) => {
@@ -555,7 +630,7 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
             removeCellOutput(cell).catch();
         }catch{}
     }));
-    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.exportToMarkdown", exportToMarkdown));
+    context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.export", exportNotebook));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.openLoadingResult", (...args) => {
         try{
             const cell = args[0] as vscode.NotebookCell;

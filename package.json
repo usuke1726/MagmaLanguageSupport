@@ -17,7 +17,8 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onNotebook:magma-calculator-notebook"
+    "onNotebook:magma-calculator-notebook",
+    "onNotebook:magma-calculator-notebook-html"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -47,11 +48,9 @@
           "dark": "./images/icon-imagma-dark.png",
           "light": "./images/icon-imagma-light.png"
         },
-        "extensions": [
-          ".imagma",
-          ".icmagma",
-          ".imag",
-          ".icmag"
+        "filenamePatterns": [
+          "*.{imagma,icmagma,imag,icmag}",
+          "*.{imagma,icmagma,imag,icmag}.{html,htm}"
         ]
       },
       {
@@ -325,8 +324,8 @@
         "category": "Notebook"
       },
       {
-        "command": "extension.magmaNotebook.exportToMarkdown",
-        "title": "%command.magmaNotebook.exportToMarkdown%",
+        "command": "extension.magmaNotebook.export",
+        "title": "%command.magmaNotebook.export%",
         "icon": "$(export)",
         "category": "Notebook"
       },
@@ -366,7 +365,7 @@
       "notebook/cell/title": [
         {
           "command": "extension.magmaNotebook.openLoadingResult",
-          "when": "notebookType == 'magma-calculator-notebook' && notebookCellType == 'code'",
+          "when": "(notebookType == 'magma-calculator-notebook' || notebookType == 'magma-calculator-notebook-html') && notebookCellType == 'code'",
           "group": "inline/cell@0"
         }
       ],
@@ -377,8 +376,8 @@
           "group": "navigation@0"
         },
         {
-          "when": "notebookType == 'magma-calculator-notebook'",
-          "command": "extension.magmaNotebook.exportToMarkdown",
+          "when": "notebookType == 'magma-calculator-notebook' || notebookType == 'magma-calculator-notebook-html'",
+          "command": "extension.magmaNotebook.export",
           "group": "navigation@0"
         }
       ]
@@ -411,16 +410,16 @@
         "displayName": "Magma Calculator Notebook",
         "selector": [
           {
-            "filenamePattern": "*.imagma"
-          },
+            "filenamePattern": "*.{imagma,icmagma,imag,icmag}"
+          }
+        ]
+      },
+      {
+        "type": "magma-calculator-notebook-html",
+        "displayName": "Magma Calculator Notebook",
+        "selector": [
           {
-            "filenamePattern": "*.icmagma"
-          },
-          {
-            "filenamePattern": "*.imag"
-          },
-          {
-            "filenamePattern": "*.icmag"
+            "filenamePattern": "*.{imagma,icmagma,imag,icmag}.{html,htm}"
           }
         ]
       }
@@ -436,8 +435,10 @@
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/mocha": "^10.0.7",
     "@types/node": "22.x",
+    "@types/sanitize-html": "^2.15.0",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
     "@typescript-eslint/parser": "^8.4.0",
@@ -449,6 +450,8 @@
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.8.10",
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "markdown-it": "^14.1.0",
+    "sanitize-html": "^2.15.0"
   }
 }
