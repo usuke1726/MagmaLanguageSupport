@@ -19,7 +19,7 @@ const indexOfEndOfBlockMath = (text: string): number => {
 const main = (text: string): [string, string] => {
     const inlineCode = /(`+)((?:[^`]|(?!(?<!`)\1(?!`))`)*)(\1)/;
     const startBlockCode = /(^|(?<=\n)|\G)(\s*)(`{3,}|~{3,})\s*[^`\n]*(?=\n|$)/;
-    const inlineMath = /(?<!\\)\$(([^\$]|(\\\$))*)(?<!\\)\$/;
+    const inlineMath = /(?<!\\)\$(([^\s]|\\\$)([^\$]|(\\\$))*)(?<![\\\s])\$/;
     const startBlockMath = /(^|(?<=\n)|\G)((?<!\\)\$){2}/;
     const m1 = startBlockCode.exec(text);
     const m2 = startBlockMath.exec(text);
