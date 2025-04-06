@@ -75,7 +75,12 @@ class Serializer implements vscode.NotebookSerializer{
             }));
         }catch(e){
             Output("Imagma deserialization error:", e);
-            throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
+            try{
+                return Serializer.tryToOpenAsImagmaHtml(content);
+            }catch(e){
+                Output("Imagma deserialization error:", e);
+                throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
+            }
         }
     }
     async serializeNotebook(data: vscode.NotebookData): Promise<Uint8Array> {
@@ -88,6 +93,17 @@ class Serializer implements vscode.NotebookSerializer{
             };
         });
         return (new TextEncoder()).encode(JSON.stringify(contents));
+    }
+    static tryToOpenAsImagmaHtml(content: Uint8Array): vscode.NotebookData{
+        const text = (new TextDecoder()).decode(content);
+        if(!text.trim()) return new vscode.NotebookData([]);
+        const data = extractHtmlData(text);
+        if(!isRowNotebookCellArray(data)) throw "invalid data";
+        return new vscode.NotebookData(data.map(item => {
+            const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
+            data.outputs = Serializer.stringToOutput(item.outputs);
+            return data;
+        }));
     }
     static copyOutputs(outputs: vscode.NotebookCellOutput[]): vscode.NotebookCellOutput[]{
         return this.stringToOutput(this.outputsToString(outputs));
@@ -132,15 +148,7 @@ class Serializer implements vscode.NotebookSerializer{
 class HTMLSerializer extends Serializer{
     async deserializeNotebook(content: Uint8Array): Promise<vscode.NotebookData> {
         try{
-            const text = (new TextDecoder()).decode(content);
-            if(!text.trim()) return new vscode.NotebookData([]);
-            const data = extractHtmlData(text);
-            if(!isRowNotebookCellArray(data)) throw "invalid data";
-            return new vscode.NotebookData(data.map(item => {
-                const data = new vscode.NotebookCellData(item.kind, item.value, item.language);
-                data.outputs = Serializer.stringToOutput(item.outputs);
-                return data;
-            }));
+            return Serializer.tryToOpenAsImagmaHtml(content);
         }catch(e){
             Output("Html-imagma deserialization error:", e);
             throw new vscode.LanguageModelError(getLocaleString("deserializationError"));
