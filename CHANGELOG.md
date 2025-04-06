@@ -1,6 +1,25 @@
 
 # Change Log
 
+## 0.8.0 - 2025-04-06
+
+- New support for `.imagma.html` file. (Can also use `.imag.html`, etc.)
+    - This file can be opened in your browser as an html file. (Instead the file size will be about twice the vanilla.)
+    - You can also export a Magma Calculator Notebook to html. (The html file size will be slightly larger than the vanilla.)
+    - How to convert `.imagma` file to `.imagma.html`: (and `.imagma.html` to `.imagma`)
+        1. Rewrite the extension `.imagma` to `.imagma.html`.
+        1. Open and save the file.
+- [**BREAKING CHANGE**] The command `extension.magmaNotebook.exportToMarkdown` has been replaced by `extension.magmaNotebook.export`.
+    - Use this command whether exporting to markdown or html.
+- New support for TeX in documentation.
+    - To enable this feature, please first configure `MagmaLanguageSupport.useMath` to `true`. (default is `false`)
+- New support for a configuration `MagmaLanguageSupport.priorityCompletionItems` and a tag `@priority`.
+    - Functions, intrinsics, and variables tagged with `@priority` or contained in `MagmaLanguageSupport.priorityCompletionItems` will be suggested as a priority.
+- New support for https communication when running a code on Magma Calculator Notebook.
+- Fixed a bug where the one-line block comment `/* ... */` would disable documentation after the comment.
+- Fixed a bug with definition jumps and hovers of arguments.
+- Removed invalid intrinsics and fixed typos.
+
 ## 0.7.1 - 2024-12-29
 
 - Updated dependent modules to fix vulnerabilities.
@@ -15,7 +34,7 @@
 
 - Fixed a bug where the intrinsic `ParallelSort` was not suggested.
 - Fixed a bug where the statement `@internal` in an inline comment was not suggested.
-- Fixed a bug where a statement after `load` was included in an inline comment when using MamgaLoader.
+- Fixed a bug where a statement after `load` was included in an inline comment when using MagmaLoader.
 - Fixed a bug where the statement `load "A"; "B";` was treated as the wrong filename `A"; "B`;
 
 ## 0.6.0 - 2024-09-11

@@ -92,7 +92,7 @@ This specifies whether inline comments are treated as documentation or not.
     "MagmaLanguageSupport.useLastInlineCommentAsDoc": true
 ```
 
-then below commentation is available as documentation.
+then the comment below is available as documentation.
 
 <img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/one-line-comment.png" alt="one-line-comment" width="200">
 
@@ -100,7 +100,7 @@ then below commentation is available as documentation.
     "MagmaLanguageSupport.useLastInlineCommentAsDoc": "tripleSlash"
 ```
 
-then below commentation is available as documentation.
+then the comment below is available as documentation.
 
 <img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/one-line-comment-triple-slash.png" alt="one-line-comment-triple-slash" width="350">
 
@@ -120,6 +120,14 @@ This specifies whether to warn when redefining an intrinsic.
 <img src="https://raw.githubusercontent.com/usuke1726/MagmaLanguageSupport/main/images/docs/redefining-warning.png" alt="redefining-warning" width="600">
 
 Default is `true`.
+
+`priorityCompletionItems`
+
+Array of intrinsic, function and variable names. Items in the configuration will be suggest as a priority.
+
+If you include `@functions` (or `@variables`) in this array, all user-defined functions (or variables) will be given priority.
+
+Default is `[]`.
 
 `useMath`
 
@@ -223,7 +231,22 @@ You can configure keybindings:
 - `// @use {cell index}` enables to load previous code blocks.
 - `// @append` or `// @overwrite` determines whether execute results are appended or overwritten.
     - You can specify the default mode by the setting `MagmaLanguageSupport.notebookOutputResultMode`.
-- You can export the contents of a notebook to markdown with the command `extension.magmaNotebook.exportToMarkdown`.
+- You can export the contents of a notebook to markdown or html with the command `extension.magmaNotebook.export`.
+
+#### Imagma HTML
+
+- The file extensions `.imagma.html`, `.icmagma.html`, `.imag.html` and `.icmag.html` are also available.
+- This file can be opened in your browser as an html file. (Instead the file size will be about twice the vanilla.)
+    - Note that the html file uses external resources:
+        - scripts and math style `katex@0.16.21`
+        - VS Code style [markdown.css](https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css)
+
+How to convert `.imagma` file to `.imagma.html`:
+
+1. Rewrite the extension `.imagma` to `.imagma.html`.
+1. Open and save the file.
+
+To convert `.imagma.html` to `.imagma`, rewrite the file extension and open and save the file in the same way.
 
 #### Settings
 
@@ -243,7 +266,7 @@ Default is `"append"`.
 
 `MagmaLanguageSupport.notebookSeparatesWithHorizontalLines`
 
-Separate cells with horizontal lines when exporting notebooks to markdown using the command `extension.magmaNotebook.exportToMarkdown`.
+Separate cells with horizontal lines when exporting notebooks to markdown using the command `extension.magmaNotebook.export`.
 
 Default is `true`.
 
