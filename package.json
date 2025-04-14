@@ -426,6 +426,9 @@
         "displayName": "Magma Calculator Notebook",
         "selector": [
           {
+            "filenamePattern": "*.imagma"
+          },
+          {
             "filenamePattern": "*.{imagma,icmagma,imag,icmag}"
           }
         ]
