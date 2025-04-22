@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.8.1 - 2025-04-22
+
+- Fixed a bug where the `extension.magmaNotebook.createNewNotebook` command created two files whose file types were not `.imagma`.
+
 ## 0.8.0 - 2025-04-06
 
 - New support for `.imagma.html` file. (Can also use `.imag.html`, etc.)
