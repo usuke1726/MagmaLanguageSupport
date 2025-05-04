@@ -34,8 +34,8 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
     ],
     allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
-        span: ["class", "style"],
-        div: ["class", "style"],
+        span: ["id", "class", "style"],
+        div: ["id", "class", "style"],
         td: ["style"],
         th: ["style"],
         details: ["open"],
@@ -96,6 +96,40 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 `.trim();
 
+const htmlSpecialStyleScript = `
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const targets = {
+        "__body": "body",
+        "__markup": "div.markup",
+        "__code": "pre.code",
+        "__output": "pre.output",
+        "__math": "span.katex",
+        "__math_block": "span.katex-display",
+        ...Object.fromEntries(
+            [...Array(10).keys()].map(i => [\`__p-\${i}\`, \`*.p-\${i}\`])
+        ),
+    };
+    const tags = Object.keys(targets)
+        .map(k => [k, document.querySelector(\`#\${k}:is(div, span)\`)])
+        .filter(v => v[1]);
+    if(tags.length){
+        const sty = document.createElement("style");
+        sty.textContent = tags
+            .map(([k, tag]) => \`\${targets[k]}{\${tag.style.cssText}}\`)
+            .join("");
+        document.head.appendChild(sty);
+        tags.forEach(([_k, tag]) => {
+            tag.removeAttribute("style");
+            if(!tag.innerHTML.trim()){
+                tag.parentNode.removeChild(tag);
+            }
+        });
+    }
+});
+</script>
+`.trim();
+
 const htmlMarkdownStyleLink = `
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
 `.trim();
@@ -120,6 +154,7 @@ const htmlOriginalStyle = `
 
 const headerSuffix: string = toOneLine(`
 ${htmlKaTeXScripts}
+${htmlSpecialStyleScript}
 ${htmlMarkdownStyleLink}
 ${htmlOriginalStyle}
 </head>
