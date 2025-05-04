@@ -23,6 +23,8 @@ const isInvalidImg = (frame: sanitizeHtml.IFrame) => (
     !/^data:image\/(png|jpeg|gif|webp|apng|avif);/i.test(frame.attribs.src)
 );
 
+const ini = /^(initial|inherit|unset|revert)$/;
+const color = [/^[a-z]+$/, /^#(0x)?[0-9a-f]+$/i, /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/];
 const sanitizeOptions: sanitizeHtml.IOptions = {
     ...sanitizeHtml.defaults,
     allowedTags: [
@@ -41,8 +43,22 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
     },
     allowedStyles: {
         "*": {
-            "color": [/^[a-z]+$/, /^#(0x)?[0-9a-f]+$/i, /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/],
-            "text-align": [/^(start|end|left|center|right|justify|match-parent)$/],
+            "color": [ini, ...color],
+            "background-color": [ini, ...color],
+            "border-color": [ini, ...color],
+            "text-decoration-color": [ini, ...color],
+            "text-align": [ini, /^(start|end|left|center|right|justify|match-parent)$/],
+            "font-size": [ini, /^((x{1,2}-)?small|medium|(x{1,3}-)?large|smaller|larger)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
+            "font-family": [ini, /^("[^"]+"|'[^']+'|[a-zA-Z\-]+)(, *("[^"]+"|'[^']+'|[a-zA-Z\-]+))*$/],
+            "line-height": [ini, /^normal$/, /^(\d+(\.\d+)?|\.\d+)$/],
+            "letter-spacing": [ini, /^normal$/, /^-?(\d+(\.\d+)?|\.\d+)(px|cm|mm|in|pc|pt|em|rem)$/],
+            "padding": [ini, /^(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))( +(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))){0,3}$/],
+            "margin": [ini, /^(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))( +(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))){0,3}$/],
+            "border-radius": [ini, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
+            "border-width": [ini, /^(thin|medium|thick)$/, /^(\d+(\.\d+)?|\.\d+)(px|cm|mm|in|pc|pt|em|rem)$/],
+            "text-decoration-line": [ini, /^(underline|line-through|overline)( +(underline|line-through|overline))*$/],
+            "text-decoration-style": [ini, /^(solid|double|dotted|dashed|wavy)$/],
+            "text-decoration-thickness": [ini, /^(auto|from-font)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
         },
     },
     allowedSchemes: ["http", "https", "mailto"],
