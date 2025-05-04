@@ -136,6 +136,9 @@ const htmlMarkdownStyleLink = `
 
 const htmlOriginalStyle = `
 <style>
+    body{
+        line-height: initial;
+    }
     pre.code{
         text-wrap: initial;
         background-color: #fafafa !important;
