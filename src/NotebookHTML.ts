@@ -17,6 +17,12 @@ const md = MarkdownIt({
 });
 md.use(mathEscaper);
 
+const isInvalidImg = (frame: sanitizeHtml.IFrame) => (
+    frame.tag === "img" &&
+    typeof frame.attribs.src === "string" &&
+    !/^data:image\/(png|jpeg|gif|webp|apng|avif);/i.test(frame.attribs.src)
+);
+
 const sanitizeOptions: sanitizeHtml.IOptions = {
     ...sanitizeHtml.defaults,
     allowedTags: [
@@ -40,6 +46,12 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
         },
     },
     allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: {
+        img: ["data"]
+    },
+    exclusiveFilter: frame => {
+        return isInvalidImg(frame);
+    },
 };
 
 const toOneLine = (t: string) => t.split("\n").map(s => s.trimStart()).join("");
