@@ -443,7 +443,7 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
         const selfIndex = cells.find(cell => cell.document.uri.fragment === document.uri.fragment)?.index ?? Infinity;
         if(pattern.test(beforeText)){
             return cells
-            .filter(cell => cell.kind === vscode.NotebookCellKind.Code && cell.index < selfIndex)
+            .filter(cell => cell.kind === vscode.NotebookCellKind.Code && cell.index !== selfIndex)
             .map(cell => {
                 const text = cell.document.getText();
                 const idx = cell.index;

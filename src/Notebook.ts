@@ -213,6 +213,7 @@ class Controller{
     private lastTimeBlocked: Date | undefined = undefined;
     private overwrites: boolean = false;
     private readonly delayMinutesAfterBlocked = 10;
+    private loadedCellIndexes = new Set<number>();
     constructor(type: string){
         this.type = type;
         this.id = `${type}-controller`;
@@ -220,6 +221,9 @@ class Controller{
         vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
         this.controller.supportedLanguages = ["magma"];
         this.controller.executeHandler = this.execute.bind(this);
+    }
+    private clearLoadedCellIndexes(){
+        this.loadedCellIndexes.clear();
     }
     private getLines(cell: vscode.NotebookCell): string[]{
         return cell.document.getText().replaceAll("\r", "").split("\n");
@@ -245,9 +249,9 @@ class Controller{
             if(!Number.isFinite(idx)){
                 Log("invalid");
                 return [];
-            }else if(idx >= currentIdx){
-                Log("too big");
-                return [];
+            }else if(this.loadedCellIndexes.has(idx)){
+                Output(`Circular reference ${idx}\n\t(from: ${currentIdx})`);
+                throw new Error(getLocaleString("circularReference", idx, currentIdx));
             }else{
                 const cell = this.cells[idx];
                 if(cell.kind === vscode.NotebookCellKind.Code){
@@ -283,12 +287,14 @@ class Controller{
     private async load(cell: vscode.NotebookCell): Promise<string[]>{
         Log(`load cell ${cell.index}`);
         const idx = cell.index;
+        this.loadedCellIndexes.add(idx);
         const lines = this.getLines(cell);
         return (await Promise.all(lines.map(line => {
             return this.readLine(cell.document.uri, line, idx);
         }))).flat();
     }
     async loadForPreview(cell: vscode.NotebookCell): Promise<string>{
+        this.clearLoadedCellIndexes();
         this.cells = cell.notebook.getCells();
         return (await this.load(cell)).join("\n");
     }
@@ -302,6 +308,7 @@ class Controller{
         this.overwrites = getConfig().notebookOutputResultMode === "overwrite";
         const [code, success] = await (async () => {
             try{
+                this.clearLoadedCellIndexes();
                 const code = await this.load(cell);
                 Log(code);
                 return [removeComments(code.join("\n")), true];

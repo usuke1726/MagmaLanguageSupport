@@ -683,12 +683,6 @@ class DefinitionLoader extends DefinitionParser{
                             getLocaleString("cellSelfReference"),
                             vscode.DiagnosticSeverity.Error
                         );
-                    }else if(cell.index < idx){
-                        return new vscode.Diagnostic(
-                            range,
-                            getLocaleString("cellBackReference"),
-                            vscode.DiagnosticSeverity.Error
-                        );
                     }
                 }).filter(d => d !== undefined);
                 if(diagnostics){
@@ -725,6 +719,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
         const stack: Def.DocumentCache[] = [];
         const selfCache = await this.requestCache(document.uri, 2);
         const searchedFiles = new Set<string>();
+        const searchedCellIndexes = new Set<number>();
         const queryBody: ((def: Def.Definition) => boolean) = (options?.onlyForward)
             ? def => Def.isForward(def) && def.name === functionName
             : def => def.name === functionName;
@@ -732,6 +727,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
         if(Def.isNotebookCache(selfCache)){
             const cell = selfCache.cells.find(cell => cell.fragment === document.uri.fragment);
             if(cell){
+                searchedCellIndexes.add(cell.index);
                 stack.push(cell.cache);
             }
         }else{
@@ -767,7 +763,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 if(typeof location === "number"){
                     if(Def.isNotebookCache(selfCache)){
                         const depCell = selfCache.cells.find(cell => cell.index === location);
-                        if(depCell){
+                        if(depCell && !searchedCellIndexes.has(depCell.index)){
                             stack.push(depCell.cache);
                         }
                     }
@@ -791,11 +787,13 @@ export default class DefinitionSearcher extends DefinitionLoader{
         const stack: Def.DocumentCache[] = [];
         const selfCache = await this.requestCache(document.uri);
         const searchedFiles = new Set<string>();
+        const searchedCellIndexes = new Set<number>();
         const ret: Def.Definition[] = [];
         if(!selfCache) return [];
         if(Def.isNotebookCache(selfCache)){
             const cell = selfCache.cells.find(cell => cell.fragment === document.uri.fragment);
             if(cell){
+                searchedCellIndexes.add(cell.index);
                 stack.push(cell.cache);
             }
         }else{
@@ -840,7 +838,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 if(typeof location === "number"){
                     if(Def.isNotebookCache(selfCache)){
                         const depCell = selfCache.cells.find(cell => cell.index === location);
-                        if(depCell){
+                        if(depCell && !searchedCellIndexes.has(depCell.index)){
                             stack.push(depCell.cache);
                         }
                     }
