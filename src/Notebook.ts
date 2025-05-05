@@ -8,6 +8,7 @@ import getLocaleStringBody from './locale';
 import getConfig from './config';
 import FileHandler from './FileHandler';
 import { clearSearchedFiles, loadRecursively, removeComments, throwError } from './Loader';
+import { CellLocation, isCellLocation, IDFromCell, findCellOfLocation } from './Definition';
 import DefinitionHandler from './DefinitionHandler';
 import DocumentParser from './DocumentParser';
 import { extractHtmlData, toHtmlContents } from './NotebookHTML';
@@ -178,8 +179,14 @@ class Status implements vscode.NotebookCellStatusBarItemProvider{
                 arguments: [cell]
             }
         }] : [];
+        const id = IDFromCell(cell);
+        const IDStatus = id ? [{
+            alignment: vscode.NotebookCellStatusBarAlignment.Right,
+            text: `ID: "${id}"`,
+        }] : [];
         return [
             ...removeButton,
+            ...IDStatus,
             {
                 alignment: vscode.NotebookCellStatusBarAlignment.Right,
                 text: `Index: ${cell.index}`
@@ -213,7 +220,7 @@ class Controller{
     private lastTimeBlocked: Date | undefined = undefined;
     private overwrites: boolean = false;
     private readonly delayMinutesAfterBlocked = 10;
-    private loadedCellIndexes = new Set<number>();
+    private loadedCellIndexes = new Set<CellLocation>();
     constructor(type: string){
         this.type = type;
         this.id = `${type}-controller`;
@@ -230,10 +237,11 @@ class Controller{
     }
     private async readLine(baseUri: vscode.Uri, line: string, currentIdx: number): Promise<string[]>{
         let m: RegExpExecArray | null;
-        const usePattern = /^\s*\/{2,}\s+@uses?\s+([0-9]+);?.*?$/;
+        const usePattern = /^\s*\/{2,}\s+@uses?\s+([0-9]+|"[^"\n]+");?.*?$/;
         const loadPattern = /^\s*load\s+"(.+)";\s*$/;
         const appendPattern = /^\s*\/{2,}\s+@append(Results?)?\s*;?.*?$/;
         const overwritePattern = /^\s*\/{2,}\s+@overwrite(Results?)?\s*;?.*?$/;
+        const cellIDPattern = /^\s*\/{2,}\s+@cell\s+"[^"\n]*";?.*?$/;
         if(appendPattern.test(line)){
             this.overwrites = false;
             return [];
@@ -242,24 +250,33 @@ class Controller{
             this.overwrites = true;
             return [];
         }
+        if(cellIDPattern.test(line)){
+            return [];
+        }
         m = usePattern.exec(line);
         if(m){
             Log("use hit", m[1]);
-            const idx = Number(m[1]);
-            if(!Number.isFinite(idx)){
-                Log("invalid");
-                return [];
-            }else if(this.loadedCellIndexes.has(idx)){
-                Output(`Circular reference ${idx}\n\t(from: ${currentIdx})`);
-                throw new Error(getLocaleString("circularReference", idx, currentIdx));
-            }else{
-                const cell = this.cells[idx];
-                if(cell.kind === vscode.NotebookCellKind.Code){
-                    Log("FOUND!");
-                    return this.load(this.cells[idx]);
+            const location = (() => {
+                if(m[1].startsWith('"')){
+                    const id = m[1].slice(1, -1);
+                    return id || undefined;
                 }else{
-                    Log("is document");
-                    return [];
+                    const idx = Number(m[1]);
+                    return Number.isFinite(idx) ? idx : undefined;
+                }
+            })();
+            if(!isCellLocation(location)) return [];
+            if(this.loadedCellIndexes.has(location)){
+                const id = typeof location === "string" ? `id "${location}"` : `${location}`
+                Output(`Circular reference ${id}\n\t(from: ${currentIdx})`);
+                throw new Error(getLocaleString("circularReference", id, currentIdx));
+            }else{
+                const cell = findCellOfLocation(this.cells, location);
+                if(cell){
+                    return this.load(this.cells[cell.index]);
+                }else{
+                    const id = typeof location === "string" ? `id "${location}"` : `${location}`
+                    throw new Error(getLocaleString("cellNotFound", id));
                 }
             }
         }

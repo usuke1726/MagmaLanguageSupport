@@ -73,7 +73,7 @@ class DefinitionParser{
         const invalidDefinedComment1 = /^(\s*\/{2,}\s+@define[sd]?)(\s+|\s+.+\s+)(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*(\(.*\))?;?\s*$/;
         const invalidDefinedComment2 = /^(\s*\/{2,}\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
         const invalidDefinedComment3 = /^(\s*\/{2,}\s+@define[sd]?\s+variable\s+(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*)(\(.*\));?\s*?$/;
-        const notebookUseStatement = /^(\s*\/{2,}\s+@uses?\s+)([0-9]+);?.*?$/;
+        const notebookUseStatement = /^(\s*\/{2,}\s+@uses?\s+)([0-9]+|"[^"\n]+");?.*?$/;
         const isNotebook = !FileHandler.isMagmaFile(uri);
         const definitions: Def.Definition[] = [];
         const dependencies: Def.Dependency[] = [];
@@ -165,10 +165,18 @@ class DefinitionParser{
                     m = notebookUseStatement.exec(line);
                     if(m){
                         parser.reset(false);
-                        const index = Number(m[2]);
-                        if(Number.isFinite(index)){
+                        const location = (() => {
+                            if(m[2].startsWith('"')){
+                                const id = m[2].slice(1, -1);
+                                return id || undefined;
+                            }else{
+                                const idx = Number(m[2]);
+                                return Number.isFinite(idx) ? idx : undefined;
+                            }
+                        })();
+                        if(location !== undefined){
                             dependencies.push({
-                                location: index,
+                                location,
                                 loadsAt: new vscode.Position(idx, m[1].length),
                                 type: "use"
                             });
@@ -637,7 +645,7 @@ class DefinitionLoader extends DefinitionParser{
         });
         cache.dependencies.forEach(dep => {
             const uri = dep.location;
-            if(typeof uri !== "number" && !this.isRegistered(uri)){
+            if(!Def.isCellLocation(uri) && !this.isRegistered(uri)){
                 this.reserveLoad(uri);
             }
         });
@@ -659,13 +667,28 @@ class DefinitionLoader extends DefinitionParser{
                 const data = await this.createCacheData(curi, cell.document.getText());
                 data.dependencies.forEach(dep => {
                     const uri = dep.location;
-                    if(typeof uri !== "number" && !this.isRegistered(uri)){
+                    if(!Def.isCellLocation(uri) && !this.isRegistered(uri)){
                         this.reserveLoad(uri);
                     }
                 });
                 const diagnostics = data.dependencies
                 .map(dep => {
                     const idx = dep.location;
+                    if(typeof idx === "string"){
+                        const cell = Def.findCellOfLocation(cells, idx);
+                        const id = `"${idx}"`;
+                        const range = new vscode.Range(
+                            dep.loadsAt,
+                            new vscode.Position(dep.loadsAt.line, dep.loadsAt.character + id.length)
+                        );
+                        if(!cell){
+                            return new vscode.Diagnostic(
+                                range,
+                                getLocaleString("cellNotFound", id),
+                                vscode.DiagnosticSeverity.Error
+                            );
+                        }
+                    }
                     if(typeof idx !== "number") return undefined;
                     const range = new vscode.Range(
                         dep.loadsAt,
@@ -695,8 +718,10 @@ class DefinitionLoader extends DefinitionParser{
         const cache: Def.NotebookCache = {
             uri, notebook,
             cells: fullData.map(([cell, data]) => {
+                const cellID = Def.IDFromCell(cell);
                 return {
                     index: cell.index,
+                    id: cellID,
                     fragment: cell.document.uri.fragment,
                     cache: {
                         uri: cell.document.uri,
@@ -760,9 +785,9 @@ export default class DefinitionSearcher extends DefinitionLoader{
                     continue;
                 }
                 const { location } = dep;
-                if(typeof location === "number"){
+                if(Def.isCellLocation(location)){
                     if(Def.isNotebookCache(selfCache)){
-                        const depCell = selfCache.cells.find(cell => cell.index === location);
+                        const depCell = Def.findCellOfLocation(selfCache.cells, location);
                         if(depCell && !searchedCellIndexes.has(depCell.index)){
                             stack.push(depCell.cache);
                         }
@@ -835,9 +860,9 @@ export default class DefinitionSearcher extends DefinitionLoader{
                     continue;
                 }
                 const { location } = dep;
-                if(typeof location === "number"){
+                if(Def.isCellLocation(location)){
                     if(Def.isNotebookCache(selfCache)){
-                        const depCell = selfCache.cells.find(cell => cell.index === location);
+                        const depCell = Def.findCellOfLocation(selfCache.cells, location);
                         if(depCell && !searchedCellIndexes.has(depCell.index)){
                             stack.push(depCell.cache);
                         }
@@ -980,7 +1005,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 const dep = docCache.dependencies.find(dep => {
                     return dep.type === "load" && dep.loadsAt.line === position.line;
                 });
-                if(dep && typeof dep.location !== "number"){
+                if(dep && !Def.isCellLocation(dep.location)){
                     const doc = await getDoc(dep.location);
                     return {
                         contents: [
@@ -995,7 +1020,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 });
                 const files = (await Promise.all(deps.map(async dep => {
                     const loc = dep.location;
-                    if(typeof loc === "number") return undefined;
+                    if(Def.isCellLocation(loc)) return undefined;
                     if(loc.fsPath === document.uri.fsPath) return undefined;
                     const doc = await getDoc(loc);
                     return [

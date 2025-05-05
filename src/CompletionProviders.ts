@@ -431,7 +431,11 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
             overwrite.kind = vscode.CompletionItemKind.Snippet;
             overwrite.insertText = "overwrite;";
             overwrite.documentation = new vscode.MarkdownString(getLocaleString("overwrite"));
-            return [use, append, overwrite];
+            const cellID = new vscode.CompletionItem("cell");
+            cellID.kind = vscode.CompletionItemKind.Snippet;
+            cellID.insertText = new vscode.SnippetString('cell "${1:cell ID}";');
+            cellID.documentation = new vscode.MarkdownString(getLocaleString("cellID"));
+            return [use, append, overwrite, cellID];
         }else{
             return [];
         }
@@ -446,8 +450,17 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
             .filter(cell => cell.kind === vscode.NotebookCellKind.Code && cell.index !== selfIndex)
             .map(cell => {
                 const text = cell.document.getText();
-                const idx = cell.index;
-                const item = new vscode.CompletionItem(`${idx}`);
+                const item = (() => {
+                    const id = Def.IDFromCell(cell);
+                    if(id === undefined){
+                        const item = new vscode.CompletionItem(`${cell.index}`);
+                        return item;
+                    }else{
+                        const item = new vscode.CompletionItem(`"${id}"`);
+                        item.sortText = `!${id}`;
+                        return item;
+                    }
+                })();
                 item.kind = vscode.CompletionItemKind.EnumMember;
                 item.documentation = new vscode.MarkdownString(DocumentParser.wrapWithBlockMagmaCode(text));
                 if(cell.index === selfIndex - 1) item.preselect = true;
