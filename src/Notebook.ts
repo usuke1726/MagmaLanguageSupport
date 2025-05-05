@@ -559,7 +559,14 @@ const exportNotebook = async () => {
 const previewCode = async (cell: vscode.NotebookCell) => {
     const ctl = controllerFromCell(cell);
     if(!ctl) return;
-    const code = await ctl.loadForPreview(cell);
+    let code: string;
+    try{
+        code = await ctl.loadForPreview(cell);
+    }catch(e){
+        const mes = (e instanceof Error) ? e.message : String(e);
+        vscode.window.showErrorMessage(`${getLocaleStringBody("message.Loader", "failed")}\n${mes}`);
+        return;
+    }
     const doc = await vscode.workspace.openTextDocument({
         content: code,
         language: "magma"
