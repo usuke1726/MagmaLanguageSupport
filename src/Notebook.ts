@@ -611,7 +611,6 @@ const adjustUseIndexes = async (notebook: vscode.NotebookDocument, addedCellInde
         const edit = new vscode.WorkspaceEdit();
         edit.set(notebook.uri, edits);
         await vscode.workspace.applyEdit(edit);
-        vscode.window.showTextDocument(notebook.cellAt(addedCellIndex).document);
     }
 };
 
