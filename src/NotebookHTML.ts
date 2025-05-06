@@ -163,7 +163,7 @@ ${htmlOriginalStyle}
 </head>
 `);
 
-const render = (text: string) => sanitizeHtml(md.render(text.replaceAll("\\", "&#92;")), sanitizeOptions);
+const render = (text: string) => sanitizeHtml(md.render(text.replaceAll("\\\\", "&#92;&#92;")), sanitizeOptions);
 const parseOutputs = (outputs: string | undefined) => {
     if(!outputs) return [];
     const isOutputs = (obj: any): obj is string[][] => 
