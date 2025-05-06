@@ -2,9 +2,10 @@
 import MarkdownIt, { StateInline, StateBlock } from "markdown-it";
 
 const escape = (s: string) => {
-    return s.replace(/[&'\`"<>]/g, m => {
+    return s
+    .replace(/&(?!#92;)/g, "&amp;")
+    .replace(/['\`"<>]/g, m => {
         return {
-            '&': '&amp;',
             "'": '&#x27;',
             '\`': '&#x60;',
             '"': '&quot;',
