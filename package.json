@@ -115,6 +115,7 @@
               "case",
               "repeat",
               "try",
+              "notebook-style-tag",
               "function",
               "procedure",
               "forward",
@@ -140,7 +141,7 @@
               ],
               "default": "snippet"
             },
-            "^(forward|definition|built-in-intrinsic)$": {
+            "^(forward|definition|built-in-intrinsic|notebook-style-tag)$": {
               "type": ["string"],
               "enum": ["snippet", "disabled"],
               "markdownEnumDescriptions": ["%config.completionTypes.snippet%", "%config.completionTypes.disabled%"],

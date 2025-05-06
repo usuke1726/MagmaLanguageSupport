@@ -491,6 +491,63 @@ class NotebookUseStatementComp implements vscode.CompletionItemProvider{
     }
 };
 
+class NotebookStyleTagComp implements vscode.CompletionItemProvider{
+    static readonly keys = [
+        "body",
+        "markup",
+        "code",
+        "output",
+        "math",
+        "math_block"
+    ];
+    static readonly items = this.createItems();
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList<vscode.CompletionItem>> {
+        if(isExclusive(document, position, ["NotebookStyleTagComp"])) return [];
+        if(getConfig().completionTypes['notebook-style-tag'] !== "snippet") return [];
+        const line = document.lineAt(position.line).text;
+        const m = /^(\s*)_{2,}\s*$/.exec(line);
+        if(m){
+            const edit = new vscode.TextEdit(new vscode.Range(
+                new vscode.Position(position.line, 0),
+                position
+            ), m[1]);
+            return NotebookStyleTagComp.items.map(item => {
+                item.additionalTextEdits = [edit];
+                return item;
+            });
+        }else{
+            return [];
+        }
+    }
+    private static snip(key: string){
+        return `<div id="__${key}" style="$1"></div>`;
+    }
+    private static createItems(){
+        const items = this.keys.map(k => {
+            const item = new vscode.CompletionItem(`__${k}`);
+            item.insertText = new vscode.SnippetString(this.snip(k));
+            item.documentation = getLocaleString(`notebookStyleTag.${k}`);
+            return item;
+        });
+        const all = new vscode.CompletionItem("__all");
+        const indent = " ".repeat(4);
+        all.insertText = new vscode.SnippetString(
+            `<div id="__" style="display: none;">\n${
+                this.keys.map(k => `${indent}${this.snip(k).replace("$1", "")
+            }`).join("\n")}\n</div>`
+        );
+        all.documentation = getLocaleString(`notebookStyleTag.all`);
+        const preset = new vscode.CompletionItem("__preset");
+        preset.insertText = new vscode.SnippetString('<div id="__p-${1|0,1,2,3,4,5,6,7,8,9|}" style="$2"></div>');
+        preset.documentation = getLocaleString(`notebookStyleTag.preset`);
+        return [
+            all,
+            preset,
+            ...items,
+        ];
+    }
+}
+
 const FileScheme = {
     scheme: "file",
     language: "magma"
@@ -506,6 +563,10 @@ const NotebookScheme = {
 const FullScheme = [
     FileScheme, UntitledScheme, NotebookScheme
 ];
+const NotebookMarkupScheme = {
+    scheme: "vscode-notebook-cell",
+    language: "markdown"
+};
 
 export const registerCompletionProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new FunctionComp()));
@@ -522,4 +583,5 @@ export const registerCompletionProviders = (context: vscode.ExtensionContext) =>
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new PriorityCommentComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(FullScheme, new DocTagComp(), "@"));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(NotebookScheme, new NotebookUseStatementComp(), "@"));
+    context.subscriptions.push(vscode.languages.registerCompletionItemProvider(NotebookMarkupScheme, new NotebookStyleTagComp(), "_"));
 };

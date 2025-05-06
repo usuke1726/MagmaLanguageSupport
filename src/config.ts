@@ -36,7 +36,7 @@ const isStringValueObject = (obj: any) => {
 };
 
 export type CompletionValue = "original" | "snippet" | "snippet-space" | "disabled";
-export const CompletionKeys = [":=", "if", "for", "while", "case", "repeat", "try", "function", "procedure", "forward", "definition", "built-in-intrinsic"] as const;
+export const CompletionKeys = [":=", "if", "for", "while", "case", "repeat", "try", "function", "procedure", "forward", "definition", "built-in-intrinsic", "notebook-style-tag"] as const;
 export type CompletionKeysType = typeof CompletionKeys[number];
 export type CompletionTypes = {
     [key in CompletionKeysType]: CompletionValue;
