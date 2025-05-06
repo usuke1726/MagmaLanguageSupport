@@ -56,6 +56,7 @@ abstract class CompletionWithSpaceCommitment implements vscode.CompletionItemPro
                         const item = new vscode.CompletionItem(kind);
                         item.kind = vscode.CompletionItemKind.Keyword;
                         item.insertText = `${kind};`;
+                        item.sortText = `!${kind}`;
                         return item;
                     });
             }
