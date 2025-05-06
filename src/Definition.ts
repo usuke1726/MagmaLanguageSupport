@@ -22,8 +22,33 @@ export type Definition = {
 export const isForward = (def: Definition) => {
     return def.kind === DefinitionKind.forward;
 };
+
+export type CellLocation = number | string;
+export const isCellLocation = (obj: any): obj is CellLocation => {
+    return typeof obj === "number" || typeof obj === "string";
+};
+export const IDFromCell = (cell: vscode.NotebookCell): string | undefined => {
+    const pattern = /^(?:\s*\/{2,}[^\n]*\n)*?\s*\/{2,}\s+@cell\s+"([^"\n]+)"/;
+    const m = pattern.exec(cell.document.getText());
+    return m ? m[1] : undefined
+};
+export const matchCellLocation = (cell: vscode.NotebookCell | {index: number, id?: string}, location: CellLocation) => {
+    const isNotebookCell = (obj: any): obj is vscode.NotebookCell => obj.hasOwnProperty("document");
+    if(isNotebookCell(cell)){
+        if(cell.kind === vscode.NotebookCellKind.Markup) return false;
+        const id = IDFromCell(cell);
+        return (typeof location === "number" ? cell.index : id) === location;
+    }else{
+        return (typeof location === "number" ? cell.index : cell.id) === location;
+    }
+};
+export const findCellOfLocation = <T extends {index: number, id?: string}>(cells: T[], location: CellLocation) => {
+    if(typeof location === "number" && cells[location]?.index === location) return cells[location];
+    return cells.find(cell => matchCellLocation(cell, location));
+};
+
 export type Dependency = {
-    location: vscode.Uri | number;
+    location: vscode.Uri | CellLocation;
     loadsAt: vscode.Position;
     type: "load" | "require" | "export" | "use";
 };
@@ -32,6 +57,7 @@ export type NotebookCache = {
     notebook: vscode.NotebookDocument;
     cells: {
         index: number;
+        id?: string;
         fragment: string;
         cache: DocumentCache;
     }[];
