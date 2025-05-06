@@ -17,6 +17,14 @@ const md = MarkdownIt({
 });
 md.use(mathEscaper);
 
+const isInvalidImg = (frame: sanitizeHtml.IFrame) => (
+    frame.tag === "img" &&
+    typeof frame.attribs.src === "string" &&
+    !/^data:image\/(png|jpeg|gif|webp|apng|avif);/i.test(frame.attribs.src)
+);
+
+const ini = /^(initial|inherit|unset|revert)$/;
+const color = [/^[a-z]+$/, /^#(0x)?[0-9a-f]+$/i, /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/];
 const sanitizeOptions: sanitizeHtml.IOptions = {
     ...sanitizeHtml.defaults,
     allowedTags: [
@@ -26,8 +34,8 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
     ],
     allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
-        span: ["class", "style"],
-        div: ["class", "style"],
+        span: ["id", "class", "style"],
+        div: ["id", "class", "style"],
         td: ["style"],
         th: ["style"],
         details: ["open"],
@@ -35,11 +43,31 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
     },
     allowedStyles: {
         "*": {
-            "color": [/^[a-z]+$/, /^#(0x)?[0-9a-f]+$/i, /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/],
-            "text-align": [/^(start|end|left|center|right|justify|match-parent)$/],
+            "color": [ini, ...color],
+            "background-color": [ini, ...color],
+            "border-color": [ini, ...color],
+            "text-decoration-color": [ini, ...color],
+            "text-align": [ini, /^(start|end|left|center|right|justify|match-parent)$/],
+            "font-size": [ini, /^((x{1,2}-)?small|medium|(x{1,3}-)?large|smaller|larger)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
+            "font-family": [ini, /^("[^"]+"|'[^']+'|[a-zA-Z\-]+)(, *("[^"]+"|'[^']+'|[a-zA-Z\-]+))*$/],
+            "line-height": [ini, /^normal$/, /^(\d+(\.\d+)?|\.\d+)$/],
+            "letter-spacing": [ini, /^normal$/, /^-?(\d+(\.\d+)?|\.\d+)(px|cm|mm|in|pc|pt|em|rem)$/],
+            "padding": [ini, /^(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))( +(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))){0,3}$/],
+            "margin": [ini, /^(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))( +(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))){0,3}$/],
+            "border-radius": [ini, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
+            "border-width": [ini, /^(thin|medium|thick)$/, /^(\d+(\.\d+)?|\.\d+)(px|cm|mm|in|pc|pt|em|rem)$/],
+            "text-decoration-line": [ini, /^(underline|line-through|overline)( +(underline|line-through|overline))*$/],
+            "text-decoration-style": [ini, /^(solid|double|dotted|dashed|wavy)$/],
+            "text-decoration-thickness": [ini, /^(auto|from-font)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
         },
     },
     allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: {
+        img: ["data"]
+    },
+    exclusiveFilter: frame => {
+        return isInvalidImg(frame);
+    },
 };
 
 const toOneLine = (t: string) => t.split("\n").map(s => s.trimStart()).join("");
@@ -68,12 +96,49 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 `.trim();
 
+const htmlSpecialStyleScript = `
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const targets = {
+        "__body": "body",
+        "__markup": "div.markup",
+        "__code": "pre.code",
+        "__output": "pre.output",
+        "__math": "span.katex",
+        "__math_block": "span.katex-display",
+        ...Object.fromEntries(
+            [...Array(10).keys()].map(i => [\`__p-\${i}\`, \`*.p-\${i}\`])
+        ),
+    };
+    const tags = Object.keys(targets)
+        .map(k => [k, document.querySelector(\`#\${k}:is(div, span)\`)])
+        .filter(v => v[1]);
+    if(tags.length){
+        const sty = document.createElement("style");
+        sty.textContent = tags
+            .map(([k, tag]) => \`\${targets[k]}{\${tag.style.cssText}}\`)
+            .join("");
+        document.head.appendChild(sty);
+        tags.forEach(([_k, tag]) => {
+            tag.removeAttribute("style");
+            if(!tag.innerHTML.trim()){
+                tag.parentNode.removeChild(tag);
+            }
+        });
+    }
+});
+</script>
+`.trim();
+
 const htmlMarkdownStyleLink = `
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
 `.trim();
 
 const htmlOriginalStyle = `
 <style>
+    body{
+        line-height: initial;
+    }
     pre.code{
         text-wrap: initial;
         background-color: #fafafa !important;
@@ -92,6 +157,7 @@ const htmlOriginalStyle = `
 
 const headerSuffix: string = toOneLine(`
 ${htmlKaTeXScripts}
+${htmlSpecialStyleScript}
 ${htmlMarkdownStyleLink}
 ${htmlOriginalStyle}
 </head>
