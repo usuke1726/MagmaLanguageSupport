@@ -44,8 +44,22 @@ const isExclusive = (document: vscode.TextDocument, position: vscode.Position, i
 
 abstract class CompletionWithSpaceCommitment implements vscode.CompletionItemProvider{
     protected abstract readonly kinds: CompletionKeysType[];
+    protected abstract readonly useEnd: boolean;
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[]{
         if(isExclusive(document, position)) return [];
+        if(this.useEnd){
+            const line = document.lineAt(position.line).text.slice(0, position.character - 1);
+            if(/^\s*end\s+$/.test(line)){
+                return this.kinds
+                    .filter(kind => this.isEnabledType(getConfig().completionTypes[kind]))
+                    .map(kind => {
+                        const item = new vscode.CompletionItem(kind);
+                        item.kind = vscode.CompletionItemKind.Keyword;
+                        item.insertText = `${kind};`;
+                        return item;
+                    });
+            }
+        }
         return this.kinds.map(k => this.makeCompletionItems(k)).flat();
     }
     private isEnabledType(type: CompletionValue): boolean{
@@ -66,12 +80,14 @@ abstract class CompletionWithSpaceCommitment implements vscode.CompletionItemPro
 };
 class FunctionComp extends CompletionWithSpaceCommitment{
     protected kinds: CompletionKeysType[] = ["function", "procedure"];
+    protected useEnd: boolean = true;
     protected snippetString(name: string){
         return new vscode.SnippetString(`${name} \${1:name}(\${2:args})\n\t\$3\nend ${name};\n`);
     }
 };
 class IfLikeComp extends CompletionWithSpaceCommitment{
     protected kinds: CompletionKeysType[] = ["if", "for", "while", "case"];
+    protected useEnd: boolean = true;
     protected snippetString(name: string){
         return new vscode.SnippetString(`${name} \$1${this.suffix(name)}\n\t\$2\nend ${name};\n`);
     }
@@ -87,12 +103,14 @@ class IfLikeComp extends CompletionWithSpaceCommitment{
 };
 class RepeatComp extends CompletionWithSpaceCommitment{
     protected kinds: CompletionKeysType[] = ["repeat"];
+    protected useEnd: boolean = false;
     protected snippetString(name: string){
         return new vscode.SnippetString(`${name}\n\t\$1\nuntil \$2;\n`);
     }
 };
 class TryComp extends CompletionWithSpaceCommitment{
     protected kinds: CompletionKeysType[] = ["try"];
+    protected useEnd: boolean = true;
     protected snippetString(name: string){
         return new vscode.SnippetString(`${name}\n\t\$1\ncatch e\n\t\$2\nend try;\n`);
     }
