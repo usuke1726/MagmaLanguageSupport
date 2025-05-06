@@ -1,6 +1,20 @@
 
 # Change Log
 
+## 0.9.0 - 2025-05-06
+
+- The `@use` statement in a notebook cell can now load cells behind than itself.
+- New support for loading with cell IDs in `@use` statements.
+    - It can load cells with `@cell "cell ID"` at the beginning.
+- More styles are available in Notebook markups.
+    - Available styles: `color`, `background-color`, `border-color`, `text-decoration-color`, `text-align`, `font-size`, `font-family`, `line-height`, `letter-spacing`, `padding`, `margin`, `border-radius`, `border-width`, `text-decoration-line`, `text-decoration-style`, `text-decoration-thickness`
+- New support for styleTag in Notebook markups.
+    - By writing `<div id="__markup" style="..."></div>`, the styles of this tag will be applied to all markup cells.
+    - Available IDs: `__body`, `__markup`, `__code`, `__output`, `__math`, `__math_block`, `__` (dummy. not applies any styles) and `__p-0` to `__p-9` (`__p-*` applies to tags with class `p-*`).
+- You can now use data URIs in images in Notebook. (except SVG)
+- Fixed a bug that opened a cell as a new file when adding a cell in Notebook.
+- Improved suggestion: prevents the original suggestion (`function name(args)...end function;`) when writing `end function`.
+
 ## 0.8.1 - 2025-04-22
 
 - Fixed a bug where the `extension.magmaNotebook.createNewNotebook` command created two files whose file types were not `.imagma`.

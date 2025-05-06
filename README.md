@@ -228,7 +228,8 @@ You can configure keybindings:
 - The file extensions `.imagma`, `.icmagma`, `.imag` and `.icmag` are available as the notebooks.
 - Executes at Magma Calculator.
 - Only the last code is executed. (Even when selecting the "Run All")
-- `// @use {cell index}` enables to load previous code blocks.
+- `// @use {cell index}` enables to load other code blocks.
+- `// @cell "cell ID"` at the beginning of the code specifies the cell ID. This cell can be loaded by `// @use "cell ID"`.
 - `// @append` or `// @overwrite` determines whether execute results are appended or overwritten.
     - You can specify the default mode by the setting `MagmaLanguageSupport.notebookOutputResultMode`.
 - You can export the contents of a notebook to markdown or html with the command `extension.magmaNotebook.export`.
