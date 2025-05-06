@@ -100,6 +100,7 @@ const htmlSpecialStyleScript = `
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const targets = {
+        "__": undefined,
         "__body": "body",
         "__markup": "div.markup",
         "__code": "pre.code",
@@ -116,14 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if(tags.length){
         const sty = document.createElement("style");
         sty.textContent = tags
+            .filter(([k, tag]) => targets[k] && tag.style.cssText.trim())
             .map(([k, tag]) => \`\${targets[k]}{\${tag.style.cssText}}\`)
             .join("");
         document.head.appendChild(sty);
         tags.forEach(([_k, tag]) => {
             tag.removeAttribute("style");
-            if(!tag.innerHTML.trim()){
-                tag.parentNode.removeChild(tag);
-            }
+            tag.parentNode.removeChild(tag);
         });
     }
 });
