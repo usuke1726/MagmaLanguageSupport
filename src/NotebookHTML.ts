@@ -217,5 +217,5 @@ export const extractHtmlData = (htmlContents: string) => {
 export const toHtmlContents = (data: string, rowData: readonly RowNotebookCell[], includesData: boolean = true) => {
     const dataContents = includesData ? `<!--\n${data.replaceAll("<!--", "<\\!--").replaceAll("-->", "--\\>")}\n-->` : "";
     const body = `<body class="vscode-body vscode-light">${parseData(rowData)}</body>`;
-    return `${prefix}${dataContents}${headerSuffix}${body}</html>`;
+    return `${prefix}${dataContents}${headerSuffix}${body}</html>`.replaceAll("\r\n", "\n");
 };
