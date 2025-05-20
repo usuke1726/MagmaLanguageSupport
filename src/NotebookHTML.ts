@@ -163,7 +163,13 @@ ${htmlOriginalStyle}
 </head>
 `);
 
-const render = (text: string) => sanitizeHtml(md.render(text.replaceAll("\\\\", "&#92;&#92;")), sanitizeOptions);
+const render = (text: string) => sanitizeHtml(
+    md.render(text
+        .replaceAll("\r\n", "\n")
+        .replace(/\n[ \t]*\$\$[ \t]*\n/g, str => `\n${str}`)
+    ),
+    sanitizeOptions
+).replace(/\n\n[ \t]*\$\$[ \t]*\n/g, m => m.slice(1));
 const parseOutputs = (outputs: string | undefined) => {
     if(!outputs) return [];
     const isOutputs = (obj: any): obj is string[][] => 
