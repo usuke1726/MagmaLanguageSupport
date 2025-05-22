@@ -15,7 +15,6 @@ type SearchResults = {
 type ResolveOptions = {
     useGlob: boolean;
     maxLength: number;
-    onlyAtMark: boolean;
 };
 type ResolveOptionsOptional = {
     [key in keyof ResolveOptions]?: ResolveOptions[key];
@@ -23,7 +22,6 @@ type ResolveOptionsOptional = {
 const defaultOptions: ResolveOptions = {
     useGlob: false,
     maxLength: 100,
-    onlyAtMark: true,
 };
 
 export default class FileHandler{
@@ -61,10 +59,6 @@ export default class FileHandler{
         if(!options) options = {...defaultOptions};
         options.useGlob ??= defaultOptions.useGlob;
         options.maxLength ??= defaultOptions.maxLength;
-        options.onlyAtMark ??= defaultOptions.onlyAtMark;
-        if(options.onlyAtMark && !this.usingAtMark(query)){
-            return [];
-        }
         const escapedChars = /[\[\]*{}?]/g;
         query = this.resolveQuery(query);
         if(!options.useGlob){
@@ -136,6 +130,8 @@ export default class FileHandler{
                 baseDir = dir.uri;
                 query = query.replace("~", ".");
             }
+        }else if(this.isAbsolutePath(query)){
+            return vscode.Uri.file(query);
         }
         return vscode.Uri.joinPath(baseDir, query);
     }
@@ -147,5 +143,11 @@ export default class FileHandler{
             query = query.replace(alias, paths[alias]);
         }
         return query;
+    }
+    static isAbsolutePath(query: string): boolean{
+        return (
+            query.startsWith("/") ||
+            /^[a-zA-Z]:[\/\\]/.test(query)
+        );
     }
 };

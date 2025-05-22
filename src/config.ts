@@ -17,8 +17,7 @@ const formatPath = (paths: Paths): Paths => {
         Object.entries(paths)
         .filter(([key, value]) => {
             const keyPattern = /^@\w+\/$/;
-            const valuePattern = /^\.\/([^~?\/<>\\*"|:]+\/)+$/;
-            return keyPattern.test(key) && valuePattern.test(value);
+            return keyPattern.test(key);
         })
         .map(([key, value]) => {
             value = value.replace(".", "~");

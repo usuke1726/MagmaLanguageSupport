@@ -49,7 +49,7 @@ class DefinitionParser{
         const priorityComment = /^(\s*\/{2,}\s+@(priority|priorityInCompletion))\b.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
-        const loadStatementWithAtMark = /^(\s*load\s+")(@[^"]+)";\s*.*$/;
+        const loadStatement = /^(\s*load\s+")([^"]+)";\s*.*$/;
         const requireComment = /^(\s*\/{2,}\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/{2,}\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
@@ -210,18 +210,19 @@ class DefinitionParser{
                     query: string;
                 };
                 const loadInfo: LoadInfo | undefined = await (async () => {
-                    m = loadStatementWithAtMark.exec(line);
+                    m = loadStatement.exec(line);
                     if(m){
                         const prefix = m[1];
                         const query = m[2];
-                        return {
-                            files: await FileHandler.resolve(uri, query, {
-                                useGlob: false,
-                                onlyAtMark: true,
-                            }),
-                            prefix, query,
-                            type: "load"
-                        };
+                        if(FileHandler.usingAtMark(query) || FileHandler.isAbsolutePath(query)){
+                            return {
+                                files: await FileHandler.resolve(uri, query, {
+                                    useGlob: false,
+                                }),
+                                prefix, query,
+                                type: "load"
+                            };
+                        }
                     }
                     m = requireComment.exec(line);
                     if(m){
@@ -230,7 +231,6 @@ class DefinitionParser{
                         return {
                             files: await FileHandler.resolve(uri, query, {
                                 useGlob: true,
-                                onlyAtMark: true,
                             }),
                             prefix, query,
                             type: "require"

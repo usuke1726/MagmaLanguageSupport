@@ -251,8 +251,7 @@
           "markdownDescription": "%config.paths%",
           "patternProperties": {
             "^@\\w+/$": {
-              "type": "string",
-              "pattern": "^\\./([^~?/<>\\\\*\"|:]+/)+$"
+              "type": "string"
             }
           },
           "additionalProperties": false

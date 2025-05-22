@@ -289,7 +289,6 @@ class Controller{
             const loadFiles = await FileHandler.resolve(
                 baseUri, query, {
                     useGlob: false,
-                    onlyAtMark: false,
                 }
             );
             clearSearchedFiles();

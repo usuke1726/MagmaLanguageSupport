@@ -82,7 +82,6 @@ export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Pro
         const loadFiles = await FileHandler.resolve(
             base, query, {
                 useGlob: false,
-                onlyAtMark: false,
             }
         );
         if(loadFiles.length !== 1){
