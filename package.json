@@ -256,6 +256,24 @@
           },
           "additionalProperties": false
         },
+        "MagmaLanguageSupport.trustedPaths": {
+          "type": "array",
+          "default": [],
+          "scope": "machine",
+          "markdownDescription": "%config.trustedPaths%"
+        },
+        "MagmaLanguageSupport.trustOpenFiles": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "markdownDescription": "%config.trustOpenFiles%"
+        },
+        "MagmaLanguageSupport.trustAllFiles": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "markdownDescription": "%config.trustAllFiles%"
+        },
         "MagmaLanguageSupport.notebookSavesOutputs": {
           "type": "boolean",
           "default": true,

@@ -69,7 +69,7 @@ export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Pro
     }
     searchedFiles.add(uri.fsPath);
     // 行またぎのload構文にも対応できるようにするため，行ごとでなく全文から検索をかける
-    let body = removeComments((await FileHandler.readFile(uri)).join("\n"));
+    let body = removeComments((await FileHandler.readFile(uri, true)).join("\n"));
     const patterns = /(?:^|(?<=\n))\s*load\s+"(.+?)"\s*;/;
     let m: RegExpExecArray | null;
     let ret: string = "";

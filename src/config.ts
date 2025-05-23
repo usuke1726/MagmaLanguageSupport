@@ -121,6 +121,9 @@ type Config = {
     onChangeDelay: number;
     warnsWhenRedefiningIntrinsic: boolean;
     paths: Paths;
+    trustedPaths: string[];
+    trustOpenFiles: boolean;
+    trustAllFiles: boolean;
     notebookSavesOutputs: boolean;
     notebookOutputResultMode: "append" | "overwrite";
     notebookDisablesVim: boolean;
@@ -144,6 +147,9 @@ const defaultConfig: Config = {
     onChangeDelay: 1000,
     warnsWhenRedefiningIntrinsic: true,
     paths: {},
+    trustedPaths: [],
+    trustOpenFiles: true,
+    trustAllFiles: false,
     notebookSavesOutputs: true,
     notebookOutputResultMode: "append",
     notebookDisablesVim: false,
@@ -165,6 +171,9 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     onChangeDelay: val => typeof val === "number",
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",
     paths: val => isPaths(val),
+    trustedPaths: val => Array.isArray(val) && val.every(v => typeof v === "string"),
+    trustOpenFiles: val => typeof val === "boolean",
+    trustAllFiles: val => typeof val === "boolean",
     notebookSavesOutputs: val => typeof val === "boolean",
     notebookOutputResultMode: val => val === "append" || val === "overwrite",
     notebookDisablesVim: val => typeof val === "boolean",
