@@ -281,11 +281,13 @@
         "MagmaLanguageSupport.useHttps": {
           "type": "boolean",
           "default": true,
+          "scope": "machine",
           "markdownDescription": "%config.useHttps%"
         },
         "MagmaLanguageSupport.magmaPath": {
           "type": "string",
           "default": "",
+          "scope": "machine",
           "markdownDescription": "%config.magmaPath%"
         },
         "MagmaLanguageSupport.redirectsStderr": {
