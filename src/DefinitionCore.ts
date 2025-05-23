@@ -57,7 +57,7 @@ class DefinitionParser{
         const inComment = /^\s*\*? {0,2}(.*)$/;
         const endComment = /^(.*)\*\/\s*$/;
         const inlineComment = /^\s*\/\*\*(.+?)\*\/\s*$/;
-        const inlineNonDocumentComment = /^\s*\/\*(.+?)\*\/\s*$/;
+        const inlineNonDocumentComment = /^\s*\/\*(.*?)\*\/\s*$/;
         const maybeDocumentInlineComment = /^\s*(\/{2,})((?:\s+[^@\s]|[^@\/\s]).*)$/;
         const comp1 = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/.source;
         const comp2 =  `(${comp1}|${comp1}\\s*<\\s*${comp1}\\s*>)`;
