@@ -1,6 +1,12 @@
 
 # Change Log
 
+## 0.9.1 - 2025-05-23
+
+- The settings `MagmaLanguageSupport.useHttps` and `MagmaLanguageSupport.magmaPath` are now only available only in user and remote settings.
+- Fixed wrong rendering of HTML-like parts (e.g., `<a>`) within math blocks.
+- Fixed a bug where statements following an empty inline block comment `/**/` were treated as comments.
+
 ## 0.9.0 - 2025-05-06
 
 - The `@use` statement in a notebook cell can now load cells behind than itself.
