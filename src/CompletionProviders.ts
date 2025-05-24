@@ -351,7 +351,6 @@ class DocTagComp implements vscode.CompletionItemProvider{
 class LoadFileComp implements vscode.CompletionItemProvider{
     async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]>{
         if(isExclusive(document, position, ["LoadFileComp"])) return [];
-        if(!FileHandler.hasSaveLocation(document.uri)) return [];
         const trigger = context.triggerCharacter;
         Log("LoadFile check start");
         if(trigger === "@"){

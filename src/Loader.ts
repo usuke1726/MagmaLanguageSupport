@@ -61,7 +61,7 @@ export const throwError = (base: vscode.Uri, query: string, files: vscode.Uri[])
     }
 };
 
-export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Promise<string> => {
+export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri, contents?: string): Promise<string> => {
     Output(`Start loading ${uri.path}`);
     if(searchedFiles.has(uri.fsPath)){
         Output(`Circular reference ${uri.path}\n\t(base: ${baseUri.path})`);
@@ -69,7 +69,12 @@ export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Pro
     }
     searchedFiles.add(uri.fsPath);
     // 行またぎのload構文にも対応できるようにするため，行ごとでなく全文から検索をかける
-    let body = removeComments((await FileHandler.readFile(uri, true)).join("\n"));
+    let body;
+    if(contents !== undefined){
+        body = removeComments(contents);
+    }else{
+        body = removeComments((await FileHandler.readFile(uri, true)).join("\n"));
+    }
     const patterns = /(?:^|(?<=\n))\s*load\s+"(.+?)"\s*;/;
     let m: RegExpExecArray | null;
     let ret: string = "";
@@ -96,9 +101,9 @@ export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri): Pro
 };
 
 export const clearSearchedFiles = () => searchedFiles.clear();
-export const load = async (uri: vscode.Uri): Promise<string> => {
+export const load = async (uri: vscode.Uri, contents?: string): Promise<string> => {
     clearSearchedFiles();
-    return await loadRecursively(uri, uri);
+    return await loadRecursively(uri, uri, contents);
 };
 
 export const getMagmaDocument = (showStatusBar: boolean = true): vscode.TextDocument | undefined => {
@@ -113,8 +118,12 @@ export const getMagmaDocument = (showStatusBar: boolean = true): vscode.TextDocu
         return undefined;
     }
     if(editor.document.uri.scheme === "untitled"){
-        show(`MAGMA Loader Error: ${getLocaleString("unsavedFile")}`);
-        return undefined;
+        if(editor.document.languageId === "magma"){
+            return editor.document;
+        }else{
+            show(`MAGMA Loader Error: ${getLocaleString("nonMagmaFile")}`);
+            return undefined;
+        }
     }
     if(editor.document.uri.scheme !== "file" || editor.document.languageId !== "magma"){
         show(`MAGMA Loader Error: ${getLocaleString("nonMagmaFile")}`);
@@ -134,7 +143,7 @@ const main = async (callback: (text: string) => void) => {
         title: getLocaleString("running")
     }, async () => {
         try{
-            const text = await load(document.uri);
+            const text = await load(document.uri, document.getText().replaceAll("\r\n", "\n"));
             Log("=== OUTPUT ===");
             Log(text);
             callback(text);

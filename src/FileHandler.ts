@@ -29,6 +29,9 @@ export default class FileHandler{
     static readonly ImagmaExtensions = [".imag", ".icmag", ".imagma", ".icmagma"].map(a => ["", ".htm", ".html"].map(b => a+b)).flat();
     static async readdir(baseUri: vscode.Uri, query: string): Promise<SearchResults[]>{
         query = this.resolveQuery(query);
+        if(!this.hasSaveLocation(baseUri) && !this.isAbsolutePath(query)){
+            return [];
+        }
         try{
             const items = (await fs.readdir(this.join(baseUri, query).fsPath, {
                 withFileTypes: true,
@@ -58,9 +61,6 @@ export default class FileHandler{
         return this.ImagmaExtensions.some(ext => path.endsWith(ext));
     }
     static async resolve(baseUri: vscode.Uri, query: string, options?: ResolveOptionsOptional): Promise<vscode.Uri[]>{
-        if(!this.hasSaveLocation(baseUri)){
-            return [];
-        }
         if(!options) options = {...defaultOptions};
         options.useGlob ??= defaultOptions.useGlob;
         options.maxLength ??= defaultOptions.maxLength;
@@ -139,6 +139,9 @@ export default class FileHandler{
         })();
     }
     static base(uri: vscode.Uri): vscode.Uri{
+        if(!this.hasSaveLocation(uri)){
+            return uri;
+        }
         return vscode.Uri.joinPath(uri, "..");
     }
     static usingAtMark(query: string): boolean{
@@ -151,8 +154,12 @@ export default class FileHandler{
                 baseDir = dir.uri;
                 query = query.replace("~", ".");
             }
-        }else if(this.isAbsolutePath(query)){
+        }
+        if(this.isAbsolutePath(query)){
             return vscode.Uri.file(query);
+        }else if(!this.hasSaveLocation(baseDir)){
+            Output(`Error: Tried joining unsaved file "${baseDir.fsPath}" and relative query "${query}".`);
+            throw new Error(`Tried joining unsaved file "${baseDir.fsPath}" and relative query "${query}".`);
         }
         return vscode.Uri.joinPath(baseDir, query);
     }
@@ -166,6 +173,7 @@ export default class FileHandler{
         return query;
     }
     static isAbsolutePath(query: string): boolean{
+        query = this.resolveQuery(query);
         return (
             query.startsWith("/") ||
             /^[a-zA-Z]:[\/\\]/.test(query)
