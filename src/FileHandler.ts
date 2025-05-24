@@ -90,7 +90,7 @@ export default class FileHandler{
             Output(mes);
             vscode.window.showErrorMessage(mes, getLocaleString("openTrustedFilesSetting")).then(value => {
                 if(value !== undefined){
-                    vscode.commands.executeCommand("workbench.action.openSettings", "MagmaLanguageSupport.trustedPaths");
+                    vscode.commands.executeCommand("workbench.action.openSettings", "@id:MagmaLanguageSupport.trustedPaths @id:MagmaLanguageSupport.trustAllFiles @id:MagmaLanguageSupport.trustOpenFiles");
                 }
             });
             if(throwError) throw new Error("");
