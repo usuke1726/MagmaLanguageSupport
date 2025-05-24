@@ -75,7 +75,7 @@ export const loadRecursively = async (baseUri: vscode.Uri, uri: vscode.Uri, cont
     }else{
         body = removeComments((await FileHandler.readFile(uri, true)).join("\n"));
     }
-    const patterns = /(?:^|(?<=\n))\s*load\s+"(.+?)"\s*;/;
+    const patterns = /(?:^|(?<=\n))\s*load\s+"(.+?)"\s*(;|(?=\n)|$)/;
     let m: RegExpExecArray | null;
     let ret: string = "";
     while(true){

@@ -49,7 +49,7 @@ class DefinitionParser{
         const priorityComment = /^(\s*\/{2,}\s+@(priority|priorityInCompletion))\b.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
-        const loadStatement = /^(\s*load\s+")([^"]+)";\s*.*$/;
+        const loadStatement = /^(\s*load\s+")([^"]+)"\s*;?\s*.*$/;
         const requireComment = /^(\s*\/{2,}\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/{2,}\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
