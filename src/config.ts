@@ -122,7 +122,7 @@ type Config = {
     warnsWhenRedefiningIntrinsic: boolean;
     paths: Paths;
     trustedPaths: string[];
-    trustOpenFiles: boolean;
+    trustDirectoriesOfOpenFiles: boolean;
     trustAllFiles: boolean;
     notebookSavesOutputs: boolean;
     notebookOutputResultMode: "append" | "overwrite";
@@ -148,7 +148,7 @@ const defaultConfig: Config = {
     warnsWhenRedefiningIntrinsic: true,
     paths: {},
     trustedPaths: [],
-    trustOpenFiles: true,
+    trustDirectoriesOfOpenFiles: true,
     trustAllFiles: false,
     notebookSavesOutputs: true,
     notebookOutputResultMode: "append",
@@ -172,7 +172,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     warnsWhenRedefiningIntrinsic: val => typeof val === "boolean",
     paths: val => isPaths(val),
     trustedPaths: val => Array.isArray(val) && val.every(v => typeof v === "string"),
-    trustOpenFiles: val => typeof val === "boolean",
+    trustDirectoriesOfOpenFiles: val => typeof val === "boolean",
     trustAllFiles: val => typeof val === "boolean",
     notebookSavesOutputs: val => typeof val === "boolean",
     notebookOutputResultMode: val => val === "append" || val === "overwrite",

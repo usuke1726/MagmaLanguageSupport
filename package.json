@@ -262,11 +262,11 @@
           "scope": "machine",
           "markdownDescription": "%config.trustedPaths%"
         },
-        "MagmaLanguageSupport.trustOpenFiles": {
+        "MagmaLanguageSupport.trustDirectoriesOfOpenFiles": {
           "type": "boolean",
           "default": true,
           "scope": "machine",
-          "markdownDescription": "%config.trustOpenFiles%"
+          "markdownDescription": "%config.trustDirectoriesOfOpenFiles%"
         },
         "MagmaLanguageSupport.trustAllFiles": {
           "type": "boolean",

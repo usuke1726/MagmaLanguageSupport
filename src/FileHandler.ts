@@ -90,7 +90,7 @@ export default class FileHandler{
             Output(mes);
             vscode.window.showErrorMessage(mes, getLocaleString("openTrustedFilesSetting")).then(value => {
                 if(value !== undefined){
-                    vscode.commands.executeCommand("workbench.action.openSettings", "@id:MagmaLanguageSupport.trustedPaths @id:MagmaLanguageSupport.trustAllFiles @id:MagmaLanguageSupport.trustOpenFiles");
+                    vscode.commands.executeCommand("workbench.action.openSettings", "@id:MagmaLanguageSupport.trustedPaths @id:MagmaLanguageSupport.trustAllFiles @id:MagmaLanguageSupport.trustDirectoriesOfOpenFiles");
                 }
             });
             if(throwError) throw new Error("");
@@ -203,7 +203,7 @@ export default class FileHandler{
         });
     }
     static isOnBasedirOfOpenFile(uri: vscode.Uri): boolean{
-        if(!getConfig().trustOpenFiles){
+        if(!getConfig().trustDirectoriesOfOpenFiles){
             return false;
         }
         const path = uri.fsPath.replaceAll("\\", "/").toLowerCase();

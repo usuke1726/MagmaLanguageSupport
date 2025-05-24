@@ -30,7 +30,7 @@
     "config.warnsWhenRedefiningIntrinsic": "Show warnings when functions are re-defining some intrinsics",
     "config.paths": "`@...` patterns configuring path aliases of `load`/`@require` statement",
     "config.trustedPaths": "Absolute paths where files will be allowed to be read. (Files on a current workspace are always trusted regardless of this config.)",
-    "config.trustOpenFiles": "Allows reading files on base directories of open files in editor.",
+    "config.trustDirectoriesOfOpenFiles": "Allows reading files on base directories of open files in editor. For example, when `/A/B/C.magma` is open, `/A/B/D.magma` and `/A/B/E/F.magma` are allowed to be read and `/A/G.magma` is not.\n\nNote that when this is disabled, open files themselves will also be untrusted by default.",
     "config.trustAllFiles": "Allows reading all files. If you set this to `true`, be careful not to send your private information to Magma Calculator.",
     "config.notebookSavesOutputs": "Whether notebook files include execution results",
     "config.notebookOutputResultMode": "Saving mode (`append` or `overwrite`) of execution results of Magma Calculator Notebook\n(You can specify the mode by `@append`, `@overwrite`)",
