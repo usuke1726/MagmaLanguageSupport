@@ -158,8 +158,7 @@ export default class FileHandler{
         if(this.isAbsolutePath(query)){
             return vscode.Uri.file(query);
         }else if(!this.hasSaveLocation(baseDir)){
-            Output(`Error: Tried joining unsaved file "${baseDir.fsPath}" and relative query "${query}".`);
-            throw new Error(`Tried joining unsaved file "${baseDir.fsPath}" and relative query "${query}".`);
+            throw new Error(getLocaleString("relativePathFromUnsavedFile", query));
         }
         return vscode.Uri.joinPath(baseDir, query);
     }
