@@ -49,7 +49,7 @@ class DefinitionParser{
         const priorityComment = /^(\s*\/{2,}\s+@(priority|priorityInCompletion))\b.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
         let isToBeIgnored: boolean = false;
-        const loadStatementWithAtMark = /^(\s*load\s+")(@[^"]+)";\s*.*$/;
+        const loadStatement = /^(\s*load\s+")([^"]+)"\s*;?\s*.*$/;
         const requireComment = /^(\s*\/{2,}\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/{2,}\s+@exports?\s+")([^"]+)";?.*/;
         const startComment = /^\s*\/\*\*(.*)$/;
@@ -184,25 +184,6 @@ class DefinitionParser{
                         continue;
                     }
                 }
-                if(!FileHandler.hasSaveLocation(uri)){
-                    const loadStatementWithAtMark = /^\s*(load)\s+".*$/;
-                    const requireComment = /^\s*\/{2,}\s+(@requires?)\s*.*$/;
-                    m = loadStatementWithAtMark.exec(line) ?? requireComment.exec(line);
-                    if(m){
-                        parser.reset(false);
-                        Log("load statement at untitled file: skip");
-                        const range = new vscode.Range(
-                            new vscode.Position(idx, 0),
-                            new vscode.Position(idx, m[0].length)
-                        );
-                        diagnostics.push(new vscode.Diagnostic(
-                            range,
-                            getLocaleString("loadingAtUntitledFile", m[1]),
-                            vscode.DiagnosticSeverity.Warning
-                        ));
-                        continue;
-                    }
-                }
                 type LoadInfo = {
                     files: vscode.Uri[];
                     type: "load" | "require";
@@ -210,31 +191,58 @@ class DefinitionParser{
                     query: string;
                 };
                 const loadInfo: LoadInfo | undefined = await (async () => {
-                    m = loadStatementWithAtMark.exec(line);
+                    m = loadStatement.exec(line);
                     if(m){
                         const prefix = m[1];
                         const query = m[2];
-                        return {
-                            files: await FileHandler.resolve(uri, query, {
-                                useGlob: false,
-                                onlyAtMark: true,
-                            }),
-                            prefix, query,
-                            type: "load"
-                        };
+                        if((FileHandler.hasSaveLocation(uri) && FileHandler.usingAtMark(query)) || FileHandler.isAbsolutePath(query)){
+                            return {
+                                files: await FileHandler.resolve(uri, query, {
+                                    useGlob: false,
+                                }),
+                                prefix, query,
+                                type: "load"
+                            };
+                        }
+                        if(!FileHandler.hasSaveLocation(uri) && !FileHandler.isAbsolutePath(query)){
+                            parser.reset(false);
+                            Log("load statement at untitled file: skip");
+                            const range = new vscode.Range(
+                                new vscode.Position(idx, 0),
+                                new vscode.Position(idx, m[0].length)
+                            );
+                            diagnostics.push(new vscode.Diagnostic(
+                                range,
+                                getLocaleString("loadingAtUntitledFile", "load"),
+                                vscode.DiagnosticSeverity.Warning
+                            ));
+                        }
                     }
                     m = requireComment.exec(line);
                     if(m){
                         const prefix = m[1];
                         const query = m[2];
-                        return {
-                            files: await FileHandler.resolve(uri, query, {
-                                useGlob: true,
-                                onlyAtMark: true,
-                            }),
-                            prefix, query,
-                            type: "require"
-                        };
+                        if(FileHandler.hasSaveLocation(uri) || FileHandler.isAbsolutePath(query)){
+                            return {
+                                files: await FileHandler.resolve(uri, query, {
+                                    useGlob: true,
+                                }),
+                                prefix, query,
+                                type: "require"
+                            };
+                        }else{
+                            parser.reset(false);
+                            Log("load statement at untitled file: skip");
+                            const range = new vscode.Range(
+                                new vscode.Position(idx, 0),
+                                new vscode.Position(idx, m[0].length)
+                            );
+                            diagnostics.push(new vscode.Diagnostic(
+                                range,
+                                getLocaleString("loadingAtUntitledFile", "@require"),
+                                vscode.DiagnosticSeverity.Warning
+                            ));
+                        }
                     }
                     return undefined;
                 })();

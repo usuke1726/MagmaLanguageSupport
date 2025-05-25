@@ -6,8 +6,7 @@ import * as https from "https";
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import getConfig from './config';
-import FileHandler from './FileHandler';
-import { clearSearchedFiles, loadRecursively, removeComments, throwError } from './Loader';
+import { load } from './Loader';
 import { CellLocation, isCellLocation, IDFromCell, findCellOfLocation } from './Definition';
 import DefinitionHandler from './DefinitionHandler';
 import DocumentParser from './DocumentParser';
@@ -232,88 +231,78 @@ class Controller{
     private clearLoadedCellIndexes(){
         this.loadedCellIndexes.clear();
     }
-    private getLines(cell: vscode.NotebookCell): string[]{
-        return cell.document.getText().replaceAll("\r", "").split("\n");
-    }
-    private async readLine(baseUri: vscode.Uri, line: string, currentIdx: number): Promise<string[]>{
+    private async readBody(baseUri: vscode.Uri, body: string, currentIdx: number): Promise<string>{
         let m: RegExpExecArray | null;
-        const usePattern = /^\s*\/{2,}\s+@uses?\s+([0-9]+|"[^"\n]+");?.*?$/;
-        const loadPattern = /^\s*load\s+"(.+)";\s*$/;
-        const appendPattern = /^\s*\/{2,}\s+@append(Results?)?\s*;?.*?$/;
-        const overwritePattern = /^\s*\/{2,}\s+@overwrite(Results?)?\s*;?.*?$/;
-        const cellIDPattern = /^\s*\/{2,}\s+@cell\s+"[^"\n]*";?.*?$/;
-        if(appendPattern.test(line)){
-            this.overwrites = false;
-            return [];
-        }
-        if(overwritePattern.test(line)){
-            this.overwrites = true;
-            return [];
-        }
-        if(cellIDPattern.test(line)){
-            return [];
-        }
-        m = usePattern.exec(line);
-        if(m){
-            Log("use hit", m[1]);
-            const location = (() => {
-                if(m[1].startsWith('"')){
-                    const id = m[1].slice(1, -1);
-                    return id || undefined;
-                }else{
-                    const idx = Number(m[1]);
-                    return Number.isFinite(idx) ? idx : undefined;
-                }
-            })();
-            if(!isCellLocation(location)) return [];
-            if(this.loadedCellIndexes.has(location)){
-                const id = typeof location === "string" ? `id "${location}"` : `${location}`
-                Output(`Circular reference ${id}\n\t(from: ${currentIdx})`);
-                throw new Error(getLocaleString("circularReference", id, currentIdx));
-            }else{
-                const cell = findCellOfLocation(this.cells, location);
-                if(cell){
-                    return this.load(this.cells[cell.index]);
-                }else{
-                    const id = typeof location === "string" ? `id "${location}"` : `${location}`
-                    throw new Error(getLocaleString("cellNotFound", id));
-                }
+        const usePattern = /(?:^|(?<=\n))\s*\/{2,}\s+@uses?\s+([0-9]+|"[^"\n]+");?[^\n]*(\n|$)/;
+        const appendPattern = /(?:^|(?<=\n))\s*\/{2,}\s+@append(Results?)?\s*;?[^\n]*(\n|$)/;
+        const overwritePattern = /(?:^|(?<=\n))\s*\/{2,}\s+@overwrite(Results?)?\s*;?[^\n]*(\n|$)/;
+        const cellIDPattern = /(?:^|(?<=\n))\s*\/{2,}\s+@cell\s+"[^"\n]*";?[^\n]*(\n|$)/;
+        while(true){
+            m = appendPattern.exec(body);
+            if(m){
+                this.overwrites = false;
+                body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                continue;
             }
-        }
-        m = loadPattern.exec(line);
-        if(m){
-            if(!FileHandler.hasSaveLocation(baseUri)){
-                throw new Error(getLocaleString("loadingAtUntitledFile"));
+            m = overwritePattern.exec(body);
+            if(m){
+                this.overwrites = true;
+                body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                continue;
             }
-            const query = m[1];
-            const loadFiles = await FileHandler.resolve(
-                baseUri, query, {
-                    useGlob: false,
-                    onlyAtMark: false,
+            m = cellIDPattern.exec(body);
+            if(m){
+                body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                continue;
+            }
+            m = usePattern.exec(body);
+            if(m){
+                Log("use hit", m[1]);
+                const location = (() => {
+                    if(m[1].startsWith('"')){
+                        const id = m[1].slice(1, -1);
+                        return id || undefined;
+                    }else{
+                        const idx = Number(m[1]);
+                        return Number.isFinite(idx) ? idx : undefined;
+                    }
+                })();
+                if(isCellLocation(location)){
+                    if(this.loadedCellIndexes.has(location)){
+                        const id = typeof location === "string" ? `id "${location}"` : `${location}`
+                        Output(`Circular reference ${id}\n\t(from: ${currentIdx})`);
+                        throw new Error(getLocaleString("circularReference", id, currentIdx));
+                    }else{
+                        const cell = findCellOfLocation(this.cells, location);
+                        if(cell){
+                            body = body.substring(0, m.index) 
+                                + (await this.load(this.cells[cell.index]))
+                                + body.substring(m.index + m[0].length);
+                        }else{
+                            const id = typeof location === "string" ? `id "${location}"` : `${location}`
+                            throw new Error(getLocaleString("cellNotFound", id));
+                        }
+                    }
+                }else{
+                    body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
                 }
-            );
-            clearSearchedFiles();
-            if(loadFiles.length !== 1) throwError(baseUri, query, loadFiles);
-            const fileUri = loadFiles[0];
-            return (
-                await loadRecursively(baseUri, fileUri)
-            ).split("\n");
+                continue;
+            }
+            break;
         }
-        return [line];
+        return load(baseUri, body);
     }
-    private async load(cell: vscode.NotebookCell): Promise<string[]>{
+    private async load(cell: vscode.NotebookCell): Promise<string>{
         Log(`load cell ${cell.index}`);
         const idx = cell.index;
         this.loadedCellIndexes.add(idx);
-        const lines = this.getLines(cell);
-        return (await Promise.all(lines.map(line => {
-            return this.readLine(cell.document.uri, line, idx);
-        }))).flat();
+        const body = cell.document.getText().replaceAll("\r", "");
+        return this.readBody(cell.document.uri, body, idx);
     }
     async loadForPreview(cell: vscode.NotebookCell): Promise<string>{
         this.clearLoadedCellIndexes();
         this.cells = cell.notebook.getCells();
-        return (await this.load(cell)).join("\n");
+        return this.load(cell);
     }
     async execute(cells: vscode.NotebookCell[], notebook: vscode.NotebookDocument, controller: vscode.NotebookController){
         Log("EXECUTE");
@@ -328,7 +317,7 @@ class Controller{
                 this.clearLoadedCellIndexes();
                 const code = await this.load(cell);
                 Log(code);
-                return [removeComments(code.join("\n")), true];
+                return [code, true];
             }catch(e){
                 const mes = (e instanceof Error) ? e.message : String(e);
                 vscode.window.showErrorMessage(`${getLocaleStringBody("message.Loader", "failed")}\n${mes}`);

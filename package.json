@@ -251,11 +251,28 @@
           "markdownDescription": "%config.paths%",
           "patternProperties": {
             "^@\\w+/$": {
-              "type": "string",
-              "pattern": "^\\./([^~?/<>\\\\*\"|:]+/)+$"
+              "type": "string"
             }
           },
           "additionalProperties": false
+        },
+        "MagmaLanguageSupport.trustedPaths": {
+          "type": "array",
+          "default": [],
+          "scope": "machine",
+          "markdownDescription": "%config.trustedPaths%"
+        },
+        "MagmaLanguageSupport.trustDirectoriesOfOpenFiles": {
+          "type": "boolean",
+          "default": true,
+          "scope": "machine",
+          "markdownDescription": "%config.trustDirectoriesOfOpenFiles%"
+        },
+        "MagmaLanguageSupport.trustAllFiles": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "markdownDescription": "%config.trustAllFiles%"
         },
         "MagmaLanguageSupport.notebookSavesOutputs": {
           "type": "boolean",
