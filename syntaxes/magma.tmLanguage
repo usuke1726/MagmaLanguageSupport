@@ -347,14 +347,9 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 				<key>4</key>
 				<dict>
 					<key>name</key>
-					<string>source.comma.tag-with-ignore-in-comment.magma</string>
-				</dict>
-				<key>5</key>
-				<dict>
-					<key>name</key>
 					<string>source.end.tag-with-ignore-in-comment.magma</string>
 				</dict>
-				<key>6</key>
+				<key>5</key>
 				<dict>
 					<key>name</key>
 					<string>comment.line.after-end.tag-with-ignore-in-comment.magma</string>
