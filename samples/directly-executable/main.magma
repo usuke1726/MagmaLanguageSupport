@@ -1,0 +1,18 @@
+
+// The load statement with "./<path>" (relative path without starting "@/") does not provide definition features (suggestion, jumping to definition, hovering, etc.)
+load "./lib/core.magma";
+// "./" is not necessary.
+load "sub-tasks/task1.magma";
+load "sub-tasks/task2.magma";
+
+// To enable definition features, specify dependencies explicitly.
+// Wildcards are available in require statements. (unavailable in load statements)
+// @require "@/sub-tasks/*"; // "@/" is omittable.
+
+procedure main()
+    task1();
+    task2();
+end procedure;
+
+main();
+quit;

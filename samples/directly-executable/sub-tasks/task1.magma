@@ -1,0 +1,29 @@
+
+/**
+ *  @file
+ *  "task1" is implemented in this file.
+ */
+
+load "./lib/lib1.magma"; // Relative path from execution path (now assuming basedir of main.magma) (It's a specification of Magma language)
+// @require "../lib/lib1.magma"; // Relative path from this file (It's a specification of @require in this VS Code extension)
+// Writing `load "@/... "` will make the path relative from this file (besides it enables definition features without require statements). However, Magma does not support load statements with @, so this code cannot be executed directly.
+
+GLOBAL_VAL1 := 1;
+
+// @ignore variables; // makes all of the following variables in this file internal. (_TEXT1 and _TEXT2 can only be referenced within this file.)
+// "@ignore this" is also available. (same effect as @internal)
+// The variable GLOBAL_VAL can be referenced from other files because it is written above the ignore statement.
+// Note that this extension does not show error message when internal variables are used in other files. But in this cases, jumping to definition and hovering will be unavailable, and you might be able to detect bugs using it.
+
+_TEXT1 := "abc";
+
+_TEXT2 := "def";
+
+// An inline comment with double slash (It will be not treated as documentation by default. see the config "MagmaLanguageSupport.useLastInlineCommentAsDoc".)
+procedure task1()
+    print "doing task1...", lib1(), _TEXT1, _TEXT2;
+end procedure;
+
+// @ignore none; // makes variables external again
+
+GLOBAL_VAL2 := 2;

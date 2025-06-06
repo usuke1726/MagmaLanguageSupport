@@ -1,0 +1,7 @@
+
+/**
+ *  @returns a string `"lib1"`
+ */
+function lib1()
+    return "lib1";
+end function;

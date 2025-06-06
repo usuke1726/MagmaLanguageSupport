@@ -1,0 +1,34 @@
+
+// Use the require statements when you want to reference functions in files that are loaded elsewhere.
+// @require "@/../lib/lib1.magma";
+
+// @internal
+/// A private method.
+procedure _private_method1()
+    print "doing _private_method1...";
+end procedure;
+
+/**
+ *  @internal
+ *  This function will only be suggested within this file.
+ */
+procedure _private_method2()
+    print "doing _private_method2...";
+end procedure;
+
+/// single line documentation
+procedure task2()
+    _private_method1();
+    _private_method2();
+    _ := lib1();
+    print "doing task2...";
+end procedure;
+
+/*
+NG pattern (only the second line will be shown):
+
+/// first line
+/// second line
+procedure task2()
+    ...
+*/

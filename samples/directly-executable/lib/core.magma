@@ -1,0 +1,16 @@
+
+/**
+ *  @file
+ *  **THIS FILE MUST BE LOADED FIRST!**
+ */
+
+// @export "@/../*"; // The functions in this file can be referenced anywhere. You don't have to write "@require core.magma" in other files. (It has to be loaded somewhere though)
+
+/**
+ *  @priority
+ *  
+ *  @returns some values
+ */
+function getSomeValues()
+    return 0, 1, 2;
+end function;

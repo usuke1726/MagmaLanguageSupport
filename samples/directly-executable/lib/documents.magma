@@ -1,0 +1,19 @@
+
+/**
+ *  @file
+ *  This file contains documentation of intrinsics.
+ *  **It's not necessary to load this file because it includes only comments.**
+ */
+
+// @export "@/../*";
+
+/**
+ *  see https://magma.maths.usyd.edu.au/magma/handbook/text/210#1790
+ */
+// @defined intrinsic Embed(E, F);
+// Note: I often forget how to use this intrinsic, so I added the link to the handbook.
+
+// @priority
+// @defined intrinsic NumberOfPlacesOfDegreeOneOverExactConstantFieldBound(F, m);
+// Note: This intrinsic will be used frequently, so I have set it to be suggested as a priority. (see also the config "MagmaLanguageSupport.priorityCompletionItems".)
+
