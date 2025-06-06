@@ -131,12 +131,20 @@ class DefinitionParser{
                 }
                 m = priorityComment.exec(line);
                 if(m){
+                    if(isInternal) isInternalThis = true;
+                    if(isExternal) isInternalThis = false;
+                    isInternal = false;
+                    isExternal = false;
                     parser.grantPriority();
                     continue;
                 }
                 m = inlineComment.exec(line);
                 if(m){
                     Log("inlineComment", line);
+                    if(isInternal) isInternalThis = true;
+                    if(isExternal) isInternalThis = false;
+                    isInternal = false;
+                    isExternal = false;
                     scope.inComment = false;
                     parser.send(m[1]?.trim());
                     parser.endComment();
@@ -145,12 +153,20 @@ class DefinitionParser{
                 m = inlineNonDocumentComment.exec(line);
                 if(m){
                     Log("inlineNonDocumentComment", line);
+                    if(isInternal) isInternalThis = true;
+                    if(isExternal) isInternalThis = false;
+                    isInternal = false;
+                    isExternal = false;
                     scope.inComment = false;
                     continue;
                 }
                 m = maybeDocumentInlineComment.exec(line);
                 if(m){
                     Log("maybeDocumentInlineComment");
+                    if(isInternal) isInternalThis = true;
+                    if(isExternal) isInternalThis = false;
+                    isInternal = false;
+                    isExternal = false;
                     const slashNum = m[1].length;
                     const { useLastInlineCommentAsDoc } = config;
                     const available = (useLastInlineCommentAsDoc === true) || (
@@ -167,12 +183,20 @@ class DefinitionParser{
                 }
                 m = startComment.exec(line);
                 if(m){
+                    if(isInternal) isInternalThis = true;
+                    if(isExternal) isInternalThis = false;
+                    isInternal = false;
+                    isExternal = false;
                     scope.inComment = true;
                     parser.send(m[1]?.trimStart());
                     continue;
                 }
                 m = startNonDocumentComment.exec(line);
                 if(m){
+                    if(isInternal) isInternalThis = true;
+                    if(isExternal) isInternalThis = false;
+                    isInternal = false;
+                    isExternal = false;
                     scope.inComment = true;
                     parser.disable();
                     continue;
@@ -615,6 +639,7 @@ class DefinitionParser{
                     Log("NOT startFunction", line);
                     scope.inComment = false;
                     parser.reset();
+                    isInternalThis = undefined;
                 }else{
                     if(isInternal){
                         globalIgnoreType = ["forwards", "functions", "variables"];
@@ -627,7 +652,6 @@ class DefinitionParser{
                         parser.reset();
                     }
                 }
-                isInternalThis = undefined;
                 isInternal = false;
                 isExternal = false;
             }else{
