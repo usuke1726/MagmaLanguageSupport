@@ -264,6 +264,8 @@ export default class DefinitionHandler extends DefinitionCore{
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const depResult = await this.searchDependency(document, position);
         if(depResult) return depResult;
+        const fileDocResult = await this.searchFileDocument(document, position);
+        if(fileDocResult) return fileDocResult;
         const isArgWithoutDoc = (def: Def.Definition) => !!def.isArg && !def.document.value.trim();
         const selfDef = this.searchDefinitionAtPosition(document, position);
         if(selfDef && !isArgWithoutDoc(selfDef)){

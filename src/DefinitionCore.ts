@@ -1043,6 +1043,26 @@ export default class DefinitionSearcher extends DefinitionLoader{
             }
         }
     }
+    protected static async searchFileDocument(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
+        const line = document.lineAt(position.line).text;
+        const ch = position.character;
+        const pattern = /^(\s*\*?\s*)@(file|overview|fileoverview|fileOverview)\b/;
+        const m = pattern.exec(line);
+        if(!m) return undefined;
+        const start = m[1].length;
+        const end = m[0].length;
+        if(ch < start || ch >= end) return undefined;
+        const cache = await this.requestCache(document.uri);
+        if(!cache) return undefined;
+        if(Def.isNotebookCache(cache)) return undefined;
+        if(cache.document.value.trim()){
+            return {
+                contents: [ cache.document ]
+            }
+        }else{
+            return undefined;
+        }
+    }
     private static getFunctionNameOfPosition(document: vscode.TextDocument, position: vscode.Position): string | undefined{
         const symbolPattern = /([A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')/;
         const range = document.getWordRangeAtPosition(position, symbolPattern);
