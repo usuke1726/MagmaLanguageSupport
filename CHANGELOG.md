@@ -1,6 +1,18 @@
 
 # Change Log
 
+## 0.10.0 - 2025-06-06
+
+- `load` and `@require` now support absolute path and relative path not starting `@/` or `./`.
+    - Instead, magma files which are neither in the current workspace nor in the directories of open magma files cannot be read by default.
+    - In order to read these files, change the new setting `MagmaLanguageSupport.trustedPaths`.
+- `load` statements without a semicolon at the end are now also available in Notebook.
+- New support for applying `@internal` globally.
+    - `@internal`/`@external` statement whose following line is empty is same as `@ignore all`/`@ignore none` respectively.
+    - `@internal` can be used in the same way as `@ignore`: `// @internal variables`.
+- New support for hovering of file documentation.
+    - When you hover `@file` in comments, the documentation is displayed.
+
 ## 0.9.1 - 2025-05-23
 
 - The settings `MagmaLanguageSupport.useHttps` and `MagmaLanguageSupport.magmaPath` are now only available only in user and remote settings.
