@@ -2,7 +2,7 @@
 // Use the require statements when you want to reference functions in files that are loaded elsewhere.
 // @require "@/../lib/lib1.magma";
 
-// @internal
+// @internal (Note that there must not be an empty line after this line so that the "internal" statement is not applied globally)
 /// A private method.
 procedure _private_method1()
     print "doing _private_method1...";

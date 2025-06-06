@@ -10,8 +10,8 @@ load "./lib/lib1.magma"; // Relative path from execution path (now assuming base
 
 GLOBAL_VAL1 := 1;
 
-// @ignore variables; // makes all of the following variables in this file internal. (_TEXT1 and _TEXT2 can only be referenced within this file.)
-// "@ignore this" is also available. (same effect as @internal)
+// @internal variables // makes all of the following variables in this file internal. (_TEXT1 and _TEXT2 can only be referenced within this file.)
+// "@ignore" is also available. (same effect as @internal)
 // The variable GLOBAL_VAL can be referenced from other files because it is written above the ignore statement.
 // Note that this extension does not show error message when internal variables are used in other files. But in this cases, jumping to definition and hovering will be unavailable, and you might be able to detect bugs using it.
 
@@ -24,6 +24,8 @@ procedure task1()
     print "doing task1...", lib1(), _TEXT1, _TEXT2;
 end procedure;
 
-// @ignore none; // makes variables external again
+// @external; // makes variables external again. The following line is empty, so both of GLOBAL_VAL2 and GLOBAL_VAL3 are treated as external.
 
 GLOBAL_VAL2 := 2;
+
+GLOBAL_VAL3 := 3;
