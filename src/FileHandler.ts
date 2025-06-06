@@ -145,7 +145,7 @@ export default class FileHandler{
         return vscode.Uri.joinPath(uri, "..");
     }
     static usingAtMark(query: string): boolean{
-        return query.startsWith("@");
+        return query.startsWith("@/") || query.startsWith("@\\");
     }
     static join(baseDir: vscode.Uri, query: string): vscode.Uri{
         if(query.startsWith("~")){
