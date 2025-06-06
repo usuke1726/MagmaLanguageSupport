@@ -45,10 +45,14 @@ class DefinitionParser{
         const parser = new DocumentParser(uri);
         const diagnostics: vscode.Diagnostic[] = [];
         const ignoreComment1 = /^(\s*\/{2,}\s+@ignores?)\s+(this|none|all|(forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*)\b.*?$/;
-        const ignoreComment2 = /^(\s*\/{2,}\s+@(?:internal|ignores?))()\b.*?$/;
+        const ignoreComment2 = /^(\s*\/{2,}\s+@internal)\s+((forwards?|variables?|functions?)(\s*,\s*(forwards?|variables?|functions?))*)\b.*?$/;
+        const ignoreComment3 = /^(\s*\/{2,}\s+@(?:internal|ignores?))()\b.*?$/;
+        const externalComment = /^\s*\/{2,}\s+@external\b.*?$/;
         const priorityComment = /^(\s*\/{2,}\s+@(priority|priorityInCompletion))\b.*?$/;
         let globalIgnoreType: ("forwards" | "functions" | "variables")[] = [];
-        let isToBeIgnored: boolean = false;
+        let isInternalThis: boolean | undefined = undefined;
+        let isInternal: boolean = false;
+        let isExternal: boolean = false;
         const loadStatement = /^(\s*load\s+")([^"]+)"\s*;?\s*.*$/;
         const requireComment = /^(\s*\/{2,}\s+@requires?\s+")([^"]+)";?.*$/;
         const exportComment = /^(\s*\/{2,}\s+@exports?\s+")([^"]+)";?.*/;
@@ -99,7 +103,7 @@ class DefinitionParser{
                     Log("ignoreComment", line);
                     const targets = m[2]?.trim();
                     if(!targets || targets === "this"){
-                        isToBeIgnored = true;
+                        isInternalThis = true;
                     }else if(targets === "none"){
                         globalIgnoreType = [];
                     }else if(targets === "all"){
@@ -111,6 +115,18 @@ class DefinitionParser{
                             else return "variables"
                         })));
                     }
+                    continue;
+                }
+                m = ignoreComment3.exec(line);
+                if(m){
+                    isInternal = true;
+                    isExternal = false;
+                    continue;
+                }
+                m = externalComment.exec(line);
+                if(m){
+                    isInternal = false;
+                    isExternal = true;
                     continue;
                 }
                 m = priorityComment.exec(line);
@@ -164,6 +180,9 @@ class DefinitionParser{
                 if(isNotebook){
                     m = notebookUseStatement.exec(line);
                     if(m){
+                        isInternalThis = undefined;
+                        isInternal = false;
+                        isExternal = false;
                         parser.reset(false);
                         const location = (() => {
                             if(m[2].startsWith('"')){
@@ -247,6 +266,9 @@ class DefinitionParser{
                     return undefined;
                 })();
                 if(loadInfo){
+                    isInternalThis = undefined;
+                    isInternal = false;
+                    isExternal = false;
                     parser.reset(false);
                     if(loadInfo.files.length){
                         loadInfo.files.forEach(reqUri => {
@@ -274,6 +296,9 @@ class DefinitionParser{
                 }
                 m = exportComment.exec(line);
                 if(m){
+                    isInternalThis = undefined;
+                    isInternal = false;
+                    isExternal = false;
                     parser.reset(false);
                     if(isNotebook){
                         continue;
@@ -307,11 +332,19 @@ class DefinitionParser{
                 if(m){
                     Log("definedVariable");
                     const isIgnored = (() => {
-                        if(isToBeIgnored){
+                        if(isInternalThis !== undefined){
+                            return isInternalThis;
+                        }else if(isInternal){
                             return true;
+                        }else if(isExternal){
+                            return false;
                         }
                         return globalIgnoreType.includes("variables");
                     })();
+                    isInternalThis = undefined;
+                    isInternal = false;
+                    isExternal = false;
+                    if(isIgnored) parser.setInternal();
                     const name = this.formatFunctionName(m[2]);
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
@@ -352,15 +385,22 @@ class DefinitionParser{
                     const isIgnored = !isEnabled || (() => {
                         const isForward = m[1].startsWith("forward");
                         const type = isForward ? "forwards" : "functions";
-                        if(isToBeIgnored){
+                        if(isInternalThis !== undefined){
+                            return isInternalThis;
+                        }else if(isInternal){
                             return true;
+                        }else if(isExternal){
+                            return false;
                         }else if(globalIgnoreType.includes(type)){
                             return true;
                         }else{
                             return false;
                         }
                     })();
-                    isToBeIgnored = false;
+                    isInternalThis = undefined;
+                    isInternal = false;
+                    isExternal = false;
+                    if(isIgnored) parser.setInternal();
                     const functionName = this.formatFunctionName(m[2]);
                     const start = m[1].length;
                     const nameRange = new vscode.Range(
@@ -443,15 +483,22 @@ class DefinitionParser{
                         return true;
                     })();
                     const isIgnored = !isEnabled || (() => {
-                        if(isToBeIgnored){
+                        if(isInternalThis !== undefined){
+                            return isInternalThis;
+                        }else if(isInternal){
                             return true;
+                        }else if(isExternal){
+                            return false;
                         }else if(globalIgnoreType.includes("variables")){
                             return true;
                         }else{
                             return false;
                         }
                     })();
-                    isToBeIgnored = false;
+                    isInternalThis = undefined;
+                    isInternal = false;
+                    isExternal = false;
+                    if(isIgnored) parser.setInternal();
                     let start = m[1].length;
                     let variables = m[2];
                     const firstLine = line.trim();
@@ -568,10 +615,21 @@ class DefinitionParser{
                     Log("NOT startFunction", line);
                     scope.inComment = false;
                     parser.reset();
-                }else if(parser.maybeDocument){
-                    Log("An empty line after maybeDocumentInlineComment");
-                    parser.reset();
+                }else{
+                    if(isInternal){
+                        globalIgnoreType = ["forwards", "functions", "variables"];
+                    }
+                    if(isExternal){
+                        globalIgnoreType = [];
+                    }
+                    if(parser.maybeDocument){
+                        Log("An empty line after maybeDocumentInlineComment");
+                        parser.reset();
+                    }
                 }
+                isInternalThis = undefined;
+                isInternal = false;
+                isExternal = false;
             }else{
                 m = endComment.exec(line);
                 if(m){
@@ -586,7 +644,10 @@ class DefinitionParser{
                 m = inComment.exec(line);
                 if(m){
                     if(/^@internal(\s|$)/.test(m[1].trim())){
-                        isToBeIgnored = true;
+                        isInternalThis = true;
+                    }
+                    if(/^@external(\s|$)/.test(m[1].trim())){
+                        isInternalThis = false;
                     }
                     parser.send(m[1]);
                     continue;

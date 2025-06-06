@@ -362,7 +362,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*/{2,}\s+)(@ignores?)\s+(forwards?|variables?|functions?)</string>
+			<string>^(\s*/{2,}\s+)(@ignores?|@internal)\s+(forwards?|variables?|functions?)</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>
@@ -429,7 +429,7 @@ Modified Copyright (c) 2024 usuke1726 - MIT License
 		</dict>
 		<dict>
 			<key>begin</key>
-			<string>^(\s*/{2,}\s+)(@(?:(?:append|overwrite)(?:Results?)?|internal|priority|priorityInCompletion|ignores?))\s*(?:(;)|\b)(.*?)$</string>
+			<string>^(\s*/{2,}\s+)(@(?:(?:append|overwrite)(?:Results?)?|internal|external|priority|priorityInCompletion|ignores?))\s*(?:(;)|\b)(.*?)$</string>
 			<key>beginCaptures</key>
 			<dict>
 				<key>1</key>

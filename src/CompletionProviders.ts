@@ -307,7 +307,7 @@ class PriorityCommentComp implements vscode.CompletionItemProvider{
 
 class DocTagComp implements vscode.CompletionItemProvider{
     private readonly paramTags = ["param", "arg", "argument"];
-    private readonly reservedTags = ["returns", "example", "remarks", "internal", "priority"];
+    private readonly reservedTags = ["returns", "example", "remarks", "internal", "external", "priority"];
     private tagToLocaleStringKey(tag: string){
         return this.paramTags.includes(tag) ? "param" : tag;
     }

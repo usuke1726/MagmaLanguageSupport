@@ -15,6 +15,7 @@ export default class DocumentParser{
     private buffer: string[] = [];
     private _isEmpty: boolean = true;
     private _maybeDocument: boolean = false;
+    private isInternal: boolean = false;
     private isFirstDoc: boolean = true;
     private isFileDocument: boolean = false;
     private _endComment: boolean = false;
@@ -55,6 +56,7 @@ export default class DocumentParser{
         this.lines = [];
         this._maybeDocument = false;
         this.isFileDocument = false;
+        this.isInternal = false;
         this._endComment = false;
         this._params.splice(0);
         this._hasPriority = false;
@@ -105,7 +107,7 @@ export default class DocumentParser{
         const tagPattern = /^\s*(@[A-Za-z_][A-Za-z0-9_]*)(|\s+.*)$/;
         const tagsExpectingArgs = ["param", "arg", "argument"];
         const tagsFileOverview = ["file", "overview", "fileoverview", "fileOverview"];
-        const tagsWithoutArgs = ["internal", "priority", "priorityInCompletion"];
+        const tagsWithoutArgs = ["internal", "external", "priority", "priorityInCompletion"];
         const tagsOnlyOneLine = ["author"];
         const m = tagPattern.exec(line);
         if(m){
@@ -191,6 +193,10 @@ export default class DocumentParser{
                 this._hasPriority = true;
                 this.resetTag();
                 break;
+            case "internal":
+            case "external":
+                this.resetTag();
+                break;
             default:
                 this.finishTag();
                 break;
@@ -274,6 +280,11 @@ export default class DocumentParser{
         if(this.isFileDocument){
             this._fileDocument = this.pop();
         }
+    }
+    setInternal(){
+        if(this.isInternal) return;
+        this.isInternal = true;
+        this.lines = ["*@internal*", "", ...this.lines];
     }
     pop(): string{
         if(this.tag){
