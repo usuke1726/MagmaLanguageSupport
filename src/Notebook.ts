@@ -276,7 +276,7 @@ class Controller{
                         const cell = findCellOfLocation(this.cells, location);
                         if(cell){
                             body = body.substring(0, m.index) 
-                                + (await this.load(this.cells[cell.index]))
+                                + "\n" + (await this.load(this.cells[cell.index])) + "\n"
                                 + body.substring(m.index + m[0].length);
                         }else{
                             const id = typeof location === "string" ? `id "${location}"` : `${location}`
