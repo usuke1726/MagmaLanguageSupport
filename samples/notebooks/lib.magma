@@ -1,0 +1,21 @@
+
+/**
+ *  @file
+ *  Library functions.
+ */
+
+/**
+ *  Checks if a given integer is positive.
+ *  @param {RngIntElt} n an integer
+ */
+function isPositive(n)
+    return n gt 0;
+end function;
+
+/**
+ *  @returns 3 values.
+ */
+function getSomeValues()
+    return 1, 2, 3;
+end function;
+

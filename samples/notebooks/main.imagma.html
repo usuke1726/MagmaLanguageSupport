@@ -1,0 +1,71 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><!--
+[{"kind":1,"language":"markdown","value":"\r\n# Magma Calculator Notebook sample\r\n\r\nThe Magma Calculator Notebook provides the feature to send its codes to the website [Magma Calculator](https://magma.maths.usyd.edu.au/calc/) and execute them there.\r\n\r\n<div id=\"__markup\" style=\"font-size: 18px;\"></div>\r\n<div id=\"__\" style=\"display: none;\">\r\nThe div tag with id \"__\" is a dummy tag. It's good to use when writing TeX macros.\r\n\r\n$$\r\n\\gdef\\sample{\\text{\\TeX\\ equations can be written.}}\r\n$$\r\n\r\n</div>\r\n\r\n$$\r\n\\sample\r\n$$\r\n","outputs":"[]"},{"kind":2,"language":"magma","value":"\r\n// @overwrite;\r\n// @use \"task1\";\r\n// @use \"task2\";\r\nload \"@/lib.magma\";\r\n\r\nprocedure main()\r\n    task1();\r\n    task2();\r\n    print getSomeValues();\r\n    assert isPositive(3);\r\n    quit;\r\nend procedure;\r\n\r\nmain();\r\n","outputs":"[[\"doing task1...\\ndoing task2...\\n1 2 3\\n\"]]"},{"kind":1,"language":"markdown","value":"\r\n## Tips\r\n\r\n### How to convert `.imagma` to `.imagma.html`\r\n\r\n1. Rename `*.imagma` to `*.imagma.html`.\r\n1. Open and then save the file on VS Code.\r\n\r\nRename the file in the same way when converting `.imagma.html` to `.imagma`.\r\n\r\n### How to convert `.imagma` or `.imagma.html` to `.html`\r\n\r\n1. Open the `.imagma`/`.imagma.html` file.\r\n1. Run the command `extension.magmaNotebook.export` (Click the \"Export this notebook contents\" button (with icon <img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAbCAMAAABcI88jAAAAZlBMVEUlJSbFxcVOUE+XucWmfiYlJV8vJSYlJTC1kmOmwMXAxcVOLyZJfqbAp4IlJVljlbZYLyaMrsAlSH2rkmNJJSa1w8WheiZTbpfAp32rhkovPkpOeqFJdqEvToIvLybArIhelbu7xcXqeOZWAAAAVElEQVR4nO3Mxw3AIBBE0XHEOefs/pu0TyBGggr4p9U+aeCSiYs/URAqre/GwujSMrcwTvafN181j8tA/Hhaq3kcRZbEZmbV+XhJUbWTvMXek7qoDwl7Aw6RKhByAAAAAElFTkSuQmCC\" height=\"20\">) on the editor title menu bar or search for the command using the command palette.)\r\n1. Export the file with \"Save as type\" HTML.\r\n\r\n\r\nThe exported `.html` file will be smaller than `.imagma.html`.\r\n\r\n### How to execute codes in `.imagma` on the production version\r\n\r\n1. Click \"Preview the execution contents\" button (with icon ![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAVCAMAAABrN94UAAABQVBMVEUeHh7FxcXCtKEeXHhUU1QlHh6utb4eHiQiHh7EwLuUp7ZVdpa9xcUeHi/FxbsrMzjFwrm+wsVDOTCwlFxPYXUzQFB4X0V2mrK3p49jgJweUm+PeWhnRThMSj42Hh6alpYeMka+tKihkodceJQ4Sl5FX32fiXROQzVqc4JZk7t/WS6Vb0w+MiMeR161vcOwnYa9uK+lflKoj3QmMTtET3ZSHh5yXUd/hYVXNh6BqcWyr5uOm6gqHh5hbXegrLWkoJZyiqVpk69aSjbFxaWGa1VvocCliGs+SlKjtb5+Xju+vLVEWW65r6UeIitsTzuipLqTrry4pYVkfI3FwLAzHyR3Y0+5u71HNSGwlHdDNCvFwsLFuKWarLo9IR4lJSszRlMeHipeSjyyo4nDvbc5QlKmur2aiXe9vbq9vrweLkkpMT9kaju7AAAAvUlEQVR4nGMgH0hlKEVilWBOtjYItcEmwcSgKhitg1WCIcvBS5oVmwQDg7cdUyIHNgmGBEdGI6wSDAwpXIp+yBK69lCGrwiPNkJY1NwMyuKNEdCCifJbKKfLs+mzqwOFg/TUhODKuYPDPBkyU/0DQ9y5fMSQHMXuyggCfOEKPG4o3uC3jGBhYbHlc4qTRfWeuKAhkIxntDJF97WmMJAwcY5FFzcO4HRhUPEQkEGX4JbQYIviTJNMkkOXIQkAAMRgFuNfxFs0AAAAAElFTkSuQmCC)) in the notebook cell title menu bar (the upper right corner of the target cell). Then an untitled magma file will be created.\r\n1. Save the created file. This file is executable on the production version.\r\n\r\n","outputs":"[]"},{"kind":1,"language":"markdown","value":"\r\n## Sub-tasks","outputs":"[]"},{"kind":2,"language":"magma","value":"\r\n// @cell \"task1\";\r\n\r\nprocedure task1()\r\n    print \"doing task1...\";\r\nend procedure;\r\n","outputs":"[]"},{"kind":2,"language":"magma","value":"\r\n// @cell \"task2\";\r\n\r\n/**\r\n *  @file\r\n *  \r\n *  **Sample** codes.\r\n */\r\n\r\nprocedure task2()\r\n    print \"doing task2...\";\r\nend procedure;\r\n","outputs":"[]"}]
+--><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css" integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous"><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script><script>document.addEventListener("DOMContentLoaded", () => {renderMathInElement(document.body, {delimiters: [{left: "$$", right: "$$", display: true},{left: "$", right: "$", display: false}],throwOnError: false});});</script><script>document.addEventListener("DOMContentLoaded", () => {const targets = {"__": undefined,"__body": "body","__markup": "div.markup","__code": "pre.code","__output": "pre.output","__math": "span.katex","__math_block": "span.katex-display",...Object.fromEntries([...Array(10).keys()].map(i => [`__p-${i}`, `*.p-${i}`])),};const tags = Object.keys(targets).map(k => [k, document.querySelector(`#${k}:is(div, span)`)]).filter(v => v[1]);if(tags.length){const sty = document.createElement("style");sty.textContent = tags.filter(([k, tag]) => targets[k] && tag.style.cssText.trim()).map(([k, tag]) => `${targets[k]}{${tag.style.cssText}}`).join("");document.head.appendChild(sty);tags.forEach(([_k, tag]) => {tag.removeAttribute("style");tag.parentNode.removeChild(tag);});}});</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css"><style>body{line-height: initial;}pre.code{text-wrap: initial;background-color: #fafafa !important;border: 1px solid #eee;border-radius: 5px;padding: 10px;}pre.output{text-wrap: initial;}p.outputs{margin-bottom: 0;}</style></head><body class="vscode-body vscode-light"><div class="cell"><div class="markup"><h1>Magma Calculator Notebook sample</h1>
+<p>The Magma Calculator Notebook provides the feature to send its codes to the website <a href="https://magma.maths.usyd.edu.au/calc/">Magma Calculator</a> and execute them there.</p>
+<div id="__markup" style="font-size:18px"></div>
+<div id="__">
+The div tag with id "__" is a dummy tag. It's good to use when writing TeX macros.
+$$
+\gdef\sample{\text{\TeX\ equations can be written.}}
+$$
+</div>
+$$
+\sample
+$$
+</div></div><div class="cell"><pre class="code"><code>
+// @overwrite;
+// @use &quot;task1&quot;;
+// @use &quot;task2&quot;;
+load &quot;@/lib.magma&quot;;
+
+procedure main()
+    task1();
+    task2();
+    print getSomeValues();
+    assert isPositive(3);
+    quit;
+end procedure;
+
+main();
+</code></pre><p class="outputs">Outputs:</p><pre class="output"><code>doing task1...
+doing task2...
+1 2 3
+</code></pre></div><div class="cell"><div class="markup"><h2>Tips</h2>
+<h3>How to convert <code>.imagma</code> to <code>.imagma.html</code></h3>
+<ol>
+<li>Rename <code>*.imagma</code> to <code>*.imagma.html</code>.</li>
+<li>Open and then save the file on VS Code.</li>
+</ol>
+<p>Rename the file in the same way when converting <code>.imagma.html</code> to <code>.imagma</code>.</p>
+<h3>How to convert <code>.imagma</code> or <code>.imagma.html</code> to <code>.html</code></h3>
+<ol>
+<li>Open the <code>.imagma</code>/<code>.imagma.html</code> file.</li>
+<li>Run the command <code>extension.magmaNotebook.export</code> (Click the "Export this notebook contents" button (with icon <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAbCAMAAABcI88jAAAAZlBMVEUlJSbFxcVOUE+XucWmfiYlJV8vJSYlJTC1kmOmwMXAxcVOLyZJfqbAp4IlJVljlbZYLyaMrsAlSH2rkmNJJSa1w8WheiZTbpfAp32rhkovPkpOeqFJdqEvToIvLybArIhelbu7xcXqeOZWAAAAVElEQVR4nO3Mxw3AIBBE0XHEOefs/pu0TyBGggr4p9U+aeCSiYs/URAqre/GwujSMrcwTvafN181j8tA/Hhaq3kcRZbEZmbV+XhJUbWTvMXek7qoDwl7Aw6RKhByAAAAAElFTkSuQmCC" height="20" />) on the editor title menu bar or search for the command using the command palette.)</li>
+<li>Export the file with "Save as type" HTML.</li>
+</ol>
+<p>The exported <code>.html</code> file will be smaller than <code>.imagma.html</code>.</p>
+<h3>How to execute codes in <code>.imagma</code> on the production version</h3>
+<ol>
+<li>Click "Preview the execution contents" button (with icon <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAVCAMAAABrN94UAAABQVBMVEUeHh7FxcXCtKEeXHhUU1QlHh6utb4eHiQiHh7EwLuUp7ZVdpa9xcUeHi/FxbsrMzjFwrm+wsVDOTCwlFxPYXUzQFB4X0V2mrK3p49jgJweUm+PeWhnRThMSj42Hh6alpYeMka+tKihkodceJQ4Sl5FX32fiXROQzVqc4JZk7t/WS6Vb0w+MiMeR161vcOwnYa9uK+lflKoj3QmMTtET3ZSHh5yXUd/hYVXNh6BqcWyr5uOm6gqHh5hbXegrLWkoJZyiqVpk69aSjbFxaWGa1VvocCliGs+SlKjtb5+Xju+vLVEWW65r6UeIitsTzuipLqTrry4pYVkfI3FwLAzHyR3Y0+5u71HNSGwlHdDNCvFwsLFuKWarLo9IR4lJSszRlMeHipeSjyyo4nDvbc5QlKmur2aiXe9vbq9vrweLkkpMT9kaju7AAAAvUlEQVR4nGMgH0hlKEVilWBOtjYItcEmwcSgKhitg1WCIcvBS5oVmwQDg7cdUyIHNgmGBEdGI6wSDAwpXIp+yBK69lCGrwiPNkJY1NwMyuKNEdCCifJbKKfLs+mzqwOFg/TUhODKuYPDPBkyU/0DQ9y5fMSQHMXuyggCfOEKPG4o3uC3jGBhYbHlc4qTRfWeuKAhkIxntDJF97WmMJAwcY5FFzcO4HRhUPEQkEGX4JbQYIviTJNMkkOXIQkAAMRgFuNfxFs0AAAAAElFTkSuQmCC" alt="" />) in the notebook cell title menu bar (the upper right corner of the target cell). Then an untitled magma file will be created.</li>
+<li>Save the created file. This file is executable on the production version.</li>
+</ol>
+</div></div><div class="cell"><div class="markup"><h2>Sub-tasks</h2>
+</div></div><div class="cell"><pre class="code"><code>
+// @cell &quot;task1&quot;;
+
+procedure task1()
+    print &quot;doing task1...&quot;;
+end procedure;
+</code></pre></div><div class="cell"><pre class="code"><code>
+// @cell &quot;task2&quot;;
+
+/**
+ *  @file
+ *  
+ *  **Sample** codes.
+ */
+
+procedure task2()
+    print &quot;doing task2...&quot;;
+end procedure;
+</code></pre></div></body></html>
