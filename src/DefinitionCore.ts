@@ -1075,7 +1075,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
             definition: res[0]
         } : undefined;
     }
-    protected static async searchDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
+    protected static async searchDependency(document: vscode.TextDocument, position: vscode.Position): Promise<Def.SearchDependencyResult | undefined>{
         const line = document.lineAt(position.line).text;
         const ch = position.character;
         const pattern = /^(\s*)(load|\/{2,}\s+@requires?)\s+"[^"]+";?/;
@@ -1110,10 +1110,13 @@ export default class DefinitionSearcher extends DefinitionLoader{
                 if(dep && !Def.isCellLocation(dep.location)){
                     const doc = await getDoc(dep.location);
                     return {
-                        contents: [
-                            new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})`),
-                            doc
-                        ]
+                        uri: dep.location,
+                        hover: {
+                            contents: [
+                                new vscode.MarkdownString(`[${getName(dep.location)}](${dep.location})`),
+                                doc
+                            ]
+                        }
                     };
                 }
             }else{
@@ -1130,14 +1133,22 @@ export default class DefinitionSearcher extends DefinitionLoader{
                         doc
                     ];
                 }))).filter(doc => doc !== undefined).flat();
+                const uri = (() => {
+                    if(deps.length !== 1) return undefined;
+                    const loc = deps[0].location;
+                    return Def.isCellLocation(loc) ? undefined : loc;
+                })();
                 const header = new vscode.MarkdownString(`${getLocaleString("matchedFiles")}`);
                 return {
-                    contents: [ header, ...files ]
+                    uri,
+                    hover: {
+                        contents: [ header, ...files ]
+                    }
                 };
             }
         }
     }
-    private static async searchUseDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
+    private static async searchUseDependency(document: vscode.TextDocument, position: vscode.Position): Promise<Def.SearchDependencyResult | undefined>{
         const line = document.lineAt(position.line).text;
         const ch = position.character;
         const pattern = /^(\s*)(\/{2,}\s+@uses?)\s+([0-9]+|"[^"\n]+")/;
@@ -1157,10 +1168,13 @@ export default class DefinitionSearcher extends DefinitionLoader{
         });
         if(cell){
             return {
-                contents: [
-                    new vscode.MarkdownString(`**cell ${DocumentParser.markdownEscape(m[3])}**`),
-                    cell.cache.document
-                ]
+                uri: cell.cache.uri,
+                hover: {
+                    contents: [
+                        new vscode.MarkdownString(`**cell ${DocumentParser.markdownEscape(m[3])}**`),
+                        cell.cache.document
+                    ]
+                }
             };
         }else{
             return undefined;

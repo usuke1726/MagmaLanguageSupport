@@ -89,6 +89,10 @@ export type SearchResult = {
     uri: vscode.Uri;
     definition: Definition;
 };
+export type SearchDependencyResult = {
+    uri?: vscode.Uri;
+    hover: vscode.Hover;
+};
 export type ExportData = {
     [fsPath: string]: RegExp[];
 };

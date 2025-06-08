@@ -244,6 +244,17 @@ export default class DefinitionHandler extends DefinitionCore{
         }
     }
     static async onDefinitionCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Definition | undefined>{
+        const depResult = await this.searchDependency(document, position);
+        if(depResult){
+            if(depResult.uri){
+                return {
+                    uri: depResult.uri,
+                    range: new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
+                };
+            }else{
+                return undefined;
+            }
+        }
         const result = await this.searchDefinition(document, position);
         if(result){
             return {
@@ -263,7 +274,7 @@ export default class DefinitionHandler extends DefinitionCore{
     }
     static async onHoverCall(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const depResult = await this.searchDependency(document, position);
-        if(depResult) return depResult;
+        if(depResult) return depResult.hover;
         const fileDocResult = await this.searchFileDocument(document, position);
         if(fileDocResult) return fileDocResult;
         const isArgWithoutDoc = (def: Def.Definition) => !!def.isArg && !def.document.value.trim();
