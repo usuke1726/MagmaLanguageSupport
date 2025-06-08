@@ -78,6 +78,7 @@ class DefinitionParser{
         const invalidDefinedComment2 = /^(\s*\/{2,}\s+@define[sd]?\s+(?:function\s+|procedure\s+|intrinsic\s+|))((?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')(\s*);?)\s*$/;
         const invalidDefinedComment3 = /^(\s*\/{2,}\s+@define[sd]?\s+variable\s+(?:[A-Za-z_][A-Za-z0-9_]*|'[^\n]*?(?<!\\)')\s*)(\(.*\));?\s*?$/;
         const notebookUseStatement = /^(\s*\/{2,}\s+@uses?\s+)([0-9]+|"[^"\n]+");?.*?$/;
+        const notebookCellIdComment = /^\s*\/{2,}\s+@cell\s+"[^"\n]*".*$/;
         const isNotebook = !FileHandler.isMagmaFile(uri);
         const definitions: Def.Definition[] = [];
         const dependencies: Def.Dependency[] = [];
@@ -224,6 +225,14 @@ class DefinitionParser{
                                 type: "use"
                             });
                         }
+                        continue;
+                    }
+                    m = notebookCellIdComment.exec(line);
+                    if(m){
+                        isInternalThis = undefined;
+                        isInternal = false;
+                        isExternal = false;
+                        parser.reset(false);
                         continue;
                     }
                 }
@@ -1071,7 +1080,7 @@ export default class DefinitionSearcher extends DefinitionLoader{
         const ch = position.character;
         const pattern = /^(\s*)(load|\/{2,}\s+@requires?)\s+"[^"]+";?/;
         const m = pattern.exec(line);
-        if(!m) return undefined;
+        if(!m) return this.searchUseDependency(document, position);
         const start = m[1].length;
         const end = m[0].length;
         if(ch < start || end <= ch) return undefined;
@@ -1128,6 +1137,35 @@ export default class DefinitionSearcher extends DefinitionLoader{
             }
         }
     }
+    private static async searchUseDependency(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
+        const line = document.lineAt(position.line).text;
+        const ch = position.character;
+        const pattern = /^(\s*)(\/{2,}\s+@uses?)\s+([0-9]+|"[^"\n]+")/;
+        const m = pattern.exec(line);
+        if(!m) return undefined;
+        const start = m[1].length;
+        const end = m[0].length;
+        if(ch < start || end <= ch) return undefined;
+
+        const cache = await this.requestCache(document.uri);
+        if(!cache || !Def.isNotebookCache(cache)) return undefined;
+        const docCache = cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache;
+        if(!docCache) return undefined;
+        const query = m[3].startsWith('"') ? m[3].slice(1,-1) : Number(m[3])
+        const cell = cache.cells.find(cell => {
+            return typeof query === "string" ? cell.id === query : cell.index === query;
+        });
+        if(cell){
+            return {
+                contents: [
+                    new vscode.MarkdownString(`**cell ${DocumentParser.markdownEscape(m[3])}**`),
+                    cell.cache.document
+                ]
+            };
+        }else{
+            return undefined;
+        }
+    }
     protected static async searchFileDocument(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.Hover | undefined>{
         const line = document.lineAt(position.line).text;
         const ch = position.character;
@@ -1139,10 +1177,13 @@ export default class DefinitionSearcher extends DefinitionLoader{
         if(ch < start || ch >= end) return undefined;
         const cache = await this.requestCache(document.uri);
         if(!cache) return undefined;
-        if(Def.isNotebookCache(cache)) return undefined;
-        if(cache.document.value.trim()){
+        const docCache = Def.isNotebookCache(cache)
+            ? cache.cells.find(cell => cell.fragment === document.uri.fragment)?.cache
+            : cache;
+        if(!docCache) return undefined;
+        if(docCache.document.value.trim()){
             return {
-                contents: [ cache.document ]
+                contents: [ docCache.document ]
             }
         }else{
             return undefined;

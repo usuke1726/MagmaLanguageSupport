@@ -272,6 +272,9 @@ export default class DocumentParser{
         const brac = "`".repeat(num);
         return `${brac}${lang}\n${code}\n${brac}`;
     }
+    static markdownEscape(text: string){
+        return text.replace(/[#+\-*_\\`.!<>{}\[\]()]/g, s => `\\${s}`);
+    }
     endComment(){
         this._endComment = true;
         if(this.tag){
