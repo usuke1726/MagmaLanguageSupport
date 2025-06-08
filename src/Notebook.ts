@@ -233,10 +233,10 @@ class Controller{
     }
     private async readBody(baseUri: vscode.Uri, body: string, currentIdx: number): Promise<string>{
         let m: RegExpExecArray | null;
-        const usePattern = /(?:^|(?<=\n))\s*\/{2,}\s+@uses?\s+([0-9]+|"[^"\n]+");?[^\n]*(\n|$)/;
-        const appendPattern = /(?:^|(?<=\n))\s*\/{2,}\s+@append(Results?)?\s*;?[^\n]*(\n|$)/;
-        const overwritePattern = /(?:^|(?<=\n))\s*\/{2,}\s+@overwrite(Results?)?\s*;?[^\n]*(\n|$)/;
-        const cellIDPattern = /(?:^|(?<=\n))\s*\/{2,}\s+@cell\s+"[^"\n]*";?[^\n]*(\n|$)/;
+        const usePattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@uses?[ \t]+([0-9]+|"[^"\n]+")[^\n]*(\n|$)/;
+        const appendPattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@append(Results?)?[^\n]*(\n|$)/;
+        const overwritePattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@overwrite(Results?)?[^\n]*(\n|$)/;
+        const cellIDPattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@cell[ \t]+"[^"\n]*"[^\n]*(\n|$)/;
         while(true){
             m = appendPattern.exec(body);
             if(m){
