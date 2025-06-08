@@ -111,6 +111,7 @@
     "message.Completion.notebookStyleTag.output": "Insert output styleTag. (its style will be applied to all of output blocks in code cells)",
     "message.Completion.notebookStyleTag.math": "Insert math styleTag. (its style will be applied to all of inline math and block math)",
     "message.Completion.notebookStyleTag.math_block": "Insert math_block styleTag. (its style will be applied to all of block math)",
+    "message.Completion.notebookStyleTag.dummy": "Insert the dummy tag. The contents of this tag will not be displayed when the file is viewed as HTML in a browser.",
     "message.Execute.notConfiguredMagmaPath": "The configuration magmaPath is not set.",
     "message.Execute.notFoundMagmaPath": "The Magma executable file was not found.",
     "message.Execute.MagmaPathIsNotFile": "The magmaPath is not file.",

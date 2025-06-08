@@ -521,6 +521,12 @@ class NotebookStyleTagComp implements vscode.CompletionItemProvider{
     private static snip(key: string){
         return `<div id="__${key}" style="$1"></div>`;
     }
+    private static dummyItem(){
+        const item = new vscode.CompletionItem("__dummy");
+        item.insertText = new vscode.SnippetString('<div id="__" style="display: none;">\n$1\n</div>');
+        item.documentation = getLocaleString("notebookStyleTag.dummy");
+        return item;
+    }
     private static createItems(){
         const items = this.keys.map(k => {
             const item = new vscode.CompletionItem(`__${k}`);
@@ -543,6 +549,7 @@ class NotebookStyleTagComp implements vscode.CompletionItemProvider{
             all,
             preset,
             ...items,
+            this.dummyItem(),
         ];
     }
 }

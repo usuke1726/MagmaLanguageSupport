@@ -111,6 +111,7 @@
     "message.Completion.notebookStyleTag.output": "outputに適用するCSSスタイルを記述する特殊タグを挿入します．",
     "message.Completion.notebookStyleTag.math": "数式(インライン，ブロック両方)に適用するCSSスタイルを記述する特殊タグを挿入します．",
     "message.Completion.notebookStyleTag.math_block": "ブロック数式に適用するCSSスタイルを記述する特殊タグを挿入します．",
+    "message.Completion.notebookStyleTag.dummy": "ダミーの特殊タグを挿入します．このタグの中身はHTMLとしてブラウザで開く際に表示されません．",
     "message.Execute.notConfiguredMagmaPath": "magmaPathが設定されていません",
     "message.Execute.notFoundMagmaPath": "Magmaの実行ファイルが見つかりません",
     "message.Execute.MagmaPathIsNotFile": "Magmaのパスがファイルではありません",
