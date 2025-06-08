@@ -39,7 +39,7 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
         td: ["style"],
         th: ["style"],
         details: ["open"],
-        img: [ 'src', 'srcset', 'alt', 'title', 'width', 'height', 'loading' ],
+        img: [ 'src', 'srcset', 'alt', 'title', 'width', 'height', 'loading', 'style' ],
     },
     allowedStyles: {
         "*": {
@@ -51,6 +51,8 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
             "font-size": [ini, /^((x{1,2}-)?small|medium|(x{1,3}-)?large|smaller|larger)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
             "font-family": [ini, /^("[^"]+"|'[^']+'|[a-zA-Z\-]+)(, *("[^"]+"|'[^']+'|[a-zA-Z\-]+))*$/],
             "line-height": [ini, /^normal$/, /^(\d+(\.\d+)?|\.\d+)$/],
+            "height": [ini, /^(auto|stretch|(max|min|fit)-content)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
+            "width": [ini, /^(auto|stretch|(max|min|fit)-content)$/, /^(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem)$/],
             "letter-spacing": [ini, /^normal$/, /^-?(\d+(\.\d+)?|\.\d+)(px|cm|mm|in|pc|pt|em|rem)$/],
             "padding": [ini, /^(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))( +(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))){0,3}$/],
             "margin": [ini, /^(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))( +(0|-?(\d+(\.\d+)?|\.\d+)(%|px|cm|mm|in|pc|pt|em|rem))){0,3}$/],
