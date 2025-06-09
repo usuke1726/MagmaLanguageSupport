@@ -1,6 +1,14 @@
 
 # Change Log
 
+## 0.10.1 - 2025-06-09
+
+- The Go to Definition feature now supports jumping to files that are to be loaded in the `load`, `@use`, and `@require` statements which target a single file.
+- Fixed a bug where `@use` statements in successive lines were not read correctly.
+- Fixed a bug where comment statements specific to notebooks containing line breaks (e.g. `// \n@use`) were incorrectly treated as valid.
+- Fixed a bug where `@file` documentation was unavailable in a notebook cell.
+- Fixed a bug that prevented images with relative or http/https URLs from being displayed in notebook-html.
+
 ## 0.10.0 - 2025-06-06
 
 - `load` and `@require` now support absolute path and relative path not starting `@/` or `./`.
