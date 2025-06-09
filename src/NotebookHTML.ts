@@ -20,6 +20,7 @@ md.use(mathEscaper);
 const isInvalidImg = (frame: sanitizeHtml.IFrame) => (
     frame.tag === "img" &&
     typeof frame.attribs.src === "string" &&
+    frame.attribs.src.startsWith("data:") &&
     !/^data:image\/(png|jpeg|gif|webp|apng|avif);/i.test(frame.attribs.src)
 );
 
@@ -65,7 +66,7 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
     },
     allowedSchemes: ["http", "https", "mailto"],
     allowedSchemesByTag: {
-        img: ["data"]
+        img: ["http", "https", "data"]
     },
     exclusiveFilter: frame => {
         return isInvalidImg(frame);
