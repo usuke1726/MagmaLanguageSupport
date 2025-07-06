@@ -155,6 +155,9 @@ const htmlOriginalStyle = `
     p.outputs{
         margin-bottom: 0;
     }
+    #__{
+        display: none;
+    }
 </style>
 `;
 
