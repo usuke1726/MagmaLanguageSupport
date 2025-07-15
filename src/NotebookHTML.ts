@@ -37,8 +37,10 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
         ...sanitizeHtml.defaults.allowedAttributes,
         span: ["id", "class", "style"],
         div: ["id", "class", "style"],
-        td: ["style"],
-        th: ["style"],
+        table: ["class", "style"],
+        tr: ["class", "style"],
+        td: ["class", "style", "colspan", "rowspan"],
+        th: ["class", "style", "colspan", "rowspan"],
         details: ["open"],
         img: [ 'src', 'srcset', 'alt', 'title', 'width', 'height', 'loading', 'style' ],
     },
@@ -155,6 +157,15 @@ const htmlOriginalStyle = `
     p.outputs{
         margin-bottom: 0;
     }
+    :is(div, table).grids :is(th, td){
+        border: 1px solid;
+    }
+    :is(td, th) p:last-child{
+        margin-bottom: 0;
+    }
+    :where(table, tr).r :where(th, td), :is(th, td).r{ text-align: right; }
+    :where(table, tr).l :where(th, td), :is(th, td).l{ text-align: left; }
+    :where(table, tr).c :where(th, td), :is(th, td).c{ text-align: center; }
     #__{
         display: none;
     }
