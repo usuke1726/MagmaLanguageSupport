@@ -163,6 +163,18 @@ const htmlOriginalStyle = `
     :is(td, th) p:last-child{
         margin-bottom: 0;
     }
+    :is(table, div).apa tr > th{
+        border-top: 1px solid;
+    }
+    :is(table, div):is(.apa, .min) tr + tr > td{
+        border-top: none;
+    }
+    :is(table, div).apa.footer tr:last-child > td{
+        border-top: 1px solid rgba(0, 0, 0, 0.69);
+    }
+    :is(table, div).apa tr:last-child > td{
+        border-bottom: 1px solid rgba(0, 0, 0, 0.69);
+    }
     :where(table, tr).r :where(th, td), :is(th, td).r{ text-align: right; }
     :where(table, tr).l :where(th, td), :is(th, td).l{ text-align: left; }
     :where(table, tr).c :where(th, td), :is(th, td).c{ text-align: center; }
