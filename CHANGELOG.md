@@ -1,6 +1,12 @@
 
 # Change Log
 
+## 0.10.2 - 2025-07-15
+
+- Table layout adjustments in notebook-html markups:
+    - New table border styles: `min`, `apa`, `apa footer`, `grids` (use them as the class names of the div tags that wrap the tables)
+    - The attributes `colspan` and `rowspan` are now available.
+
 ## 0.10.1 - 2025-06-09
 
 - The Go to Definition feature now supports jumping to files that are to be loaded in the `load`, `@use`, and `@require` statements which target a single file.
