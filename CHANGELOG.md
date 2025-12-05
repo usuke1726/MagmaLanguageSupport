@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.10.3 - 2025-12-05
+
+- Updated dependent modules to fix vulnerabilities.
+
 ## 0.10.2 - 2025-07-15
 
 - Table layout adjustments in notebook-html markups:
