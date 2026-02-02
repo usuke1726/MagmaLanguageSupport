@@ -87,6 +87,9 @@
         }
       }
     ],
+    "configurationDefaults": {
+      "editor.colorDecorators": false
+    },
     "configuration": {
       "type": "object",
       "title": "MAGMA Language Support",
