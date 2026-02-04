@@ -1,6 +1,11 @@
 
 # Change Log
 
+## 0.10.4 - 2026-02-04
+
+- Updated a dependent module to fix a vulnerability.
+- Disabled color decorators.
+
 ## 0.10.3 - 2025-12-05
 
 - Updated dependent modules to fix vulnerabilities.
