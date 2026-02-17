@@ -1,6 +1,10 @@
 
 # Change Log
 
+## 0.10.5 - 2026-02-17
+
+- Updated dependent modules to fix vulnerabilities.
+
 ## 0.10.4 - 2026-02-04
 
 - Updated a dependent module to fix a vulnerability.
