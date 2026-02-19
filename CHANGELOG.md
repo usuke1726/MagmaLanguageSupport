@@ -1,6 +1,9 @@
 
 # Change Log
 
+## 0.11.0 - 2026-02-19
+- Added a new notebook controller that supports executions on local magma installation.
+
 ## 0.10.5 - 2026-02-17
 
 - Updated dependent modules to fix vulnerabilities.

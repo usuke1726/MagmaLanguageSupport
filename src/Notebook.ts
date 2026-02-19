@@ -3,6 +3,9 @@ import * as vscode from 'vscode';
 import * as xmldom from '@xmldom/xmldom';
 import * as http from "http";
 import * as https from "https";
+import { createServer, Server, Socket } from "net";
+import fs from "node:fs/promises";
+import path from "node:path";
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import getConfig from './config';
@@ -456,17 +459,444 @@ class Controller{
         exe.end(true);
     }
 };
+
+// Type for tracking active notebook runs in local Magma
+type ActiveNotebookRun = {
+    socket: Socket;
+    context: Promise<void> | undefined;
+    outputcell: vscode.NotebookCellExecution;
+    codeRunEnd: boolean;
+    header: string;
+    activeoutput: string;
+    cancelRequested: boolean;
+};
+
+type ActiveNotebooksRuns = {
+    [notebookId: string]: ActiveNotebookRun;
+};
+
+// Local Magma Controller - connects to local Magma installation
+class LocalMagmaController {
+    private readonly id: string;
+    private readonly type: string;
+    private readonly label = "Local Magma Notebook";
+    private readonly controller: vscode.NotebookController;
+    
+    readonly headerTrace: string = 'Type ? for help.  Type <Ctrl>-D to quit.';
+    readonly idEnd: string = "2CEAC29D938146F5B9BFD4F9A5A9DA02-END";
+    readonly delay = (ms: number | undefined) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    private server!: Server;
+    private magmaActiveRuns: ActiveNotebooksRuns = {};
+    private _executionOrder = 0;
+    private _app: string = "";
+    private _port: number = 9001;
+    private serverstarted: boolean = false;
+    private cells: vscode.NotebookCell[] = [];
+    private lastTimeBlocked: Date | undefined = undefined;
+    private overwrites: boolean = false;
+    private readonly delayMinutesAfterBlocked = 10;
+    private loadedCellIndexes = new Set<CellLocation>();
+
+    constructor(type: string) {
+        this.type = type;
+        this.id = `${type}-local-controller`;
+        this.controller = vscode.notebooks.createNotebookController(this.id, this.type, this.label);
+        vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
+        this.controller.supportedLanguages = ["magma"];
+        this.controller.supportsExecutionOrder = true;
+        this.controller.executeHandler = this.execute.bind(this);
+        this.controller.interruptHandler = this.interrupt.bind(this);
+    }
+
+    private _startMagmaServer(): Promise<void> {
+        return new Promise(async (resolve, reject) => {
+            let resolved = false;
+            const finalize = (started: boolean) => {
+                if (resolved) return;
+                resolved = true;
+                this.serverstarted = started;
+                resolve();
+            };
+            try{
+                this._app = await this.resolveMagmaExecutable();
+            }catch(e){
+                const mes = e instanceof Error ? e.message : String(e);
+                vscode.window.showErrorMessage(mes, "Go to Magma settings").then(sel => {
+                    if(sel === "Go to Magma settings"){
+                        vscode.commands.executeCommand("workbench.action.openSettings", "MagmaLanguageSupport.magmaPath");
+                    }
+                });
+                finalize(false);
+                return;
+            }
+            
+            this._port = getConfig().magmaServerPort;
+            
+            this.server = createServer((c: Socket) => {
+                const spawn = require('child_process').spawn;
+                const sh = spawn(this._app, []);
+                
+                sh.on('error', (err: string) => {
+                    c.write(`ERROR: ${String(err)}\n`);
+                    c.end();
+                });
+                
+                c.pipe(sh.stdin);
+                sh.stdout.pipe(c);
+                sh.stderr.pipe(c);
+            });
+            
+            this.server.listen(this._port);
+            finalize(true);
+        });
+    }
+
+    private async resolveMagmaExecutable(): Promise<string> {
+        const magmaPath = getConfig().magmaPath.trim();
+        if(!magmaPath){
+            throw new Error(getLocaleStringBody("message.Execute", "notConfiguredMagmaPath"));
+        }
+        const stat = await fs.stat(magmaPath).catch(() => undefined);
+        if(stat?.isFile()){
+            return magmaPath;
+        }
+        if(stat?.isDirectory()){
+            const exeName = process.platform === "win32" ? "magma.exe" : "magma";
+            const exePath = path.join(magmaPath, exeName);
+            const exeStat = await fs.stat(exePath).catch(() => undefined);
+            if(exeStat?.isFile()){
+                return exePath;
+            }
+        }
+        throw new Error(getLocaleStringBody("message.Execute", "notFoundMagmaPath"));
+    }
+
+    private _connectNewClient(notebookId: string): Promise<void> {
+        return new Promise(async (resolve, reject) => {
+            const socket = this.magmaActiveRuns[notebookId].socket;
+            socket.once('error', err => {
+                this.magmaActiveRuns[notebookId].codeRunEnd = true;
+                reject(err);
+            });
+            socket.on('close', () => {
+                this.magmaActiveRuns[notebookId].codeRunEnd = true;
+            });
+            socket.connect(this._port, '127.0.0.1', () => {
+                socket.setEncoding('utf-8');
+                socket.setNoDelay(true);
+                socket.on('data', (data: string) => {
+                    let chunk = data;
+                    if (chunk.indexOf(this.headerTrace) !== -1) {
+                        if (this.magmaActiveRuns[notebookId].header === "") {
+                            const idx = chunk.indexOf(this.headerTrace);
+                            this.magmaActiveRuns[notebookId].header = chunk.replace(/\r?\n|\r/g, "").replace(this.headerTrace, '');
+                            chunk = chunk.substring(idx + this.headerTrace.length);
+                        }
+                        chunk = chunk.replace(this.headerTrace, "");
+                    }
+                    if (this.magmaActiveRuns[notebookId].header === "" && chunk.indexOf(this.headerTrace) === -1) {
+                        return;
+                    }
+                    if (chunk.length) {
+                        this.magmaActiveRuns[notebookId].activeoutput += chunk;
+                        if (this.magmaActiveRuns[notebookId].activeoutput.includes(this.idEnd)) {
+                            this.magmaActiveRuns[notebookId].activeoutput = this.magmaActiveRuns[notebookId].activeoutput
+                                .replace('print("' + this.idEnd + '");', '')
+                                .replace(this.idEnd, "");
+                            this.magmaActiveRuns[notebookId].codeRunEnd = true;
+                        }
+                        this.magmaActiveRuns[notebookId].outputcell.replaceOutput([
+                            new vscode.NotebookCellOutput([
+                                vscode.NotebookCellOutputItem.text(this.magmaActiveRuns[notebookId].activeoutput)
+                            ])
+                        ]);
+                    }
+                });
+                socket.write("\n");
+                resolve();
+            });
+        });
+    }
+
+    private _runMagmaCode(notebookId: string, magmacode: string, token?: vscode.CancellationToken): Promise<void> {
+        return new Promise(async (resolve, reject) => {
+            if (magmacode.slice(-1) !== ";") {
+                magmacode += ";";
+            }
+            this.magmaActiveRuns[notebookId].codeRunEnd = false;
+            this.magmaActiveRuns[notebookId].socket.write(magmacode + '\nprint("' + this.idEnd + '");\r\n');
+            const start = Date.now();
+            while (!this.magmaActiveRuns[notebookId].codeRunEnd) {
+                if (token?.isCancellationRequested || this.magmaActiveRuns[notebookId].cancelRequested) {
+                    this.magmaActiveRuns[notebookId].codeRunEnd = true;
+                    break;
+                }
+                if (Date.now() - start > 60_000) {
+                    this.magmaActiveRuns[notebookId].codeRunEnd = true;
+                    break;
+                }
+                await this.delay(10);
+            }
+            resolve();
+        });
+    }
+
+    private clearLoadedCellIndexes() {
+        this.loadedCellIndexes.clear();
+    }
+
+    private async readBody(baseUri: vscode.Uri, body: string, currentIdx: number): Promise<string> {
+        let m: RegExpExecArray | null;
+        const usePattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@uses?[ \t]+([0-9]+|"[^"\n]+")[^\n]*(\n|$)/;
+        const appendPattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@append(Results?)?[^\n]*(\n|$)/;
+        const overwritePattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@overwrite(Results?)?[^\n]*(\n|$)/;
+        const cellIDPattern = /(?:^|(?<=\n))[ \t]*\/{2,}[ \t]+@cell[ \t]+"[^"\n]*"[^\n]*(\n|$)/;
+        
+        while (true) {
+            m = appendPattern.exec(body);
+            if (m) {
+                this.overwrites = false;
+                body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                continue;
+            }
+            m = overwritePattern.exec(body);
+            if (m) {
+                this.overwrites = true;
+                body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                continue;
+            }
+            m = cellIDPattern.exec(body);
+            if (m) {
+                body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                continue;
+            }
+            m = usePattern.exec(body);
+            if (m) {
+                Log("use hit", m[1]);
+                const location = (() => {
+                    if (m[1].startsWith('"')) {
+                        const id = m[1].slice(1, -1);
+                        return id || undefined;
+                    } else {
+                        const idx = Number(m[1]);
+                        return Number.isFinite(idx) ? idx : undefined;
+                    }
+                })();
+                if (isCellLocation(location)) {
+                    if (this.loadedCellIndexes.has(location)) {
+                        const id = typeof location === "string" ? `id "${location}"` : `${location}`;
+                        Output(`Circular reference ${id}\n\t(from: ${currentIdx})`);
+                        throw new Error(getLocaleString("circularReference", id, currentIdx));
+                    } else {
+                        const cell = findCellOfLocation(this.cells, location);
+                        if (cell) {
+                            body = body.substring(0, m.index)
+                                + "\n" + (await this.load(this.cells[cell.index])) + "\n"
+                                + body.substring(m.index + m[0].length);
+                        } else {
+                            const id = typeof location === "string" ? `id "${location}"` : `${location}`;
+                            throw new Error(getLocaleString("cellNotFound", id));
+                        }
+                    }
+                } else {
+                    body = body.substring(0, m.index) + body.substring(m.index + m[0].length);
+                }
+                continue;
+            }
+            break;
+        }
+        return load(baseUri, body);
+    }
+
+    private async load(cell: vscode.NotebookCell): Promise<string> {
+        Log(`load cell ${cell.index}`);
+        const idx = cell.index;
+        this.loadedCellIndexes.add(idx);
+        const body = cell.document.getText().replaceAll("\r", "");
+        return this.readBody(cell.document.uri, body, idx);
+    }
+
+    async loadForPreview(cell: vscode.NotebookCell): Promise<string> {
+        this.clearLoadedCellIndexes();
+        this.cells = cell.notebook.getCells();
+        return this.load(cell);
+    }
+
+    async execute(cells: vscode.NotebookCell[], notebook: vscode.NotebookDocument, controller: vscode.NotebookController) {
+        Log("LOCAL MAGMA EXECUTE");
+        Log(cells);
+        if (!cells.length) return;
+        this.cells = notebook.getCells();
+        const cell = cells.length > 1 ? cells[cells.length - 1] : cells[0];
+        const exe = controller.createNotebookCellExecution(cell);
+        this.overwrites = getConfig().notebookOutputResultMode === "overwrite";
+        
+        const [code, success] = await (async () => {
+            try {
+                this.clearLoadedCellIndexes();
+                const code = await this.load(cell);
+                Log(code);
+                return [code, true];
+            } catch (e) {
+                const mes = (e instanceof Error) ? e.message : String(e);
+                vscode.window.showErrorMessage(`${getLocaleStringBody("message.Loader", "failed")}\n${mes}`);
+                return ["", false];
+            }
+        })();
+        
+        exe.start(Date.now());
+        if (!success) {
+            exe.end(false);
+            return;
+        }
+        if (this.overwrites) exe.clearOutput();
+        
+        if (!code.trim()) {
+            exe.end(true, Date.now());
+            return;
+        }
+        
+        await this._doExecution(cell, notebook, exe, code);
+    }
+
+    private async _doExecution(
+        cell: vscode.NotebookCell,
+        notebook: vscode.NotebookDocument,
+        execution: vscode.NotebookCellExecution,
+        code: string
+    ): Promise<void> {
+        execution.executionOrder = ++this._executionOrder;
+        let notebookid = notebook.uri.toString(true);
+        const cancelHandler = execution.token.onCancellationRequested(() => {
+            this._interruptNotebook(notebookid);
+        });
+        
+        if (!this.serverstarted) {
+            await this._startMagmaServer();
+        }
+        
+        if (this.serverstarted) {
+            if (this.magmaActiveRuns[notebookid] === undefined) {
+                this.magmaActiveRuns[notebookid] = {
+                    socket: new Socket(),
+                    context: undefined,
+                    outputcell: execution,
+                    codeRunEnd: true,
+                    header: "",
+                    activeoutput: "",
+                    cancelRequested: false
+                };
+                
+                this.magmaActiveRuns[notebookid].context = this._connectNewClient(notebookid)
+                    .then(() => this._runMagmaCode(notebookid, "SetAutoColumns(false);SetColumns(1000);"))
+                    .catch(err => {
+                        this.magmaActiveRuns[notebookid].codeRunEnd = true;
+                        this.magmaActiveRuns[notebookid].cancelRequested = true;
+                        execution.appendOutput(new vscode.NotebookCellOutput([
+                            vscode.NotebookCellOutputItem.text(String(err))
+                        ]));
+                        execution.end(false, Date.now());
+                    });
+            }
+            
+            this.magmaActiveRuns[notebookid].cancelRequested = false;
+            this.magmaActiveRuns[notebookid].activeoutput = "";
+            this.magmaActiveRuns[notebookid].outputcell = execution;
+            this.magmaActiveRuns[notebookid].outputcell.clearOutput();
+            
+            this.magmaActiveRuns[notebookid].context = this.magmaActiveRuns[notebookid].context!
+                .then(() => this._runMagmaCode(notebookid, code, execution.token)
+                    .then(() => {
+                        if (execution.token.isCancellationRequested || this.magmaActiveRuns[notebookid].cancelRequested) {
+                            execution.end(false, Date.now());
+                        } else {
+                            execution.end(true, Date.now());
+                        }
+                    })
+                ).catch(err => {
+                    execution.appendOutput(new vscode.NotebookCellOutput([
+                        vscode.NotebookCellOutputItem.text(String(err))
+                    ]));
+                    execution.end(false, Date.now());
+                }).finally(() => {
+                    cancelHandler.dispose();
+                });
+        } else {
+            execution.end(false);
+            let goToSetting = 'Go to Magma settings';
+            vscode.window.showErrorMessage(
+                'Unable to start the "Magma" interpreter.' + "\r\n" + 'Please revise the corresponding settings.',
+                goToSetting
+            ).then(selection => {
+                if (selection === goToSetting) {
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'magma');
+                }
+            });
+            cancelHandler.dispose();
+        }
+    }
+
+    private _interruptNotebook(notebookId: string) {
+        const run = this.magmaActiveRuns[notebookId];
+        if (!run) return;
+        run.cancelRequested = true;
+        try {
+            run.socket.write("\x03");
+        } catch {
+            // ignore
+        }
+        try {
+            run.outputcell.end(false, Date.now());
+        } catch {
+            // ignore
+        }
+    }
+
+    private interrupt(notebook: vscode.NotebookDocument): void {
+        const notebookId = notebook.uri.toString(true);
+        const run = this.magmaActiveRuns[notebookId];
+        if (!run) return;
+        run.cancelRequested = true;
+        try {
+            run.socket.write("\x03");
+        } catch {
+            // ignore
+        }
+    }
+
+    removeOutputs(cell: vscode.NotebookCell, indices: number[]) {
+        const newOutputs = cell.outputs.filter((_o, idx) => !indices.includes(idx));
+        const exe = this.controller.createNotebookCellExecution(cell);
+        exe.start();
+        exe.replaceOutput(newOutputs);
+        exe.end(true);
+    }
+
+    public clean() {
+        if (this.server) {
+            this.server.unref();
+        }
+    }
+}
+
 const controller: Controller = new Controller(ID);
 const HTMLcontroller: Controller = new Controller(HTML_ID);
+const localController: LocalMagmaController = new LocalMagmaController(ID);
+const HTMLLocalController: LocalMagmaController = new LocalMagmaController(HTML_ID);
 
-const controllerFromCell = (cell: vscode.NotebookCell) => {
+const controllerFromCell = (cell: vscode.NotebookCell): Controller | LocalMagmaController | undefined => {
     const type = cell.notebook.notebookType;
-    if(type === ID) return controller;
-    else if(type === HTML_ID) return HTMLcontroller;
-    else{
+    const backend = getConfig().notebookBackend;
+    
+    if (type === ID) {
+        return backend === "local" ? localController : controller;
+    } else if (type === HTML_ID) {
+        return backend === "local" ? HTMLLocalController : HTMLcontroller;
+    } else {
         vscode.window.showErrorMessage(`${type} は無効です．`);
         return undefined;
-    };
+    }
 }
 
 const removeCellOutput = async (cell: vscode.NotebookCell) => {
