@@ -1,10 +1,9 @@
 
-import { mathjax } from "mathjax-full/js/mathjax.js";
-import { TeX } from "mathjax-full/js/input/tex.js";
-import { SVG } from "mathjax-full/js/output/svg.js";
-import { liteAdaptor } from "mathjax-full/js/adaptors/liteAdaptor.js";
-import { RegisterHTMLHandler } from "mathjax-full/js/handlers/html.js";
-import { AllPackages } from "mathjax-full/js/input/tex/AllPackages.js";
+import { mathjax } from "@mathjax/src/js/mathjax.js";
+import { TeX } from "@mathjax/src/js/input/tex.js";
+import { SVG } from "@mathjax/src/js/output/svg.js";
+import { liteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
+import { RegisterHTMLHandler } from "@mathjax/src/js/handlers/html.js";
 import getConfig from "./config";
 import LogObject from './Log';
 import DocumentParser from "./DocumentParser";
@@ -14,7 +13,6 @@ const adaptor = liteAdaptor();
 RegisterHTMLHandler(adaptor);
 
 const tex = new TeX({
-    packages: AllPackages,
 });
 const svg = new SVG({
     fontCache: 'none'
