@@ -1,7 +1,7 @@
 
 # Change Log
 
-## 0.11.0 - 2026-02-19
+## 0.11.0 - 2026-03-03
 
 - Added a new notebook controller that supports executions on local magma installation. Thanks [@admkopec](https://github.com/admkopec)! (via [#1](https://github.com/usuke1726/MagmaLanguageSupport/pull/1))
     - To enable this feature, change the kernel of notebook to `Local Magma Notebook`.
