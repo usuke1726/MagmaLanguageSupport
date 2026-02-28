@@ -298,16 +298,6 @@
           "default": true,
           "markdownDescription": "%config.notebookSeparatesWithHorizontalLines%"
         },
-        "MagmaLanguageSupport.notebookBackend": {
-          "type": "string",
-          "default": "online",
-          "enum": ["online", "local"],
-          "enumDescriptions": [
-            "%config.notebookBackend.online%",
-            "%config.notebookBackend.local%"
-          ],
-          "markdownDescription": "%config.notebookBackend%"
-        },
         "MagmaLanguageSupport.useHttps": {
           "type": "boolean",
           "default": true,

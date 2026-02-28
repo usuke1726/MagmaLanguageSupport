@@ -111,9 +111,6 @@ const formatEnabledDefinition = (types: UserDefinedEnabledDefinition): EnableDef
 const MathRenderingTypes = ["fetch:math-api", "fetch:TeX-SVG-Worker", "embedding"] as const;
 type MathRenderingTypes = typeof MathRenderingTypes[number];
 
-const NotebookBackendTypes = ["online", "local"] as const;
-type NotebookBackendTypes = typeof NotebookBackendTypes[number];
-
 type Config = {
     completionTypes: CompletionTypes;
     intrinsicCompletionAliases: { [alias: string]: string },
@@ -131,7 +128,6 @@ type Config = {
     notebookOutputResultMode: "append" | "overwrite";
     notebookDisablesVim: boolean;
     notebookSeparatesWithHorizontalLines: boolean;
-    notebookBackend: NotebookBackendTypes;
     useHttps: boolean;
     magmaPath: string;
     magmaServerPort: number;
@@ -159,7 +155,6 @@ const defaultConfig: Config = {
     notebookOutputResultMode: "append",
     notebookDisablesVim: false,
     notebookSeparatesWithHorizontalLines: true,
-    notebookBackend: "online",
     useHttps: true,
     magmaPath: "",
     magmaServerPort: 9001,
@@ -185,7 +180,6 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     notebookOutputResultMode: val => val === "append" || val === "overwrite",
     notebookDisablesVim: val => typeof val === "boolean",
     notebookSeparatesWithHorizontalLines: val => typeof val === "boolean",
-    notebookBackend: val => typeof val === "string" && ([...NotebookBackendTypes] as string[]).includes(val),
     useHttps: val => typeof val === "boolean",
     magmaPath: val => typeof val === "string",
     magmaServerPort: val => typeof val === "number",

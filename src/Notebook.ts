@@ -20,6 +20,7 @@ const getLocaleString = getLocaleStringBody.bind(undefined, "message.Notebook");
 
 const ID = "magma-calculator-notebook";
 const HTML_ID = "magma-calculator-notebook-html";
+const selectedControllers: {[uri: string]: "local" | "online"} = {}
 
 const isNoteBookCellKind = (obj: any): obj is vscode.NotebookCellKind => {
     return obj === 1 || obj === 2;
@@ -231,6 +232,13 @@ class Controller{
         vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
         this.controller.supportedLanguages = ["magma"];
         this.controller.executeHandler = this.execute.bind(this);
+        this.controller.onDidChangeSelectedNotebooks(e => {
+            if(e.selected){
+                Log(`online controller selected`);
+                const uri = e.notebook.uri.toString(true);
+                selectedControllers[uri] = "online";
+            }
+        });
     }
     private clearLoadedCellIndexes(){
         this.loadedCellIndexes.clear();
@@ -506,6 +514,13 @@ class LocalMagmaController {
         this.controller.supportsExecutionOrder = true;
         this.controller.executeHandler = this.execute.bind(this);
         this.controller.interruptHandler = this.interrupt.bind(this);
+        this.controller.onDidChangeSelectedNotebooks(e => {
+            if(e.selected){
+                Log(`local controller selected`);
+                const uri = e.notebook.uri.toString(true);
+                selectedControllers[uri] = "local";
+            }
+        });
     }
 
     private _startMagmaServer(): Promise<void> {
@@ -885,15 +900,23 @@ const localController: LocalMagmaController = new LocalMagmaController(ID);
 const HTMLLocalController: LocalMagmaController = new LocalMagmaController(HTML_ID);
 
 const controllerFromCell = (cell: vscode.NotebookCell): Controller | LocalMagmaController | undefined => {
-    const type = cell.notebook.notebookType;
-    const backend = getConfig().notebookBackend;
-    
-    if (type === ID) {
-        return backend === "local" ? localController : controller;
-    } else if (type === HTML_ID) {
-        return backend === "local" ? HTMLLocalController : HTMLcontroller;
-    } else {
-        vscode.window.showErrorMessage(`${type} は無効です．`);
+    const notebook = cell.notebook;
+    const type = notebook.notebookType;
+    const backend = selectedControllers[notebook.uri.toString(true)];
+    const errorInvalidType = () => {
+        vscode.window.showErrorMessage(`invalid type: ${type}`);
+        return undefined;
+    }
+    if(backend === "online"){
+        if(type === ID) return controller;
+        if(type === HTML_ID) return HTMLcontroller;
+        return errorInvalidType();
+    }else if(backend === "local"){
+        if(type === ID) return localController;
+        if(type === HTML_ID) return HTMLLocalController;
+        return errorInvalidType();
+    }else{
+        vscode.window.showErrorMessage(`Failed to fetch the kernel. Please reopen this file.`);
         return undefined;
     }
 }
@@ -1068,6 +1091,10 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(HTML_ID, new HTMLSerializer()));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
+    vscode.workspace.onDidCloseNotebookDocument(e => {
+        const uri = e.uri.toString(true);
+        delete selectedControllers[uri];
+    });
     vscode.workspace.onDidChangeNotebookDocument(async e => {
         if(![ID, HTML_ID].includes(e.notebook.notebookType)) return;
         const [oneAdded, addedCellIndex] = oneCellAdded(e);
