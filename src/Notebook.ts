@@ -861,15 +861,6 @@ class LocalMagmaController {
                 });
         } else {
             execution.end(false);
-            let goToSetting = 'Go to Magma settings';
-            vscode.window.showErrorMessage(
-                'Unable to start the "Magma" interpreter.' + "\r\n" + 'Please revise the corresponding settings.',
-                goToSetting
-            ).then(selection => {
-                if (selection === goToSetting) {
-                    vscode.commands.executeCommand('workbench.action.openSettings', 'magma');
-                }
-            });
             cancelHandler.dispose();
         }
     }
