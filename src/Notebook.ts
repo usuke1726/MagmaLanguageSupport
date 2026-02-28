@@ -229,7 +229,6 @@ class Controller{
         this.type = type;
         this.id = `${type}-controller`;
         this.controller = vscode.notebooks.createNotebookController(this.id, this.type, this.label);
-        vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
         this.controller.supportedLanguages = ["magma"];
         this.controller.executeHandler = this.execute.bind(this);
         this.controller.onDidChangeSelectedNotebooks(e => {
@@ -509,7 +508,6 @@ class LocalMagmaController {
         this.type = type;
         this.id = `${type}-local-controller`;
         this.controller = vscode.notebooks.createNotebookController(this.id, this.type, this.label);
-        vscode.notebooks.registerNotebookCellStatusBarItemProvider(this.type, new Status());
         this.controller.supportedLanguages = ["magma"];
         this.controller.supportsExecutionOrder = true;
         this.controller.executeHandler = this.execute.bind(this);
@@ -1091,6 +1089,8 @@ const setNotebookProviders = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(HTML_ID, new HTMLSerializer()));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
+    vscode.notebooks.registerNotebookCellStatusBarItemProvider(ID, new Status());
+    vscode.notebooks.registerNotebookCellStatusBarItemProvider(HTML_ID, new Status());
     vscode.workspace.onDidCloseNotebookDocument(e => {
         const uri = e.uri.toString(true);
         delete selectedControllers[uri];
