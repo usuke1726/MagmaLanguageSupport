@@ -477,6 +477,7 @@ type ActiveNotebookRun = {
     header: string;
     activeoutput: string;
     cancelRequested: boolean;
+    previousOutpus: vscode.NotebookCellOutput[];
 };
 
 type ActiveNotebooksRuns = {
@@ -619,6 +620,7 @@ class LocalMagmaController {
                             this.magmaActiveRuns[notebookId].codeRunEnd = true;
                         }
                         this.magmaActiveRuns[notebookId].outputcell.replaceOutput([
+                            ...this.magmaActiveRuns[notebookId].previousOutpus,
                             new vscode.NotebookCellOutput([
                                 vscode.NotebookCellOutputItem.text(this.magmaActiveRuns[notebookId].activeoutput)
                             ])
@@ -797,7 +799,8 @@ class LocalMagmaController {
                     codeRunEnd: true,
                     header: "",
                     activeoutput: "",
-                    cancelRequested: false
+                    cancelRequested: false,
+                    previousOutpus: this.overwrites ? [] : [... cell.outputs],
                 };
                 
                 this.magmaActiveRuns[notebookid].context = this._connectNewClient(notebookid)
@@ -810,12 +813,13 @@ class LocalMagmaController {
                         ]));
                         execution.end(false, Date.now());
                     });
+            }else{
+                this.magmaActiveRuns[notebookid].previousOutpus = this.overwrites ? [] : [... cell.outputs];
             }
             
             this.magmaActiveRuns[notebookid].cancelRequested = false;
             this.magmaActiveRuns[notebookid].activeoutput = "";
             this.magmaActiveRuns[notebookid].outputcell = execution;
-            this.magmaActiveRuns[notebookid].outputcell.clearOutput();
             
             this.magmaActiveRuns[notebookid].context = this.magmaActiveRuns[notebookid].context!
                 .then(() => this._runMagmaCode(notebookid, code, execution.token)
