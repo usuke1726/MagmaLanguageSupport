@@ -118,7 +118,6 @@
     "message.Completion.notebookStyleTag.dummy": "Insert the dummy tag. The contents of this tag will not be displayed when the file is viewed as HTML in a browser.",
     "message.Execute.notConfiguredMagmaPath": "The configuration magmaPath is not set.",
     "message.Execute.notFoundMagmaPath": "The Magma executable file was not found.",
-    "message.Execute.MagmaPathIsNotFile": "The magmaPath is not file.",
     "message.Execute.goToSettings": "Go to settings",
     "message.Execute.InputBoxPlaceHolder": "file name",
     "message.Execute.InputBoxPrompt": "Destination of execution results",

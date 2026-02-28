@@ -1,11 +1,12 @@
 
 import * as vscode from 'vscode';
 import * as xmldom from '@xmldom/xmldom';
-import * as http from "http";
-import * as https from "https";
-import { createServer, Server, Socket } from "net";
+import * as http from "node:http";
+import * as https from "node:https";
+import { createServer, Server, Socket } from "node:net";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { spawn } from 'node:child_process';
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import getConfig from './config';
@@ -493,9 +494,7 @@ class LocalMagmaController {
     private _port: number = 9001;
     private serverstarted: boolean = false;
     private cells: vscode.NotebookCell[] = [];
-    private lastTimeBlocked: Date | undefined = undefined;
     private overwrites: boolean = false;
-    private readonly delayMinutesAfterBlocked = 10;
     private loadedCellIndexes = new Set<CellLocation>();
 
     constructor(type: string) {
@@ -522,8 +521,9 @@ class LocalMagmaController {
                 this._app = await this.resolveMagmaExecutable();
             }catch(e){
                 const mes = e instanceof Error ? e.message : String(e);
-                vscode.window.showErrorMessage(mes, "Go to Magma settings").then(sel => {
-                    if(sel === "Go to Magma settings"){
+                const goToSettings = getLocaleStringBody("message.Execute", "goToSettings");
+                vscode.window.showErrorMessage(mes, goToSettings).then(val => {
+                    if(val === goToSettings){
                         vscode.commands.executeCommand("workbench.action.openSettings", "MagmaLanguageSupport.magmaPath");
                     }
                 });
@@ -534,7 +534,6 @@ class LocalMagmaController {
             this._port = getConfig().magmaServerPort;
             
             this.server = createServer((c: Socket) => {
-                const spawn = require('child_process').spawn;
                 const sh = spawn(this._app, []);
                 
                 sh.on('error', (err: string) => {

@@ -118,7 +118,6 @@
     "message.Completion.notebookStyleTag.dummy": "ダミーの特殊タグを挿入します．このタグの中身はHTMLとしてブラウザで開く際に表示されません．",
     "message.Execute.notConfiguredMagmaPath": "magmaPathが設定されていません",
     "message.Execute.notFoundMagmaPath": "Magmaの実行ファイルが見つかりません",
-    "message.Execute.MagmaPathIsNotFile": "Magmaのパスがファイルではありません",
     "message.Execute.goToSettings": "設定を開く",
     "message.Execute.InputBoxPlaceHolder": "ファイル名",
     "message.Execute.InputBoxPrompt": "実行結果の保存先",
