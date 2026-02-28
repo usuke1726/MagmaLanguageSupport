@@ -86,6 +86,7 @@
     "message.Notebook.selectRemovingOutputs": "削除する出力を選択してください",
     "message.Notebook.buttonRemovingOutputs": "結果を削除",
     "message.Notebook.calledOnNonMagmaNotebookFile": "Magmaノートブックでのみ実行できるコマンドです．",
+    "message.Notebook.failedToLaunchMagma": "Magmaの起動に失敗しました．",
     "message.DisableVim.suggestsReloading": "notebookDisablesVimの変更を正常に行うためにウィンドウの再読み込みをお勧めします．",
     "message.DisableVim.reload": "ウィンドウの再読み込み",
     "message.Completion.append": "これまでの実行結果を削除しないようにします．\\\n(実行結果を追加していきます)",

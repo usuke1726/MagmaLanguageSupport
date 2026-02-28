@@ -501,6 +501,7 @@ class LocalMagmaController {
     private _app: string = "";
     private _port: number = 9001;
     private serverstarted: boolean = false;
+    private errorOnLaunchMagma: boolean = false;
     private cells: vscode.NotebookCell[] = [];
     private overwrites: boolean = false;
     private loadedCellIndexes = new Set<CellLocation>();
@@ -523,6 +524,7 @@ class LocalMagmaController {
     }
 
     private _startMagmaServer(): Promise<void> {
+        this.errorOnLaunchMagma = false;
         return new Promise(async (resolve, reject) => {
             let resolved = false;
             const finalize = (started: boolean) => {
@@ -548,16 +550,28 @@ class LocalMagmaController {
             this._port = getConfig().magmaServerPort;
             
             this.server = createServer((c: Socket) => {
-                const sh = spawn(this._app, []);
-                
-                sh.on('error', (err: string) => {
-                    c.write(`ERROR: ${String(err)}\n`);
+                try{
+                    const sh = spawn(this._app, []);
+                    
+                    sh.on('error', (err: string) => {
+                        c.write(`ERROR: ${String(err)}\n`);
+                        c.end();
+                    });
+                    
+                    c.pipe(sh.stdin);
+                    sh.stdout.pipe(c);
+                    sh.stderr.pipe(c);
+                }catch(e){
+                    const mes = e instanceof Error ? e.message : String(e);
+                    const erroMes = `Failed to spawn magma (path: \"${this._app}\") - ${mes}`
+                    Log(erroMes);
+                    Output(erroMes);
+                    vscode.window.showErrorMessage(getLocaleString("failedToLaunchMagma"));
+                    this.errorOnLaunchMagma = true;
                     c.end();
-                });
-                
-                c.pipe(sh.stdin);
-                sh.stdout.pipe(c);
-                sh.stderr.pipe(c);
+                    this.server.close();
+                    this.serverstarted = false;
+                }
             });
             
             this.server.listen(this._port);
@@ -642,6 +656,10 @@ class LocalMagmaController {
             this.magmaActiveRuns[notebookId].socket.write(magmacode + '\nprint("' + this.idEnd + '");\r\n');
             const start = Date.now();
             while (!this.magmaActiveRuns[notebookId].codeRunEnd) {
+                if(this.errorOnLaunchMagma){
+                    this.magmaActiveRuns[notebookId].codeRunEnd = true;
+                    break;
+                }
                 if (token?.isCancellationRequested || this.magmaActiveRuns[notebookId].cancelRequested) {
                     this.magmaActiveRuns[notebookId].codeRunEnd = true;
                     break;
@@ -824,7 +842,10 @@ class LocalMagmaController {
             this.magmaActiveRuns[notebookid].context = this.magmaActiveRuns[notebookid].context!
                 .then(() => this._runMagmaCode(notebookid, code, execution.token)
                     .then(() => {
-                        if (execution.token.isCancellationRequested || this.magmaActiveRuns[notebookid].cancelRequested) {
+                        if(this.errorOnLaunchMagma){
+                            delete this.magmaActiveRuns[notebookid];
+                            execution.end(false);
+                        } else if (execution.token.isCancellationRequested || this.magmaActiveRuns[notebookid].cancelRequested) {
                             execution.end(false, Date.now());
                         } else {
                             execution.end(true, Date.now());

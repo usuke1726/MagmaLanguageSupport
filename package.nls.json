@@ -86,6 +86,7 @@
     "message.Notebook.selectRemovingOutputs": "Please select the indices of the outputs to be removed.",
     "message.Notebook.buttonRemovingOutputs": "Remove the Outputs",
     "message.Notebook.calledOnNonMagmaNotebookFile": "This command is only available on Magma notebooks.",
+    "message.Notebook.failedToLaunchMagma": "Error: Failed to launch the magma process.",
     "message.DisableVim.suggestsReloading": "Window reloading is recommended to change the configuration notebookDisablesVim successfully.",
     "message.DisableVim.reload": "Reload the window",
     "message.Completion.append": "Appends execution results, not deletes previous results.",
