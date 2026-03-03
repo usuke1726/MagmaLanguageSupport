@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import LogObject from './Log';
 import getLocaleStringBody from './locale';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { getMagmaDocument, load } from './Loader';
 import getConfig from './config';
@@ -13,21 +14,24 @@ const getLoaderLocaleString = getLocaleStringBody.bind(undefined, "message.Loade
 const getRedirectTypeLocaleString = getLocaleStringBody.bind(undefined, "config.redirectsStderr");
 
 
-const validatePath = async (path: string) => {
-    if(!path.trim()){
+const resolvePath = async (magmaPath: string): Promise<string> => {
+    if(!magmaPath.trim()){
         throw new Error(getLocaleString("notConfiguredMagmaPath"));
     }
-    Log(path);
-    const status = await (async () => {
-        try{
-            return await fs.stat(path);
-        }catch{
-            throw new Error(getLocaleString("notFoundMagmaPath"));
-        }
-    })();
-    if(!status.isFile()){
-        throw new Error("MagmaPathIsNotFile");
+    Log(magmaPath);
+    const status = await fs.stat(magmaPath).catch(() => undefined);
+    if(status?.isFile()){
+        return magmaPath;
     }
+    if(status?.isDirectory()){
+        const exeName = process.platform === "win32" ? "magma.exe" : "magma";
+        const exePath = path.join(magmaPath, exeName);
+        const exeStat = await fs.stat(exePath).catch(() => undefined);
+        if(exeStat?.isFile()){
+            return exePath;
+        }
+    }
+    throw new Error(getLocaleString("notFoundMagmaPath"));
 };
 
 const basename = (uri: vscode.Uri): string => {
@@ -49,8 +53,9 @@ const main = async () => {
     const uri = document.uri;
     const {magmaPath, redirectsStderr} = getConfig();
     let errType = redirectsStderr;
+    let exePath;
     try{
-        await validatePath(magmaPath);
+        exePath = await resolvePath(magmaPath.trim());
     }catch(e){
         const mes = e instanceof Error ? e.message : String(e);
         const goToSettings = getLocaleString("goToSettings");
@@ -128,7 +133,7 @@ const main = async () => {
                 case "no": return undefined;
             }
         })() ?? "ignore";
-        const proc = spawn(magmaPath, [], {
+        const proc = spawn(exePath, [], {
             stdio: ["pipe", fd, errfd],
             env: {
                 ...process.env,

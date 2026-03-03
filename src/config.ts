@@ -130,6 +130,7 @@ type Config = {
     notebookSeparatesWithHorizontalLines: boolean;
     useHttps: boolean;
     magmaPath: string;
+    magmaServerPort: number;
     redirectsStderr: "yes" | "separately" | "select" | "no";
     useMath: boolean;
     mathRenderingType: MathRenderingTypes;
@@ -156,6 +157,7 @@ const defaultConfig: Config = {
     notebookSeparatesWithHorizontalLines: true,
     useHttps: true,
     magmaPath: "",
+    magmaServerPort: 9001,
     redirectsStderr: "select",
     useMath: false,
     mathRenderingType: "embedding",
@@ -180,6 +182,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     notebookSeparatesWithHorizontalLines: val => typeof val === "boolean",
     useHttps: val => typeof val === "boolean",
     magmaPath: val => typeof val === "string",
+    magmaServerPort: val => typeof val === "number",
     redirectsStderr: val => typeof val === "string" && ["yes", "separately", "select", "no"].includes(val),
     useMath: val => typeof val === "boolean",
     mathRenderingType: val => typeof val === "string" && ([...MathRenderingTypes] as string[]).includes(val),

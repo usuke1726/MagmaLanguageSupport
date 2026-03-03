@@ -2,7 +2,7 @@
   "name": "magma-language-support",
   "displayName": "MAGMA Language Support & IntelliSense",
   "description": "Magma Language Support for Visual Studio Code",
-  "version": "0.10.6",
+  "version": "0.11.0",
   "license": "MIT",
   "publisher": "usuke1726",
   "repository": {
@@ -309,6 +309,12 @@
           "default": "",
           "scope": "machine",
           "markdownDescription": "%config.magmaPath%"
+        },
+        "MagmaLanguageSupport.magmaServerPort": {
+          "type": "number",
+          "default": 9001,
+          "scope": "machine",
+          "markdownDescription": "%config.magmaServerPort%"
         },
         "MagmaLanguageSupport.redirectsStderr": {
           "type": "string",

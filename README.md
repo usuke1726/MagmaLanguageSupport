@@ -285,11 +285,26 @@ Default is `false`.
 - The processes will continue to run even after this extension is deactivated or this window is closed.
 - You must configure the Magma path with the setting `MagmaLanguageSupport.magmaPath`.
 
+#### Notebook support
+
+- From version 0.11.0, the notebook now can use local magma installation.
+- To enable this feature, change the kernel of notebook to `Local Magma Notebook`:
+    1. Open your magma notebook.
+    1. Press the "Select Kernel" or "Magma Calculator Notebook" button.
+    1. Select `MAGMA Language Support & IntelliSense` as a kernel source. (If the prompt is not for selecting the kernel source, choose `Select Another Kernel...`)
+    1. Select the above kernel.
+
 #### Settings
 
 `MagmaLanguageSupport.magmaPath`
 
 The absolute path of magma.
+
+`MagmaLanguageSupport.magmaServerPort`
+
+The server port for sending and receiving code and output with the local Magma process when using `Local Magma Notebook` kernel.
+
+Default is `9001`.
 
 `MagmaLanguageSupport.redirectsStderr`
 
