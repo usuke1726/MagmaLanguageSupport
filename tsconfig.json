@@ -4,6 +4,7 @@
 		"target": "ES2022",
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
+		"types": ["node"],
 		"lib": [
 			"ES2022"
 		],
