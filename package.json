@@ -88,7 +88,9 @@
       }
     ],
     "configurationDefaults": {
-      "editor.colorDecorators": false
+      "[magma]": {
+        "editor.defaultColorDecorators": "never"
+      }
     },
     "configuration": {
       "type": "object",
