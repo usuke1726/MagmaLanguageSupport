@@ -279,6 +279,18 @@
           "scope": "machine",
           "markdownDescription": "%config.trustAllFiles%"
         },
+        "MagmaLanguageSupport.notebookKernelType": {
+          "type": "string",
+          "enum": ["online", "local", "both"],
+          "default": "both",
+          "scope": "machine",
+          "enumDescriptions": [
+            "%config.notebookKernelType.online%",
+            "%config.notebookKernelType.local%",
+            "%config.notebookKernelType.both%"
+          ],
+          "markdownDescription": "%config.notebookKernelType%"
+        },
         "MagmaLanguageSupport.notebookSavesOutputs": {
           "type": "boolean",
           "default": true,

@@ -124,6 +124,7 @@ type Config = {
     trustedPaths: string[];
     trustDirectoriesOfOpenFiles: boolean;
     trustAllFiles: boolean;
+    notebookKernelType: "online" | "local" | "both";
     notebookSavesOutputs: boolean;
     notebookOutputResultMode: "append" | "overwrite";
     notebookDisablesVim: boolean;
@@ -151,6 +152,7 @@ const defaultConfig: Config = {
     trustedPaths: [],
     trustDirectoriesOfOpenFiles: true,
     trustAllFiles: false,
+    notebookKernelType: "both",
     notebookSavesOutputs: true,
     notebookOutputResultMode: "append",
     notebookDisablesVim: false,
@@ -176,6 +178,7 @@ const conditions: {[key in ConfigKey]: (val: unknown) => boolean} = {
     trustedPaths: val => Array.isArray(val) && val.every(v => typeof v === "string"),
     trustDirectoriesOfOpenFiles: val => typeof val === "boolean",
     trustAllFiles: val => typeof val === "boolean",
+    notebookKernelType: val => typeof val === "string" && ["online", "local", "both"].includes(val),
     notebookSavesOutputs: val => typeof val === "boolean",
     notebookOutputResultMode: val => val === "append" || val === "overwrite",
     notebookDisablesVim: val => typeof val === "boolean",

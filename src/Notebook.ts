@@ -908,10 +908,21 @@ class LocalMagmaController {
     }
 }
 
-const controller: Controller = new Controller(ID);
-const HTMLcontroller: Controller = new Controller(HTML_ID);
-const localController: LocalMagmaController = new LocalMagmaController(ID);
-const HTMLLocalController: LocalMagmaController = new LocalMagmaController(HTML_ID);
+let controller: Controller;
+let HTMLcontroller: Controller;
+let localController: LocalMagmaController;
+let HTMLLocalController: LocalMagmaController;
+
+const setupControllers = (kernelType: "online" | "local" | "both") => {
+    if(kernelType !== "local"){
+        controller = new Controller(ID);
+        HTMLcontroller = new Controller(HTML_ID);
+    }
+    if(kernelType !== "online"){
+        localController = new LocalMagmaController(ID);
+        HTMLLocalController = new LocalMagmaController(HTML_ID);
+    }
+}
 
 const controllerFromCell = (cell: vscode.NotebookCell): Controller | LocalMagmaController | undefined => {
     const notebook = cell.notebook;
@@ -1102,6 +1113,12 @@ const adjustUseIndexes = async (notebook: vscode.NotebookDocument, addedCellInde
 
 const setNotebookProviders = (context: vscode.ExtensionContext) => {
     Log("Notebook activated");
+    setupControllers(getConfig().notebookKernelType);
+    vscode.workspace.onDidChangeConfiguration(e => {
+        if(e.affectsConfiguration("MagmaLanguageSupport.notebookKernelType")){
+            vscode.window.showInformationMessage(getLocaleString("kernelTypeConfigChanged"));
+        }
+    });
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(ID, new Serializer()));
     context.subscriptions.push(vscode.workspace.registerNotebookSerializer(HTML_ID, new HTMLSerializer()));
     context.subscriptions.push(vscode.commands.registerCommand("extension.magmaNotebook.createNewNotebook", open));
