@@ -1,6 +1,11 @@
 
 # Change Log
 
+## 0.12.0 - 2026-09-04
+
+- Added the new setting `MagmaLanguageSupport.notebookKernelType`.
+    - It is now possible to specify that only an online or local notebook should be used, preventing the kernel selection dialog from being shown.
+
 ## 0.11.7 - 2026-09-04
 
 - Updated dependent modules to fix vulnerabilities.
